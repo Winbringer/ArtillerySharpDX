@@ -2,10 +2,7 @@
 using SharpDX.D3DCompiler;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SharpDX11GameByWinbringer.Models
 {
@@ -72,7 +69,7 @@ namespace SharpDX11GameByWinbringer.Models
             _dx11DeviceContext.InputAssembler.SetIndexBuffer(_indexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);                     
             _dx11DeviceContext.VertexShader.SetConstantBuffer(0, _constantBuffer);
             //Рисуем в буффер нашего свайпчейна
-            _dx11DeviceContext.DrawIndexed(_indeces.Length, 0, 0);
+            _dx11DeviceContext.DrawIndexed(_indeces.Count(), 0, 0);
         }
 
         public void Dispose()

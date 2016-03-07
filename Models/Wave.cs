@@ -1,26 +1,22 @@
 ﻿
 using SharpDX;
-using DX11 = SharpDX.Direct3D11;
-using System;
-using SharpDX.D3DCompiler;
-using SharpDX.Direct3D;
-using SharpDX.DXGI;
+using SharpDX.Direct3D11;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    class Wave : IDisposable
+    class Wave : System.IDisposable
     {
         private Vector3[] _vertices;
         int[] _indeces;
         Color4 _world;
         Drawer<Color4> _drawer;
 
-        public Wave(DX11.Device dv, DX11.DeviceContext dc)
+        public Wave(Device dv, DeviceContext dc)
         {
             InitializeTriangle();
-            DX11.InputElement[] inputElements = new DX11.InputElement[]
+            InputElement[] inputElements = new InputElement[]
             {
-                new DX11.InputElement("POSITION", 0, Format.R32G32B32_Float, 0)
+                new InputElement("POSITION", 0, SharpDX.DXGI.Format.R32G32B32_Float, 0)
             };
             _world = new Color4(1f, 0, 1f, 1f);
             _drawer = new Drawer<Color4>(_world,

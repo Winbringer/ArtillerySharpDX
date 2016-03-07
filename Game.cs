@@ -38,9 +38,11 @@ namespace SharpDX11GameByWinbringer
                 ClientSize = new Size(_Width, _Height),
                 FormBorderStyle = System.Windows.Forms.FormBorderStyle.None
             };
+            _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };
+            InitInput();
             InitializeDeviceResources();
             _waves = new Wave(_dx11Device, _dx11DeviceContext);
-           
+
         }
 
         private void InitializeDeviceResources()
@@ -51,11 +53,12 @@ namespace SharpDX11GameByWinbringer
                 ModeDescription = backBufferDesc,
                 SampleDescription = new SampleDescription(1, 0),
                 Usage = Usage.RenderTargetOutput,
-                BufferCount = 1,
+                BufferCount = 2,
                 OutputHandle = _renderForm.Handle,
-                IsWindowed = true
+                IsWindowed = true,
+                SwapEffect = SwapEffect.Discard
             };
-           //Создаем Девайс и Девайс контекст
+            //Создаем Девайс, Цепочку обмена и Девайс контекст
             DX11.Device.CreateWithSwapChain(DriverType.Hardware, DX11.DeviceCreationFlags.None, swapChainDesc, out _dx11Device, out _swapChain);
             _dx11DeviceContext = _dx11Device.ImmediateContext;
             //Игноровать все события видновс
@@ -67,7 +70,7 @@ namespace SharpDX11GameByWinbringer
                 _renderTargetView = new DX11.RenderTargetView(_dx11Device, backBuffer);
             }
             _viewport = new Viewport(0, 0, _Width, _Height);
-            _dx11DeviceContext.OutputMerger.SetRenderTargets(_renderTargetView);           
+            _dx11DeviceContext.OutputMerger.SetRenderTargets(_renderTargetView);
             _dx11DeviceContext.Rasterizer.SetViewport(_viewport);
         }
         private void Draw(double time)
@@ -75,11 +78,20 @@ namespace SharpDX11GameByWinbringer
             _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(32, 103, 178));
             //Рисование объектов 
             _waves.Draw();
-            _swapChain.Present(1, PresentFlags.None);
+            _swapChain.Present(0, PresentFlags.None);
         }
         private void Update(double time)
         {
 
+
+        }
+
+        private void InitInput()
+        {
+            _renderForm.KeyDown += (sender, e) =>
+            {
+                if (e.KeyCode == System.Windows.Forms.Keys.Escape) _renderForm.Close();
+            };
         }
 
         public void Dispose()
@@ -89,7 +101,7 @@ namespace SharpDX11GameByWinbringer
             _swapChain.Dispose();
             _dx11Device.Dispose();
             _dx11DeviceContext.Dispose();
-            _renderForm.Dispose();            
+            _renderForm.Dispose();
         }
 
         public void Run()

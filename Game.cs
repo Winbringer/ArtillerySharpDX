@@ -41,7 +41,8 @@ namespace SharpDX11GameByWinbringer
             _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };
             InitInput();
             InitializeDeviceResources();
-            _waves = new Wave(_dx11Device, _dx11DeviceContext);
+            float ratio = (float)_Width / (float)_Height;
+            _waves = new Wave(_dx11Device, _dx11DeviceContext, ratio);
 
         }
 

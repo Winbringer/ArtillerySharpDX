@@ -27,8 +27,7 @@ namespace SharpDX11GameByWinbringer.Models
                 _vertices,
                 _indeces,
                 "Shaders\\Shader.hlsl",
-                inputElements, dv, dc,
-                PrimitiveTopology.TriangleList);
+                inputElements, dv, dc);
         }
 
         private void InitializeTriangle()
@@ -68,7 +67,7 @@ namespace SharpDX11GameByWinbringer.Models
         }
 
         public void Draw()
-        {
+        {            
             _drawer.Draw();
         }
 

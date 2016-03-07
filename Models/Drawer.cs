@@ -20,19 +20,23 @@ namespace SharpDX11GameByWinbringer.Models
         private PixelShader _pixelShader;
         private ShaderSignature _inputSignature;
         private InputLayout _inputLayout;
+        //Используемые данные
         private int[] _indeces;
         private Vector3[] _vertices;
-        T _world;
-        PrimitiveTopology _pt;
+        T _world; 
+        /// <summary>
+        /// Задает тип рисуемых примитивов
+        /// </summary>
+        public PrimitiveTopology PTolology { get; set; }
 
-        public Drawer(T constBufferData, Vector3[] vetexes, int[] indexes, string shadersFile, InputElement[] inputElements, Device dv, DeviceContext dvContext, PrimitiveTopology pt)
+        public Drawer(T constBufferData, Vector3[] vetexes, int[] indexes, string shadersFile, InputElement[] inputElements, Device dv, DeviceContext dvContext)
         {
             _indeces = indexes;
             _vertices = vetexes;
             _world = constBufferData;
             _dx11Device = dv;
             _dx11DeviceContext = dvContext;
-            _pt = pt;
+            PTolology = PrimitiveTopology.TriangleList;         
             //Создаем буфферы для видеокарты
             _triangleVertexBuffer = Buffer.Create<Vector3>(_dx11Device, BindFlags.VertexBuffer, _vertices);
             _indexBuffer = Buffer.Create(_dx11Device, BindFlags.IndexBuffer, _indeces);
@@ -60,7 +64,7 @@ namespace SharpDX11GameByWinbringer.Models
             _dx11DeviceContext.VertexShader.Set(_vertexShader);
             _dx11DeviceContext.PixelShader.Set(_pixelShader);           
             //Задаем тип рисуемых примитивов
-            _dx11DeviceContext.InputAssembler.PrimitiveTopology = _pt;
+            _dx11DeviceContext.InputAssembler.PrimitiveTopology = PTolology;
             //Устанавливаем макет для входных данных видеокарты. В нем указано какие данные ожидает шейдер
             _dx11DeviceContext.InputAssembler.InputLayout = _inputLayout;
             //Перенос данных буферов в видеокарту

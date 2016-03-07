@@ -11,7 +11,7 @@ cbuffer data : register(b0)
     float4x4 World;
     float4x4 View;
     float4x4 Proj;
-    float Time;
+    float4 Time;
 };
 
 struct VS_IN
@@ -21,20 +21,21 @@ struct VS_IN
 
 struct PS_IN
 {
-    float4 pos : SV_POSITION;   
+    float4 pos : SV_POSITION;
+    float4 col : COLOR0;
 };
 
 PS_IN VS(VS_IN input)
 {
-    PS_IN output = (PS_IN) 0;     
-    float4 Pos =input.pos;
-    float4 wp = mul(World,Pos );
-    float4 vp = mul(View,wp );
-    output.pos = mul(Proj,vp);
-      return output;
+    PS_IN output = (PS_IN) 0;
+    float4 Pos = input.pos;
+    float4 wp = mul(World, Pos);
+    float4 vp = mul(View, wp);
+    output.pos = mul(Proj, vp);   
+    return output;
 }
 
 float4 PS(PS_IN input) : SV_Target
 {
-    return diffuseMap.Sample(textureSampler, float2(0, 0));
+    return diffuseMap.Sample(textureSampler, float2(0, 0));    
 }

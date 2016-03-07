@@ -22,7 +22,7 @@ namespace SharpDX11GameByWinbringer.Models
         //Используемые данные
         private int[] _indeces;
         private Vector3[] _vertices;
-        T _world;
+        public T ShaderData;
         /// <summary>
         /// Задает тип рисуемых примитивов
         /// </summary>
@@ -32,7 +32,7 @@ namespace SharpDX11GameByWinbringer.Models
         {
             _indeces = indexes;
             _vertices = vetexes;
-            _world = constBufferData;
+            ShaderData = constBufferData;
             _dx11Device = dv;
             _dx11DeviceContext = dvContext;
             PTolology = PrimitiveTopology.TriangleList;
@@ -97,7 +97,7 @@ namespace SharpDX11GameByWinbringer.Models
             //Отправляем текстуру в шейдер
             _dx11DeviceContext.PixelShader.SetShaderResource(0, _textureResourse);
             //Обновляем данные в буфере переменных шейдера
-            _dx11DeviceContext.UpdateSubresource(ref _world, _constantBuffer);
+            _dx11DeviceContext.UpdateSubresource(ref ShaderData, _constantBuffer);
             //Рисуем в буффер нашего свайпчейна
             _dx11DeviceContext.DrawIndexed(_indeces.Count(), 0, 0);
         }

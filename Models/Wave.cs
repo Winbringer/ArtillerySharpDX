@@ -17,6 +17,7 @@ namespace SharpDX11GameByWinbringer.Models
         private Vector2[] _textureC;
         private int[] _indeces;
         private Data _data;
+        private readonly float _size = 500F;
 
         public Wave(Device dv, DeviceContext dc, float ratio)
         {
@@ -28,8 +29,8 @@ namespace SharpDX11GameByWinbringer.Models
 
             _data = new Data()
             {
-                World = Matrix.Identity,// * Matrix.LookAtLH(new Vector3(0f, 6f, -5f), Vector3.Zero, Vector3.Up)* Matrix.PerspectiveFovLH(MathUtil.PiOverFour, ratio, 0.1f, 100.0f),
-                View = Matrix.LookAtLH(new Vector3(0, 100f, -200f), new Vector3(0,0,0), Vector3.Up),
+                World = Matrix.Translation(-_size / 2, 0, _size/2), //* Matrix.LookAtLH(new Vector3(0, 250f, -250f), Vector3.Zero, Vector3.Up)* Matrix.PerspectiveFovLH(MathUtil.PiOverFour, ratio, 0.1f, 100.0f),
+                View = Matrix.LookAtLH(new Vector3(350f, 100f, 0), new Vector3(0,0,0), Vector3.Up),
                 Proj = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, ratio, 1f, 1000f),
                 Time = new Vector4(1)
             };
@@ -37,25 +38,24 @@ namespace SharpDX11GameByWinbringer.Models
                 _vertices,
                 _indeces,
                 "Shaders\\Shader.hlsl",
-                inputElements, dv, dc,
+                inputElements, dc,
                 "Textures\\venus.png");
         }
 
         private void InitializeTriangle()
         {
             //Количество точек вдоль одной стороны куба
-            int N = 200;
+            int N = 500;
             //Создание верщин
-            _vertices = new Vector3[N * N];
-            float size = 100f;
-            float delta = size / (N - 1);
+            _vertices = new Vector3[N * N];            
+            float delta = _size / (N - 1);
             float deltaTexture = 1f / (N - 1);
             for (int i = 0; i < N; i++)
             {
                 for (int j = 0; j < N; j++)
                 {
                     int index = i * N + j;
-                    _vertices[index] = new Vector3(delta * i - size / 2, 0 , -delta * j);                    
+                    _vertices[index] = new Vector3(delta * i , 0, -delta * j);                    
                 }
             }
             //Создание индексов
@@ -96,8 +96,8 @@ namespace SharpDX11GameByWinbringer.Models
 
         public void Draw()
         {
-            _drawer.PTolology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
-            _drawer.ShaderData.Time = new Vector4(1);
+            _drawer.PTolology = SharpDX.Direct3D.PrimitiveTopology.LineList;
+            _drawer.ShaderData.Time = new Vector4(System.Environment.TickCount);
             _drawer.Draw();
         }
 

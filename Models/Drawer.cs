@@ -10,8 +10,7 @@ namespace SharpDX11GameByWinbringer.Models
     {
         private Buffer _triangleVertexBuffer;
         private Buffer _indexBuffer;
-        private Buffer _constantBuffer;
-        private Device _dx11Device;
+        private Buffer _constantBuffer;      
         private DeviceContext _dx11DeviceContext;
         private VertexShader _vertexShader;
         private PixelShader _pixelShader;
@@ -28,35 +27,35 @@ namespace SharpDX11GameByWinbringer.Models
         /// </summary>
         public PrimitiveTopology PTolology { get; set; }
 
-        public Drawer(T constBufferData, Vector3[] vetexes, int[] indexes, string shadersFile, InputElement[] inputElements, Device dv, DeviceContext dvContext, string texture)
+        public Drawer(T constBufferData, Vector3[] vetexes, int[] indexes, string shadersFile, InputElement[] inputElements,  DeviceContext dvContext, string texture)
         {
             _indeces = indexes;
             _vertices = vetexes;
-            ShaderData = constBufferData;
-            _dx11Device = dv;
-            _dx11DeviceContext = dvContext;
+            ShaderData = constBufferData;           
+            _dx11DeviceContext = dvContext;           
             PTolology = PrimitiveTopology.TriangleList;
             //Создаем буфферы для видеокарты
-            _triangleVertexBuffer = Buffer.Create<Vector3>(_dx11Device, BindFlags.VertexBuffer, _vertices);
-            _indexBuffer = Buffer.Create(_dx11Device, BindFlags.IndexBuffer, _indeces);
+            _triangleVertexBuffer = Buffer.Create<Vector3>(_dx11DeviceContext.Device, BindFlags.VertexBuffer, _vertices);
+            _indexBuffer = Buffer.Create(_dx11DeviceContext.Device, BindFlags.IndexBuffer, _indeces);
             int size = Utilities.SizeOf<T>();
-            _constantBuffer = new Buffer( _dx11Device, size, ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+            _constantBuffer = new Buffer(_dx11DeviceContext.Device, size, ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
             //Загружаем шейдеры из файлов
-            using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "VS", "vs_4_0", ShaderFlags.Debug))
+            using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "VS", "vs_5_0", ShaderFlags.Debug))
             {
                 //Синатура храянящая сведения о том какие входные переменные есть у шейдера
                 _inputSignature = ShaderSignature.GetInputSignature(vertexShaderByteCode);
-                _vertexShader = new VertexShader(_dx11Device, vertexShaderByteCode);
+                _vertexShader = new VertexShader(_dx11DeviceContext.Device, vertexShaderByteCode);
             }
-            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "PS", "ps_4_0", ShaderFlags.Debug))
+            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "PS", "ps_5_0", ShaderFlags.Debug))
             {
-                _pixelShader = new PixelShader(_dx11Device, pixelShaderByteCode);
+                _pixelShader = new PixelShader(_dx11DeviceContext.Device, pixelShaderByteCode);
             }
             //Создаем шаблон ввода данных для шейдера
-            _inputLayout = new InputLayout(_dx11Device, _inputSignature, inputElements);
+            _inputLayout = new InputLayout(_dx11DeviceContext.Device, _inputSignature, inputElements);
             _textureBuffer = CreateTextureFromBitmap(texture);
-            _textureResourse = new ShaderResourceView(_dx11Device, _textureBuffer);
+            _textureResourse = new ShaderResourceView(_dx11DeviceContext.Device, _textureBuffer);
         }
+      
         private Texture2D CreateTextureFromBitmap(string filename)
         {
             System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(filename);
@@ -76,7 +75,7 @@ namespace SharpDX11GameByWinbringer.Models
             };
             System.Drawing.Imaging.BitmapData data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             DataRectangle dataRectangle = new DataRectangle(data.Scan0, data.Stride);
-            var buffer = new Texture2D(_dx11Device, textureDesc, dataRectangle);
+            var buffer = new Texture2D(_dx11DeviceContext.Device, textureDesc, dataRectangle);
             bitmap.UnlockBits(data);
             return buffer;
         }

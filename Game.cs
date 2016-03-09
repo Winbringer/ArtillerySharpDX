@@ -32,6 +32,7 @@ namespace SharpDX11GameByWinbringer
         DX11.DepthStencilView _depthView = null;
         //Параметры растеризации
         DX11.RasterizerState _rasterizerState = null;
+        DX11.DepthStencilState _DState = null;
         DX11.RasterizerStateDescription _rasterizerStateDescription;
         Wave _waves = null;
         public Game()
@@ -55,11 +56,12 @@ namespace SharpDX11GameByWinbringer
 
         private void InitializeDeviceResources()
         {
-            ModeDescription backBufferDesc = new ModeDescription(_Width, _Height, new Rational(60, 1), Format.R8G8B8A8_UNorm);
+            //Параметры отоборжарежния
+            ModeDescription backBufferDesc = new ModeDescription(_Width, _Height, new Rational(0, 1), Format.R8G8B8A8_UNorm);
             SwapChainDescription swapChainDesc = new SwapChainDescription()
             {
                 ModeDescription = backBufferDesc,
-                SampleDescription = new SampleDescription(4, 4),
+                SampleDescription = new SampleDescription(2, 2),
                 Usage = Usage.BackBuffer | Usage.RenderTargetOutput,
                 BufferCount = 2,
                 OutputHandle = _renderForm.Handle,
@@ -81,14 +83,14 @@ namespace SharpDX11GameByWinbringer
                 MipLevels = 1,
                 Width = _renderForm.ClientSize.Width,
                 Height = _renderForm.ClientSize.Height,
-                SampleDescription = new SampleDescription(4, 4),
+                SampleDescription = new SampleDescription(2, 2),
                 Usage = DX11.ResourceUsage.Default,
                 BindFlags = DX11.BindFlags.DepthStencil,
                 CpuAccessFlags = DX11.CpuAccessFlags.None,
                 OptionFlags = DX11.ResourceOptionFlags.None
-            });
+            });           
             // Создавем Отображение глубины
-            _depthView = new DX11.DepthStencilView(_dx11Device, _depthBuffer);
+            _depthView = new DX11.DepthStencilView(_dx11Device, _depthBuffer);            
             //Создаем цель куда будем рисовать
             using (DX11.Texture2D backBuffer = _swapChain.GetBackBuffer<DX11.Texture2D>(0))
             {
@@ -100,9 +102,14 @@ namespace SharpDX11GameByWinbringer
             _dx11DeviceContext.Rasterizer.SetViewport(_viewport);
             //Устанавливаем параметры рисования.
             _rasterizerStateDescription = DX11.RasterizerStateDescription.Default();
-            _rasterizerStateDescription.CullMode= DX11.CullMode.None;
+            _rasterizerStateDescription.CullMode= DX11.CullMode.None;                 
             _rasterizerState = new DX11.RasterizerState(_dx11Device, _rasterizerStateDescription);
             _dx11DeviceContext.Rasterizer.State = _rasterizerState;
+            //Устанавливаем параметры буффера глубины
+            DX11.DepthStencilStateDescription DStateDescripshion = DX11.DepthStencilStateDescription.Default();
+            DStateDescripshion.DepthWriteMask = DX11.DepthWriteMask.Zero;
+            _DState = new DX11.DepthStencilState(_dx11Device, DStateDescripshion);
+            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;       
         }
 
         private void Update(double time)
@@ -130,17 +137,18 @@ namespace SharpDX11GameByWinbringer
 
         public void Dispose()
         {
+            _DState.Dispose();
             _timer.Stop();
             _waves.Dispose();
             _renderTargetView.Dispose();
-            _swapChain.Dispose();
-            _dx11Device.Dispose();
-            _dx11DeviceContext.Dispose();
+            _swapChain.Dispose();           
             _renderForm.Dispose();
             _factory.Dispose();
             _depthBuffer.Dispose();
             _depthView.Dispose();
             _rasterizerState.Dispose();
+            _dx11Device.Dispose();
+            _dx11DeviceContext.Dispose();
         }
 
         public void Run()

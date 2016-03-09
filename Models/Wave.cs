@@ -30,7 +30,7 @@ namespace SharpDX11GameByWinbringer.Models
         private int[] _indeces;
         private Data _data;
         private readonly float _size = 500F;
-        readonly int _N = 500;
+        readonly int _N = 4;
 
         public Wave(DeviceContext dc, float ratio)
         {
@@ -40,12 +40,18 @@ namespace SharpDX11GameByWinbringer.Models
                 new InputElement("SV_Position", 0, SharpDX.DXGI.Format.R32G32B32_Float,0, 0),
                 new InputElement("TEXCOORD",0,SharpDX.DXGI.Format.R32G32_Float,12,0)
             };
+            Matrix w =Matrix.Translation(-_size / 2, 0, _size / 2) * Matrix.Identity;
+            Matrix v = Matrix.LookAtLH(new Vector3(0, 500f, -500f), new Vector3(0, 0, 0), Vector3.Up);
+            Matrix p = Matrix.PerspectiveFovLH(MathUtil.Pi / 3, ratio, 1f, 2000f);
 
+            w.Transpose();
+            v.Transpose();
+            p.Transpose();
             _data = new Data()
             {
-                World = Matrix.Translation(-_size / 2, 0, _size / 2)* Matrix.Identity,
-                View = Matrix.LookAtLH(new Vector3(0, 400f, 400f), new Vector3(0, 0, 0), Vector3.Up),
-                Proj = Matrix.PerspectiveFovLH(MathUtil.Pi/3, ratio, 1f, 2000f),
+                World = w,
+                View = v,
+                Proj = p,
                 Time = new Vector4(1)
             };
             _drawer = new Drawer<Data, Vertex>(
@@ -69,7 +75,7 @@ namespace SharpDX11GameByWinbringer.Models
                 {
                     int index = i * _N + j;
                     _vertices[index].Position = new Vector3(delta * i, 0, -delta * j);
-                    _vertices[index].TextureUV = new Vector2(deltaT * i, deltaT * j);
+                  _vertices[index].TextureUV = new Vector2(deltaT*i, deltaT* j);
                 }
             }
             //Создание индексов
@@ -91,7 +97,7 @@ namespace SharpDX11GameByWinbringer.Models
                     _indeces[counter++] = lowerRight;
                 }
             }
-            ////Создание координат текстуры            
+            //Создание координат текстуры            
             //for (int k = 0; k < _vertices.Length; k++)
             //{
             //    int m = 0;
@@ -99,7 +105,7 @@ namespace SharpDX11GameByWinbringer.Models
             //    {
             //        for (int j = 0; j < 2; j++)
             //        {
-            //            _vertices[k + m].TextureUV = new Vector2(i, j);
+            //            _vertices[k + m].TextureUV = new Vector2(i,j);
             //            ++m;
             //        }
             //    }

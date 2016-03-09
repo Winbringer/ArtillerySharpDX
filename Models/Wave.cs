@@ -41,7 +41,7 @@ namespace SharpDX11GameByWinbringer.Models
                 new InputElement("TEXCOORD",0,SharpDX.DXGI.Format.R32G32_Float,12,0)
             };
             Matrix w =Matrix.Translation(-_size / 2, 0, _size / 2) * Matrix.RotationY(MathUtil.PiOverFour);
-            Matrix v = Matrix.LookAtLH(new Vector3(0, 50f, -400f), new Vector3(0, 0, 0), Vector3.Up);
+            Matrix v = Matrix.LookAtLH(new Vector3(0, -50f, -400f), new Vector3(0, 0, 0), Vector3.Up);
             Matrix p = Matrix.PerspectiveFovLH(MathUtil.Pi / 3, ratio, 1f, 2000f);
 
             w.Transpose();

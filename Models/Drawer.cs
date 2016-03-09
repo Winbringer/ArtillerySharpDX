@@ -17,6 +17,7 @@ namespace SharpDX11GameByWinbringer.Models
         private ShaderSignature _inputSignature;
         private InputLayout _inputLayout;
         private ShaderResourceView _textureResourse;
+        private SamplerState _samplerState = null;
         //Используемые данные
         private int[] _indeces;
         private T1[] _vertices;      
@@ -25,7 +26,7 @@ namespace SharpDX11GameByWinbringer.Models
         /// </summary>
         public PrimitiveTopology PTolology { get; set; }
 
-        public Drawer(T1[] vetexes, int[] indexes, string shadersFile, InputElement[] inputElements, DeviceContext dvContext, string texture)
+        public Drawer(T1[] vetexes, int[] indexes, string shadersFile, InputElement[] inputElements, DeviceContext dvContext, string texture, SamplerStateDescription description)
         {
             _indeces = indexes;
             _vertices = vetexes;         
@@ -51,6 +52,8 @@ namespace SharpDX11GameByWinbringer.Models
             _inputLayout = new InputLayout(_dx11DeviceContext.Device, _inputSignature, inputElements);
             //Загружаем текстуру           
             _textureResourse = CreateTextureFromFile(texture);
+            //Создание самплера для текстуры
+            _samplerState = new SamplerState(_dx11DeviceContext.Device, description);           
         }
 
         private ShaderResourceView CreateTextureFromFile(string filename)
@@ -88,6 +91,8 @@ namespace SharpDX11GameByWinbringer.Models
             //Установка шейдеров
             _dx11DeviceContext.VertexShader.Set(_vertexShader);
             _dx11DeviceContext.PixelShader.Set(_pixelShader);
+            //Устанавливаем самплер текстуры для шейдера
+            _dx11DeviceContext.PixelShader.SetSampler(0, _samplerState);
             //Задаем тип рисуемых примитивов
             _dx11DeviceContext.InputAssembler.PrimitiveTopology = PTolology;
             //Устанавливаем макет для входных данных видеокарты. В нем указано какие данные ожидает шейдер
@@ -104,16 +109,37 @@ namespace SharpDX11GameByWinbringer.Models
             _dx11DeviceContext.DrawIndexed(_indeces.Count(), 0, 0);
         }
 
+        #region IDisposable Support
+        private bool disposedValue = false;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: освободить управляемое состояние (управляемые объекты).
+                    _samplerState.Dispose();
+                    _textureResourse.Dispose();
+                    _triangleVertexBuffer.Dispose();
+                    _vertexShader.Dispose();
+                    _pixelShader.Dispose();
+                    _inputLayout.Dispose();
+                    _inputSignature.Dispose();
+                    _indexBuffer.Dispose();
+                    _constantBuffer.Dispose();
+                }
+
+                // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
+                // TODO: задать большим полям значение NULL.
+
+                disposedValue = true;
+            }
+        }
         public void Dispose()
         {
-            _textureResourse.Dispose();
-            _triangleVertexBuffer.Dispose();
-            _vertexShader.Dispose();
-            _pixelShader.Dispose();
-            _inputLayout.Dispose();
-            _inputSignature.Dispose();
-            _indexBuffer.Dispose();
-            _constantBuffer.Dispose();
+            Dispose(true);
         }
+        #endregion
+      
     }
 }

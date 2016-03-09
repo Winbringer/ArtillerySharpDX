@@ -27,6 +27,7 @@ namespace SharpDX11GameByWinbringer.Models
 
     class Wave : System.IDisposable
     {
+        private Matrix _world;
         private Drawer<Data, Vertex> _drawer;
         private Vertex[] _vertices;
         private int[] _indeces;
@@ -34,36 +35,32 @@ namespace SharpDX11GameByWinbringer.Models
         private readonly float _size = 500F;
         readonly int _N = 500;
 
-        public Wave(DeviceContext dc, float ratio)
+        public Wave(DeviceContext dc)
         {
+            _world = Matrix.Translation(-_size / 2, 0, _size / 2) * Matrix.RotationY(MathUtil.PiOverFour);
             InitializeTriangle();
             InputElement[] inputElements = new InputElement[]
             {
                 new InputElement("SV_Position", 0, SharpDX.DXGI.Format.R32G32B32_Float,0, 0),
                 new InputElement("TEXCOORD",0,SharpDX.DXGI.Format.R32G32_Float,12,0)
-            };
-            Matrix w =Matrix.Translation(-_size / 2, 0, _size / 2) * Matrix.RotationY(MathUtil.PiOverFour);
-            Matrix v = Matrix.LookAtLH(new Vector3(0, 50f, -400f), new Vector3(0, 0, 0), Vector3.Up);
-            Matrix p = Matrix.PerspectiveFovLH(MathUtil.Pi / 3, ratio, 1f, 2000f);
-
-            w.Transpose();
-            v.Transpose();
-            p.Transpose();
-
+            };            
             _data = new Data()
-            {
-                World = w,
-                View = v,
-                Proj = p,
+            {                
                 Time = new Vector4(1)
             };
+            //Установка Сампрелар для текстуры.
+            SamplerStateDescription description = SamplerStateDescription.Default();
+            description.Filter = Filter.MinMagMipLinear;
+            description.AddressU = TextureAddressMode.Wrap;
+            description.AddressV = TextureAddressMode.Wrap;
 
             _drawer = new Drawer<Data, Vertex>(
                 _vertices,
                 _indeces,
                 "Shaders\\Shader.hlsl",
                 inputElements, dc,
-                "Textures\\grass.jpg");
+                "Textures\\grass.jpg",
+                description);
         }
 
         private void InitializeTriangle()
@@ -79,7 +76,7 @@ namespace SharpDX11GameByWinbringer.Models
                 {
                     int index = i * _N + j;
                     _vertices[index].Position = new Vector3(delta * i, 0, -delta * j);
-                  _vertices[index].TextureUV = new Vector2(deltaT*i, deltaT* j);
+                    _vertices[index].TextureUV = new Vector2(deltaT * i, deltaT * j);
                 }
             }
             //Создание индексов
@@ -101,21 +98,17 @@ namespace SharpDX11GameByWinbringer.Models
                     _indeces[counter++] = lowerRight;
                 }
             }
-            //Создание координат текстуры            
-            //for (int k = 0; k < _vertices.Length; k++)
-            //{
-            //    int m = 0;
-            //    for (int i = 0; i < 2; i++)
-            //    {
-            //        for (int j = 0; j < 2; j++)
-            //        {
-            //            _vertices[k + m].TextureUV = new Vector2(i,j);
-            //            ++m;
-            //        }
-            //    }
-            //    k += m - 1;
-            //}
+        }
 
+        public void Update(Matrix world, Matrix view, Matrix proj)
+        {
+
+            _data.World = _world * world;
+            _data.View = view;
+            _data.Proj = proj;
+            _data.World.Transpose();
+            _data.View.Transpose();
+            _data.Proj.Transpose();
         }
 
         public void Draw()
@@ -124,14 +117,30 @@ namespace SharpDX11GameByWinbringer.Models
             _data.Time = new Vector4(System.Environment.TickCount);
             _drawer.Draw(_data);
         }
-
-        public void Update()
+        
+       
+        #region IDisposable Support
+        private bool disposedValue = false;
+        protected virtual void Dispose(bool disposing)
         {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: освободить управляемое состояние (управляемые объекты).
+                    _drawer.Dispose();
+                }
 
+                // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
+                // TODO: задать большим полям значение NULL.
+
+                disposedValue = true;
+            }
         }
         public void Dispose()
         {
-            _drawer.Dispose();
+            Dispose(true);
         }
+        #endregion
     }
 }

@@ -1,19 +1,17 @@
-﻿using SharpDX.Windows;
-using DX11 = SharpDX.Direct3D11;
-using System;
-using System.Drawing;
+﻿using DX11=SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using SharpDX11GameByWinbringer.Models;
-using SharpDX.Direct3D;
-using SharpDX;
 
 namespace SharpDX11GameByWinbringer
 {
-    class Game : IDisposable
+  public  class Game : System.IDisposable
     {
+        public delegate void UpdateDraw(double t);
+        public event UpdateDraw OnUpdate=null;
+        public event UpdateDraw OnDraw=null;
         Factory _factory;
         //Форма куда будем вставлять наше представление renderTargetView.
-        private RenderForm _renderForm = null;
+        private SharpDX.Windows.RenderForm _renderForm = null;
         private readonly int _Width = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width;
         private readonly int _Height = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height;
         //Таймер который будет счиать время
@@ -26,7 +24,7 @@ namespace SharpDX11GameByWinbringer
         //Представление куда мы выводим картинку.
         private DX11.RenderTargetView _renderTargetView = null;
         //Координатная сетка 
-        private Viewport _viewport;
+        private SharpDX.Viewport _viewport;
         //Буффер и представление глубины
         DX11.Texture2D _depthBuffer = null;
         DX11.DepthStencilView _depthView = null;
@@ -34,24 +32,28 @@ namespace SharpDX11GameByWinbringer
         DX11.RasterizerState _rasterizerState = null;
         DX11.DepthStencilState _DState = null;
         DX11.RasterizerStateDescription _rasterizerStateDescription;
-        Wave _waves = null;
+        Presenter _presenter = null;
+
+
+        public float ViewRatio { get; set; }  
+        public DX11.DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
+        public SharpDX.Windows.RenderForm Form { get { return _renderForm; } }
+
         public Game()
         {
+            ViewRatio = (float)_Width / _Height;
             _timer.Reset();
-            _renderForm = new RenderForm("SharpDXGameByWinbringer")
+            _renderForm = new SharpDX.Windows.RenderForm("SharpDXGameByWinbringer")
             {
                 AllowUserResizing = false,
                 IsFullscreen = false,
                 StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen,
-                ClientSize = new Size(_Width, _Height),
+                ClientSize = new System.Drawing.Size(_Width, _Height),
                 FormBorderStyle = System.Windows.Forms.FormBorderStyle.None
             };
-            _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };
-            InitInput();
+            _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };           
             InitializeDeviceResources();
-            float ratio = (float)_Width / (float)_Height;
-            _waves = new Wave(_dx11DeviceContext, ratio);
-
+            _presenter = new Presenter(this);
         }
 
         private void InitializeDeviceResources()
@@ -66,11 +68,11 @@ namespace SharpDX11GameByWinbringer
                 BufferCount = 2,
                 OutputHandle = _renderForm.Handle,
                 IsWindowed = true,
-                SwapEffect = SwapEffect.Discard,                 
+                SwapEffect = SwapEffect.Discard,
                 Flags = SwapChainFlags.AllowModeSwitch
             };
             //Создаем Девайс, Цепочку обмена и Девайс контекст
-            DX11.Device.CreateWithSwapChain(DriverType.Hardware, DX11.DeviceCreationFlags.None, new[] { FeatureLevel.Level_11_0 }, swapChainDesc, out _dx11Device, out _swapChain);
+            DX11.Device.CreateWithSwapChain(SharpDX.Direct3D.DriverType.Hardware, DX11.DeviceCreationFlags.None, new[] { SharpDX.Direct3D.FeatureLevel.Level_11_0 }, swapChainDesc, out _dx11Device, out _swapChain);
             _dx11DeviceContext = _dx11Device.ImmediateContext;
             //Игноровать все события видновс
             _factory = _swapChain.GetParent<Factory>();
@@ -88,80 +90,90 @@ namespace SharpDX11GameByWinbringer
                 BindFlags = DX11.BindFlags.DepthStencil,
                 CpuAccessFlags = DX11.CpuAccessFlags.None,
                 OptionFlags = DX11.ResourceOptionFlags.None
-            });           
+            });
             // Создавем Отображение глубины
-            _depthView = new DX11.DepthStencilView(_dx11Device, _depthBuffer);            
+            _depthView = new DX11.DepthStencilView(_dx11Device, _depthBuffer);
             //Создаем цель куда будем рисовать
             using (DX11.Texture2D backBuffer = _swapChain.GetBackBuffer<DX11.Texture2D>(0))
             {
                 _renderTargetView = new DX11.RenderTargetView(_dx11Device, backBuffer);
-            }            
+            }
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderTargetView);
             //Устанавливаем цели для рисования
-            _viewport = new Viewport(0, 0, _Width, _Height);
+            _viewport = new SharpDX.Viewport(0, 0, _Width, _Height);
             _dx11DeviceContext.Rasterizer.SetViewport(_viewport);
             //Устанавливаем параметры рисования.
             _rasterizerStateDescription = DX11.RasterizerStateDescription.Default();
-            _rasterizerStateDescription.CullMode= DX11.CullMode.None;                 
+            _rasterizerStateDescription.CullMode = DX11.CullMode.None;
             _rasterizerState = new DX11.RasterizerState(_dx11Device, _rasterizerStateDescription);
             _dx11DeviceContext.Rasterizer.State = _rasterizerState;
             //Устанавливаем параметры буффера глубины
             DX11.DepthStencilStateDescription DStateDescripshion = DX11.DepthStencilStateDescription.Default();
             DStateDescripshion.DepthWriteMask = DX11.DepthWriteMask.Zero;
             _DState = new DX11.DepthStencilState(_dx11Device, DStateDescripshion);
-            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;       
+            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
         }
 
         private void Update(double time)
         {
-            
-        }
+            OnUpdate?.Invoke(time);
+        }       
 
         private void Draw()
         {
+           
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth, 1.0f, 0);
-            _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(0, 0,128));
-            //Рисование объектов 
-            _waves.Draw();
+            _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(0, 0, 128));
+            //Рисование объектов             
+            OnDraw?.Invoke(1);
             _swapChain.Present(1, PresentFlags.None);
         }
-        
-
-        private void InitInput()
-        {
-            _renderForm.KeyDown += (sender, e) =>
-            {
-                if (e.KeyCode == System.Windows.Forms.Keys.Escape) _renderForm.Close();
-            };
-        }
-
-        public void Dispose()
-        {
-            _DState.Dispose();
-            _timer.Stop();
-            _waves.Dispose();
-            _renderTargetView.Dispose();
-            _swapChain.Dispose();           
-            _renderForm.Dispose();
-            _factory.Dispose();
-            _depthBuffer.Dispose();
-            _depthView.Dispose();
-            _rasterizerState.Dispose();
-            _dx11Device.Dispose();
-            _dx11DeviceContext.Dispose();
-        }
-
+               
         public void Run()
         {
-            RenderLoop.Run(_renderForm, RenderCallback);
+            SharpDX.Windows.RenderLoop.Run(_renderForm, RenderCallback);
         }
-        double nextFrameTime = Environment.TickCount;
+        double nextFrameTime = System.Environment.TickCount;
         private void RenderCallback()
-        {          
-            double lag = Environment.TickCount - nextFrameTime;
-            if (lag > 30) { nextFrameTime = Environment.TickCount; Update(lag); }
+        {
+            double lag = System.Environment.TickCount - nextFrameTime;
+            if (lag > 30) { nextFrameTime = System.Environment.TickCount; Update(lag); }
             Draw();
         }
+        #region IDisposable Support
+        private bool disposedValue = false;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: освободить управляемое состояние (управляемые объекты).
+                    _presenter.Dispose();
+                    _DState.Dispose();
+                    _timer.Stop();
+                    _renderTargetView.Dispose();
+                    _swapChain.Dispose();
+                    _renderForm.Dispose();
+                    _factory.Dispose();
+                    _depthBuffer.Dispose();
+                    _depthView.Dispose();
+                    _rasterizerState.Dispose();
+                    _dx11Device.Dispose();
+                    _dx11DeviceContext.Dispose();
+                }
+
+                // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
+                // TODO: задать большим полям значение NULL.
+
+                disposedValue = true;
+            }
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
     }
 }
 // _timer.Tick();

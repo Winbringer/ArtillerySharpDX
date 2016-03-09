@@ -86,9 +86,10 @@
     <Compile Include="Models\GameTimer.cs" />
     <Compile Include="Models\Text.cs" />
     <Compile Include="Models\Wave.cs" />
+    <Compile Include="Presenter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TextureLoader.cs" />
+    <Compile Include="Models\TextureLoader.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

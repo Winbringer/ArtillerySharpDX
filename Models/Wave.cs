@@ -30,7 +30,7 @@ namespace SharpDX11GameByWinbringer.Models
         private int[] _indeces;
         private Data _data;
         private readonly float _size = 500F;
-        readonly int _N = 4;
+        readonly int _N = 500;
 
         public Wave(DeviceContext dc, float ratio)
         {
@@ -40,8 +40,8 @@ namespace SharpDX11GameByWinbringer.Models
                 new InputElement("SV_Position", 0, SharpDX.DXGI.Format.R32G32B32_Float,0, 0),
                 new InputElement("TEXCOORD",0,SharpDX.DXGI.Format.R32G32_Float,12,0)
             };
-            Matrix w =Matrix.Translation(-_size / 2, 0, _size / 2) * Matrix.Identity;
-            Matrix v = Matrix.LookAtLH(new Vector3(0, 500f, -500f), new Vector3(0, 0, 0), Vector3.Up);
+            Matrix w =Matrix.Translation(-_size / 2, 0, _size / 2) * Matrix.RotationY(MathUtil.PiOverFour);
+            Matrix v = Matrix.LookAtLH(new Vector3(0, 50f, -400f), new Vector3(0, 0, 0), Vector3.Up);
             Matrix p = Matrix.PerspectiveFovLH(MathUtil.Pi / 3, ratio, 1f, 2000f);
 
             w.Transpose();

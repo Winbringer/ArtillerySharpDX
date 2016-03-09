@@ -11,6 +11,7 @@ namespace SharpDX11GameByWinbringer
 {
     class Game : IDisposable
     {
+        Factory _factory;
         //Форма куда будем вставлять наше представление renderTargetView.
         private RenderForm _renderForm;
         private readonly int _Width = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width;
@@ -42,7 +43,7 @@ namespace SharpDX11GameByWinbringer
             InitInput();
             InitializeDeviceResources();
             float ratio = (float)_Width / (float)_Height;
-            _waves = new Wave(_dx11Device, _dx11DeviceContext, ratio);
+            _waves = new Wave(_dx11DeviceContext, ratio);
 
         }
 
@@ -52,19 +53,20 @@ namespace SharpDX11GameByWinbringer
             SwapChainDescription swapChainDesc = new SwapChainDescription()
             {
                 ModeDescription = backBufferDesc,
-                SampleDescription = new SampleDescription(1, 0),
-                Usage = Usage.RenderTargetOutput,
+                SampleDescription = new SampleDescription(4, 4),
+                Usage = Usage.BackBuffer | Usage.RenderTargetOutput,
                 BufferCount = 2,
                 OutputHandle = _renderForm.Handle,
                 IsWindowed = true,
-                SwapEffect = SwapEffect.Discard
+                SwapEffect = SwapEffect.Discard,                 
+                Flags = SwapChainFlags.AllowModeSwitch
             };
             //Создаем Девайс, Цепочку обмена и Девайс контекст
-            DX11.Device.CreateWithSwapChain(DriverType.Hardware, DX11.DeviceCreationFlags.None, swapChainDesc, out _dx11Device, out _swapChain);
+            DX11.Device.CreateWithSwapChain(DriverType.Hardware, DX11.DeviceCreationFlags.None, new[] { FeatureLevel.Level_11_0 }, swapChainDesc, out _dx11Device, out _swapChain);
             _dx11DeviceContext = _dx11Device.ImmediateContext;
             //Игноровать все события видновс
-            var factory = _swapChain.GetParent<Factory>();
-            factory.MakeWindowAssociation(_renderForm.Handle, WindowAssociationFlags.IgnoreAll);
+            _factory = _swapChain.GetParent<Factory>();
+            _factory.MakeWindowAssociation(_renderForm.Handle, WindowAssociationFlags.IgnoreAll);
 
             using (DX11.Texture2D backBuffer = _swapChain.GetBackBuffer<DX11.Texture2D>(0))
             {
@@ -74,9 +76,9 @@ namespace SharpDX11GameByWinbringer
             _dx11DeviceContext.OutputMerger.SetRenderTargets(_renderTargetView);
             _dx11DeviceContext.Rasterizer.SetViewport(_viewport);
         }
-        private void Draw(double time)
+        private void Draw()
         {
-            _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(32, 103, 178));
+            _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(0, 0,128));
             //Рисование объектов 
             _waves.Draw();
             _swapChain.Present(1, PresentFlags.None);
@@ -103,19 +105,39 @@ namespace SharpDX11GameByWinbringer
             _dx11Device.Dispose();
             _dx11DeviceContext.Dispose();
             _renderForm.Dispose();
+            _factory.Dispose();
         }
 
         public void Run()
         {
             RenderLoop.Run(_renderForm, RenderCallback);
         }
-
+        double nextFrameTime = Environment.TickCount;
         private void RenderCallback()
-        {
-            _timer.Tick();
-            Update(_timer.DeltaTime);
-            Draw(_timer.DeltaTime);
-
+        {          
+            double lag = Environment.TickCount - nextFrameTime;
+            if (lag > 30) { nextFrameTime = Environment.TickCount; Update(lag); }
+            Draw();
         }
     }
 }
+// _timer.Tick();
+//const int FPS = 25;
+//const int FrameDuration = 1000 / FPS;
+//const int MaxFrameSkip = 10;
+//double nextFrameTime = Environment.TickCount;
+//// счетчик итераций игрового цикла, произведенных до первого рендера
+//int loops;
+//private void RenderCallback()
+//{
+//    _timer.Tick();
+//    loops = 0;
+//    while (Environment.TickCount > nextFrameTime && loops < MaxFrameSkip)
+//    {
+//        Update(_timer.DeltaTime);
+//        nextFrameTime += FrameDuration;
+//        loops++;
+//    }
+
+//    Draw(_timer.DeltaTime);
+//}

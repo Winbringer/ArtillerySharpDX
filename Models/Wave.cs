@@ -1,8 +1,10 @@
 ﻿using SharpDX;
 using SharpDX.Direct3D11;
+using System.Runtime.InteropServices;
 
 namespace SharpDX11GameByWinbringer.Models
 {
+    [StructLayout(LayoutKind.Sequential)]
     struct Data
     {
         public Matrix World;
@@ -10,64 +12,76 @@ namespace SharpDX11GameByWinbringer.Models
         public Matrix Proj;
         public Vector4 Time;
     }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Vertex
+    {
+        public Vertex(Vector3 position, Vector2 textureUV)
+        {
+            Position = position;
+            TextureUV = textureUV;
+        }
+        public Vector3 Position;
+        public Vector2 TextureUV;
+    }
     class Wave : System.IDisposable
     {
-        private Drawer<Data> _drawer;
-        private Vector3[] _vertices;
-        private Vector2[] _textureC;
+        private Drawer<Data, Vertex> _drawer;
+        private Vertex[] _vertices;
         private int[] _indeces;
         private Data _data;
         private readonly float _size = 500F;
+        readonly int _N = 500;
 
-        public Wave(Device dv, DeviceContext dc, float ratio)
+        public Wave(DeviceContext dc, float ratio)
         {
             InitializeTriangle();
             InputElement[] inputElements = new InputElement[]
             {
-                new InputElement("POSITION", 0, SharpDX.DXGI.Format.R32G32B32_Float, 0)
+                new InputElement("SV_Position", 0, SharpDX.DXGI.Format.R32G32B32_Float,0, 0),
+                new InputElement("TEXCOORD",0,SharpDX.DXGI.Format.R32G32_Float,12,0)
             };
 
             _data = new Data()
             {
-                World = Matrix.Translation(-_size / 2, 0, _size/2), //* Matrix.LookAtLH(new Vector3(0, 250f, -250f), Vector3.Zero, Vector3.Up)* Matrix.PerspectiveFovLH(MathUtil.PiOverFour, ratio, 0.1f, 100.0f),
-                View = Matrix.LookAtLH(new Vector3(350f, 100f, 0), new Vector3(0,0,0), Vector3.Up),
-                Proj = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, ratio, 1f, 1000f),
+                World = Matrix.Translation(-_size / 2, 0, _size / 2)* Matrix.Identity,
+                View = Matrix.LookAtLH(new Vector3(0, 400f, 400f), new Vector3(0, 0, 0), Vector3.Up),
+                Proj = Matrix.PerspectiveFovLH(MathUtil.Pi/3, ratio, 1f, 2000f),
                 Time = new Vector4(1)
             };
-            _drawer = new Drawer<Data>(_data,
+            _drawer = new Drawer<Data, Vertex>(
                 _vertices,
                 _indeces,
                 "Shaders\\Shader.hlsl",
                 inputElements, dc,
-                "Textures\\venus.png");
+                "Textures\\grass.jpg");
         }
 
         private void InitializeTriangle()
         {
-            //Количество точек вдоль одной стороны куба
-            int N = 500;
-            //Создание верщин
-            _vertices = new Vector3[N * N];            
-            float delta = _size / (N - 1);
-            float deltaTexture = 1f / (N - 1);
-            for (int i = 0; i < N; i++)
+            _vertices = new Vertex[_N * _N];
+            //Создание верщин           
+            float delta = _size / (_N - 1);
+            float deltaT = 1f / (_N - 1);
+            float deltaTexture = 1f / (_N - 1);
+            for (int i = 0; i < _N; i++)
             {
-                for (int j = 0; j < N; j++)
+                for (int j = 0; j < _N; j++)
                 {
-                    int index = i * N + j;
-                    _vertices[index] = new Vector3(delta * i , 0, -delta * j);                    
+                    int index = i * _N + j;
+                    _vertices[index].Position = new Vector3(delta * i, 0, -delta * j);
+                    _vertices[index].TextureUV = new Vector2(deltaT * i, deltaT * j);
                 }
             }
             //Создание индексов
-            _indeces = new int[(N - 1) * (N - 1) * 6];
+            _indeces = new int[(_N - 1) * (_N - 1) * 6];
             uint counter = 0;
-            for (int z = 0; z < (N - 1); z++)
+            for (int z = 0; z < (_N - 1); z++)
             {
-                for (int X = 0; X < (N - 1); X++)
+                for (int X = 0; X < (_N - 1); X++)
                 {
-                    int lowerLeft = (z * N + X);
+                    int lowerLeft = (z * _N + X);
                     int lowerRight = lowerLeft + 1;
-                    int upperLeft = lowerLeft + N;
+                    int upperLeft = lowerLeft + _N;
                     int upperRight = upperLeft + 1;
                     _indeces[counter++] = lowerLeft;
                     _indeces[counter++] = upperLeft;
@@ -77,28 +91,28 @@ namespace SharpDX11GameByWinbringer.Models
                     _indeces[counter++] = lowerRight;
                 }
             }
-            //Создание координат текстуры
-            _textureC = new Vector2[N * N];
-            for (int k = 0; k < _textureC.Length; k++)
-            {
-                int m = 0;
-                for (int i = 0; i < 2; i++)
-                {
-                    for (int j = 0; j < 2; j++)
-                    {
-                        _textureC[k + m] = new Vector2(i, j);
-                        ++m;
-                    }
-                }
-                k += m - 1;
-            }
+            ////Создание координат текстуры            
+            //for (int k = 0; k < _vertices.Length; k++)
+            //{
+            //    int m = 0;
+            //    for (int i = 0; i < 2; i++)
+            //    {
+            //        for (int j = 0; j < 2; j++)
+            //        {
+            //            _vertices[k + m].TextureUV = new Vector2(i, j);
+            //            ++m;
+            //        }
+            //    }
+            //    k += m - 1;
+            //}
+
         }
 
         public void Draw()
         {
-            _drawer.PTolology = SharpDX.Direct3D.PrimitiveTopology.LineList;
-            _drawer.ShaderData.Time = new Vector4(System.Environment.TickCount);
-            _drawer.Draw();
+            _drawer.PTolology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
+            _data.Time = new Vector4(System.Environment.TickCount);
+            _drawer.Draw(_data);
         }
 
         public void Update()

@@ -2,9 +2,13 @@
 using SharpDX.DXGI;
 using SharpDX11GameByWinbringer.Models;
 using System.Diagnostics;
+using SharpDX;
 
 namespace SharpDX11GameByWinbringer
 {
+    /// <summary>
+    /// Основной класс игры. Наша Вьюшка. Отвечает за инициализацию графики и игровой цкил отображения данных на экран.
+    /// </summary>
     public class Game : System.IDisposable
     {
         public delegate void UpdateDraw(double t);
@@ -14,16 +18,14 @@ namespace SharpDX11GameByWinbringer
         //Форма куда будем вставлять наше представление renderTargetView.
         private SharpDX.Windows.RenderForm _renderForm = null;
         private readonly int _Width = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width;
-        private readonly int _Height = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height;        
+        private readonly int _Height = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height;
         //Объектное представление нашей видеокарты
         private DX11.Device _dx11Device = null;
         private DX11.DeviceContext _dx11DeviceContext = null;
         //Цепочка замены заднего и отображаемого буфера
         private SwapChain _swapChain;
         //Представление куда мы выводим картинку.
-        private DX11.RenderTargetView _renderTargetView = null;
-        //Координатная сетка 
-        private SharpDX.Viewport _viewport;
+        private DX11.RenderTargetView _renderTargetView = null;       
         //Буффер и представление глубины
         DX11.Texture2D _depthBuffer = null;
         DX11.DepthStencilView _depthView = null;
@@ -35,10 +37,10 @@ namespace SharpDX11GameByWinbringer
         public float ViewRatio { get; set; }
         public DX11.DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
         public SharpDX.Windows.RenderForm Form { get { return _renderForm; } }
-
+        
         public Game()
         {
-            ViewRatio = (float)_Width / _Height;           
+            ViewRatio = (float)_Width / _Height;
             _renderForm = new SharpDX.Windows.RenderForm("SharpDXGameByWinbringer")
             {
                 AllowUserResizing = false,
@@ -48,7 +50,7 @@ namespace SharpDX11GameByWinbringer
                 FormBorderStyle = System.Windows.Forms.FormBorderStyle.None
             };
             _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };
-            InitializeDeviceResources();                   
+            InitializeDeviceResources();
         }
 
         private void InitializeDeviceResources()
@@ -107,31 +109,29 @@ namespace SharpDX11GameByWinbringer
             DX11.DepthStencilStateDescription DStateDescripshion = DX11.DepthStencilStateDescription.Default();
             DStateDescripshion.DepthWriteMask = DX11.DepthWriteMask.Zero;
             _DState = new DX11.DepthStencilState(_dx11Device, DStateDescripshion);
-            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;            
+            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
         }
-        
+
         private void Update(double time)
-        {            
+        {
             OnUpdate?.Invoke(time);
         }
 
         private void Draw()
         {
-
-            _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth|DX11.DepthStencilClearFlags.Stencil, 1.0f, 0);
+            _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth | DX11.DepthStencilClearFlags.Stencil, 1.0f, 0);
             _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(0, 0, 128));
-            OnDraw?.Invoke(1);           
+            OnDraw?.Invoke(1);
             _swapChain.Present(0, PresentFlags.None);
-
-
-
         }
 
         public void Run()
         {
             SharpDX.Windows.RenderLoop.Run(_renderForm, RenderCallback);
         }
+
         double nextFrameTime = System.Environment.TickCount;
+
         private void RenderCallback()
         {
             double lag = System.Environment.TickCount - nextFrameTime;
@@ -150,25 +150,22 @@ namespace SharpDX11GameByWinbringer
             {
                 if (disposing)
                 {
-                    // TODO: освободить управляемое состояние (управляемые объекты).
-                   
-                    _presenter.Dispose();
-                    _DState.Dispose();
-                   
-                    _renderTargetView.Dispose();
-                    _swapChain.Dispose();
-                    _renderForm.Dispose();
-                    _factory.Dispose();
-                    _depthBuffer.Dispose();
-                    _depthView.Dispose();
-                    _rasterizerState.Dispose();
-                    _dx11Device.Dispose();
-                    _dx11DeviceContext.Dispose();
+                    // TODO: освободить управляемое состояние (управляемые объекты).                  
+                    Utilities.Dispose(ref _presenter);
+                    Utilities.Dispose(ref _DState);
+                    Utilities.Dispose(ref _renderTargetView);
+                    Utilities.Dispose(ref _swapChain);
+                    Utilities.Dispose(ref _renderForm);
+                    Utilities.Dispose(ref _factory);
+                    Utilities.Dispose(ref _depthBuffer);
+                    Utilities.Dispose(ref _depthView);
+                    Utilities.Dispose(ref _rasterizerState);
+                    Utilities.Dispose(ref _dx11Device);
+                    Utilities.Dispose(ref _dx11DeviceContext);
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
                 // TODO: задать большим полям значение NULL.
-
                 disposedValue = true;
             }
         }

@@ -10,6 +10,9 @@ using System.Windows.Forms;
 
 namespace SharpDX11GameByWinbringer
 {
+    /// <summary>
+    /// Наш презентер. Отвечает за работу с моделями и расчеты.
+    /// </summary>
     public class Presenter : IDisposable
     {
         Matrix _World;
@@ -63,8 +66,8 @@ namespace SharpDX11GameByWinbringer
                 if (disposing)
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты).                  
-                    _waves.Dispose();
-                    _text2DWriter.Dispose();
+                    Utilities.Dispose(ref _waves);
+                    Utilities.Dispose(ref _text2DWriter);
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.

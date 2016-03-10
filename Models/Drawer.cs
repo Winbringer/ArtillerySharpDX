@@ -11,7 +11,7 @@ namespace SharpDX11GameByWinbringer.Models
     /// </summary>
     /// <typeparam name="T">Тип в котором храняться данные передаваемы в шейдер, матрицы Мира, Камеры, Проекции и т. д.</typeparam>
     /// <typeparam name="T1">Тип в котором храняться данные вертекса</typeparam>
-    class Drawer<T,T1> : System.IDisposable where T1 : struct where T : struct
+    class Drawer<T, T1> : System.IDisposable where T1 : struct where T : struct
     {
         private Buffer _triangleVertexBuffer;
         private Buffer _indexBuffer;
@@ -25,16 +25,16 @@ namespace SharpDX11GameByWinbringer.Models
         private SamplerState _samplerState = null;
         //Используемые данные
         private int[] _indeces;
-        private T1[] _vertices;      
+        private T1[] _vertices;
         /// <summary>
-        /// Задает тип рисуемых примитивов
+        /// Задает вид рисуемых примитивов
         /// </summary>
         public PrimitiveTopology PTolology { get; set; }
 
         public Drawer(T1[] vetexes, int[] indexes, string shadersFile, InputElement[] inputElements, DeviceContext dvContext, string texture, SamplerStateDescription description)
         {
             _indeces = indexes;
-            _vertices = vetexes;         
+            _vertices = vetexes;
             _dx11DeviceContext = dvContext;
             PTolology = PrimitiveTopology.TriangleList;
             //Создаем буфферы для видеокарты
@@ -58,7 +58,7 @@ namespace SharpDX11GameByWinbringer.Models
             //Загружаем текстуру           
             _textureResourse = CreateTextureFromFile(texture);
             //Создание самплера для текстуры
-            _samplerState = new SamplerState(_dx11DeviceContext.Device, description);           
+            _samplerState = new SamplerState(_dx11DeviceContext.Device, description);
         }
 
         private ShaderResourceView CreateTextureFromFile(string filename)
@@ -79,7 +79,7 @@ namespace SharpDX11GameByWinbringer.Models
                     BindFlags = BindFlags.ShaderResource,
                     Usage = ResourceUsage.Default,
                     SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0)
-                };               
+                };
                 System.Drawing.Imaging.BitmapData data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 DataRectangle dataRectangle = new DataRectangle(data.Scan0, data.Stride);
                 using (var buffer = new Texture2D(_dx11DeviceContext.Device, textureDesc, dataRectangle))
@@ -91,7 +91,7 @@ namespace SharpDX11GameByWinbringer.Models
             return SRV;
         }
 
-        public void Draw(T shaderData) 
+        public void Draw(T shaderData)
         {
             //Установка шейдеров
             _dx11DeviceContext.VertexShader.Set(_vertexShader);
@@ -109,7 +109,7 @@ namespace SharpDX11GameByWinbringer.Models
             _dx11DeviceContext.UpdateSubresource(ref shaderData, _constantBuffer);
             _dx11DeviceContext.VertexShader.SetConstantBuffer(0, _constantBuffer);
             //Отправляем текстуру в шейдер
-            _dx11DeviceContext.PixelShader.SetShaderResource(0, _textureResourse);           
+            _dx11DeviceContext.PixelShader.SetShaderResource(0, _textureResourse);
             //Рисуем в буффер нашего свайпчейна
             _dx11DeviceContext.DrawIndexed(_indeces.Count(), 0, 0);
         }
@@ -123,20 +123,19 @@ namespace SharpDX11GameByWinbringer.Models
                 if (disposing)
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты).
-                    _samplerState.Dispose();
-                    _textureResourse.Dispose();
-                    _triangleVertexBuffer.Dispose();
-                    _vertexShader.Dispose();
-                    _pixelShader.Dispose();
-                    _inputLayout.Dispose();
-                    _inputSignature.Dispose();
-                    _indexBuffer.Dispose();
-                    _constantBuffer.Dispose();
+                    Utilities.Dispose(ref _samplerState);
+                    Utilities.Dispose(ref _textureResourse);
+                    Utilities.Dispose(ref _triangleVertexBuffer);
+                    Utilities.Dispose(ref _vertexShader);
+                    Utilities.Dispose(ref _pixelShader);
+                    Utilities.Dispose(ref _inputLayout);
+                    Utilities.Dispose(ref _inputSignature);
+                    Utilities.Dispose(ref _indexBuffer);
+                    Utilities.Dispose(ref _constantBuffer);
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
                 // TODO: задать большим полям значение NULL.
-
                 disposedValue = true;
             }
         }
@@ -145,6 +144,6 @@ namespace SharpDX11GameByWinbringer.Models
             Dispose(true);
         }
         #endregion
-      
+
     }
 }

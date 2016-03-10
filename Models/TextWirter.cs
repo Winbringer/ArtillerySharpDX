@@ -7,10 +7,13 @@ using Factory = SharpDX.Direct2D1.Factory;
 using SharpDX.DirectWrite;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-
+    /// <summary>
+    /// Рисует текст и 2Д объекты на экран.
+    /// </summary>
   public  class TextWirter : System.IDisposable
     {
         private Factory _Factory2D;
@@ -21,8 +24,13 @@ namespace SharpDX11GameByWinbringer.Models
         private TextLayout _TextLayout;
         private Stopwatch _sw;
         int _width;
-        int _heght;
-
+        int _heght;      
+        /// <summary>
+        /// Конструктор
+        /// </summary>
+        /// <param name="BackBuffer">Буффер на который будем рисовать, наш холст</param>
+        /// <param name="Width">Ширина области в которую будем рисовать</param>
+        /// <param name="Height">Высота объласти в которую будем рисовать</param>
         public TextWirter(SharpDX.Direct3D11.Texture2D BackBuffer, int Width, int Height)
         {
             _width = Width;
@@ -36,18 +44,15 @@ namespace SharpDX11GameByWinbringer.Models
                                                   new RenderTargetProperties(new PixelFormat(Format.R8G8B8A8_UNorm, AlphaMode.Premultiplied)));
             }
             _RenderTarget2D.AntialiasMode = AntialiasMode.PerPrimitive;
-
             _FactoryDWrite = new SharpDX.DirectWrite.Factory();
-
             _SceneColorBrush = new SolidColorBrush(_RenderTarget2D, Color.White);
             // Initialize a TextFormat
             _TextFormat = new TextFormat(_FactoryDWrite, "Calibri", 14) { TextAlignment = TextAlignment.Leading, ParagraphAlignment = ParagraphAlignment.Near };
-
-            _RenderTarget2D.TextAntialiasMode = TextAntialiasMode.Cleartype;          
-
+            _RenderTarget2D.TextAntialiasMode = TextAntialiasMode.Cleartype;    
             // Initialize a TextLayout
             _TextLayout = new TextLayout(_FactoryDWrite, "SharpDX D2D1 - DWrite", _TextFormat,Width, Height);
         }
+
         public void DrawText(string text)
         {
             _sw.Stop();
@@ -60,7 +65,7 @@ namespace SharpDX11GameByWinbringer.Models
           //  RenderTarget2D.DrawTextLayout(new Vector2(0, 0), TextLayout, SceneColorBrush, DrawTextOptions.None);
             _RenderTarget2D.EndDraw();
         }
-
+               
         public void Dispose()
         {
             Utilities.Dispose(ref _Factory2D);

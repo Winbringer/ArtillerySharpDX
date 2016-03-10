@@ -108,7 +108,7 @@ namespace SharpDX11GameByWinbringer
             DX11.DepthStencilStateDescription DStateDescripshion = DX11.DepthStencilStateDescription.Default();
             DStateDescripshion.DepthWriteMask = DX11.DepthWriteMask.Zero;
             _DState = new DX11.DepthStencilState(_dx11Device, DStateDescripshion);
-            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
+           
         }
 
         private void Update(double time)
@@ -120,6 +120,7 @@ namespace SharpDX11GameByWinbringer
         {
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth | DX11.DepthStencilClearFlags.Stencil, 1.0f, 0);
             _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(0, 0, 128));
+            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
             OnDraw?.Invoke(1);
             _swapChain.Present(0, PresentFlags.None);
         }

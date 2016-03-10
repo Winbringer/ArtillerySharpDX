@@ -22,15 +22,16 @@ namespace SharpDX11GameByWinbringer
         TextWirter _text2DWriter;
         string s;
         Stopwatch sw;
+               
         public Presenter(Game game, TextWirter Text2D)
         {
             _text2DWriter = Text2D;
             game.OnDraw += Draw;
             game.OnUpdate += Update;
-            game.Form.KeyUp += InputKeysControl;
+            game.Form.KeyDown += InputKeysControl;
             _waves = new Wave(game.DeviceContext);
             _World = Matrix.Identity;
-            _View = Matrix.LookAtLH(new Vector3(0, 400f, -400f), new Vector3(0, 0, 0), Vector3.Up);
+            _View = Matrix.LookAtLH(new Vector3(0, 300f, 600f), new Vector3(0, 0, 0), Vector3.Up);
             _Progection = Matrix.PerspectiveFovLH(MathUtil.Pi / 3, game.ViewRatio, 1f, 2000f);
             sw = new Stopwatch();
             sw.Start();
@@ -50,11 +51,13 @@ namespace SharpDX11GameByWinbringer
             _waves.Draw();
             _text2DWriter.DrawText(s);
         }
-
+       
         private void InputKeysControl(object sender, EventArgs e)
         {
             Keys Key = ((dynamic)e).KeyCode;
             if (Key == Keys.Escape) ((SharpDX.Windows.RenderForm)sender).Close();
+            if (Key == Keys.A) _View *= Matrix.RotationY(MathUtil.DegreesToRadians(1));
+            if (Key == Keys.D) _View *= Matrix.RotationY(MathUtil.DegreesToRadians(-1)) ;           
         }
 
         #region IDisposable Support

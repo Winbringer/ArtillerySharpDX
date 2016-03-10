@@ -37,9 +37,9 @@ PS_IN VS(VS_IN input)
     float height = (sin(Time.x / 1000 + pos.z / (float) 10) + sin(Time.x / 1000 + pos.x / (float) 10)) / 2;
     pos.y = height * 5;
     //Расчет позиции точки на экране
-    float4 posW = mul(pos, World);
-    float4 posV = mul(posW, View);
-    float4 posP = mul(posV, Proj);
+    float4 posW = mul(pos,World);
+    float4 posV = mul(posW,View);
+    float4 posP = mul(posV,Proj);
     //Установка выходных значений
     height = (height + (float) 1) / (float) 2;
     output.height = lerp(0.7, 1.0F, height);

@@ -43,9 +43,9 @@ namespace SharpDX11GameByWinbringer.Models
             {
                 new InputElement("SV_Position", 0, SharpDX.DXGI.Format.R32G32B32_Float,0, 0),
                 new InputElement("TEXCOORD",0,SharpDX.DXGI.Format.R32G32_Float,12,0)
-            };            
+            };
             _data = new Data()
-            {                
+            {
                 Time = new Vector4(1)
             };
             //Установка Сампрелар для текстуры.
@@ -76,7 +76,7 @@ namespace SharpDX11GameByWinbringer.Models
                 {
                     int index = i * _N + j;
                     _vertices[index].Position = new Vector3(delta * i, 0, -delta * j);
-                    _vertices[index].TextureUV = new Vector2(deltaT *i, deltaT* j);
+                    _vertices[index].TextureUV = new Vector2(deltaT * i, deltaT * j);
                 }
             }
             //Создание индексов
@@ -117,8 +117,8 @@ namespace SharpDX11GameByWinbringer.Models
             _data.Time = new Vector4(System.Environment.TickCount);
             _drawer.Draw(_data);
         }
-        
-       
+
+
         #region IDisposable Support
         private bool disposedValue = false;
         protected virtual void Dispose(bool disposing)

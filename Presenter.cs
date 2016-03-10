@@ -30,7 +30,7 @@ namespace SharpDX11GameByWinbringer
             game.Form.KeyUp += InputKeysControl;
             _waves = new Wave(game.DeviceContext);
             _World = Matrix.Identity;
-            _View = Matrix.LookAtLH(new Vector3(0, 50f, -400f), new Vector3(0, 0, 0), Vector3.Up);
+            _View = Matrix.LookAtLH(new Vector3(0, 400f, -400f), new Vector3(0, 0, 0), Vector3.Up);
             _Progection = Matrix.PerspectiveFovLH(MathUtil.Pi / 3, game.ViewRatio, 1f, 2000f);
             sw = new Stopwatch();
             sw.Start();

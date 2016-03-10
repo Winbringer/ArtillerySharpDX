@@ -93,9 +93,8 @@ namespace SharpDX11GameByWinbringer
             //Создаем цель куда будем рисовать
             using (DX11.Texture2D backBuffer = _swapChain.GetBackBuffer<DX11.Texture2D>(0))
             {
-                _renderTargetView = new DX11.RenderTargetView(_dx11Device, backBuffer);
-                TextWirter t = new TextWirter(backBuffer, _Width, _Height);
-                _presenter = new Presenter(this, t);
+                _renderTargetView = new DX11.RenderTargetView(_dx11Device, backBuffer);                
+                _presenter = new Presenter(this, new TextWirter(backBuffer, _Width, _Height));
             }
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderTargetView);
             //Устанавливаем размер конечной картинки            

@@ -76,7 +76,7 @@ namespace SharpDX11GameByWinbringer.Models
                 {
                     int index = i * _N + j;
                     _vertices[index].Position = new Vector3(delta * i, 0, -delta * j);
-                    _vertices[index].TextureUV = new Vector2(deltaT * i, deltaT * j);
+                    _vertices[index].TextureUV = new Vector2(deltaT *i, deltaT* j);
                 }
             }
             //Создание индексов

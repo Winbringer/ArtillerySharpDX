@@ -6,6 +6,11 @@ using System.Linq;
 
 namespace SharpDX11GameByWinbringer.Models
 {
+    /// <summary>
+    /// Рисует 3D примитивы на экране
+    /// </summary>
+    /// <typeparam name="T">Тип в котором храняться данные передаваемы в шейдер, матрицы Мира, Камеры, Проекции и т. д.</typeparam>
+    /// <typeparam name="T1">Тип в котором храняться данные вертекса</typeparam>
     class Drawer<T,T1> : System.IDisposable where T1 : struct where T : struct
     {
         private Buffer _triangleVertexBuffer;

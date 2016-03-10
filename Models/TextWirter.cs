@@ -11,7 +11,7 @@ using System.Diagnostics;
 namespace SharpDX11GameByWinbringer.Models
 {
 
-    class TextWirter : System.IDisposable
+  public  class TextWirter : System.IDisposable
     {
         private Factory _Factory2D;
         private SharpDX.DirectWrite.Factory _FactoryDWrite;

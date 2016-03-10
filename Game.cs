@@ -14,9 +14,7 @@ namespace SharpDX11GameByWinbringer
         //Форма куда будем вставлять наше представление renderTargetView.
         private SharpDX.Windows.RenderForm _renderForm = null;
         private readonly int _Width = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width;
-        private readonly int _Height = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height;
-        //Таймер который будет счиать время
-        private static readonly GameTimer _timer = new GameTimer();
+        private readonly int _Height = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height;        
         //Объектное представление нашей видеокарты
         private DX11.Device _dx11Device = null;
         private DX11.DeviceContext _dx11DeviceContext = null;
@@ -34,17 +32,13 @@ namespace SharpDX11GameByWinbringer
         DX11.DepthStencilState _DState = null;
         DX11.RasterizerStateDescription _rasterizerStateDescription;
         Presenter _presenter = null;
-        TextWirter t;
-
-
         public float ViewRatio { get; set; }
         public DX11.DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
         public SharpDX.Windows.RenderForm Form { get { return _renderForm; } }
 
         public Game()
         {
-            ViewRatio = (float)_Width / _Height;
-            _timer.Reset();
+            ViewRatio = (float)_Width / _Height;           
             _renderForm = new SharpDX.Windows.RenderForm("SharpDXGameByWinbringer")
             {
                 AllowUserResizing = false,
@@ -54,10 +48,7 @@ namespace SharpDX11GameByWinbringer
                 FormBorderStyle = System.Windows.Forms.FormBorderStyle.None
             };
             _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };
-            InitializeDeviceResources();
-            _presenter = new Presenter(this);
-            sw = new Stopwatch();
-            sw.Start();
+            InitializeDeviceResources();                   
         }
 
         private void InitializeDeviceResources()
@@ -101,7 +92,8 @@ namespace SharpDX11GameByWinbringer
             using (DX11.Texture2D backBuffer = _swapChain.GetBackBuffer<DX11.Texture2D>(0))
             {
                 _renderTargetView = new DX11.RenderTargetView(_dx11Device, backBuffer);
-                t = new TextWirter(backBuffer, _Width, _Height);
+                TextWirter t = new TextWirter(backBuffer, _Width, _Height);
+                _presenter = new Presenter(this, t);
             }
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderTargetView);
             //Устанавливаем размер конечной картинки            
@@ -115,26 +107,20 @@ namespace SharpDX11GameByWinbringer
             DX11.DepthStencilStateDescription DStateDescripshion = DX11.DepthStencilStateDescription.Default();
             DStateDescripshion.DepthWriteMask = DX11.DepthWriteMask.Zero;
             _DState = new DX11.DepthStencilState(_dx11Device, DStateDescripshion);
-            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
-            // (_dx11Device.QueryInterface<SharpDX.DXGI.Device>(), _swapChain.QueryInterface<SharpDX.DXGI.SwapChain>());
+            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;            
         }
-        string s;
+        
         private void Update(double time)
-        {
-            sw.Stop();
-            s = string.Format("Частота Обновления логики : {0:#####}", 1000.0f / sw.Elapsed.TotalMilliseconds);
-            sw.Reset();
-            sw.Start();
+        {            
             OnUpdate?.Invoke(time);
         }
 
         private void Draw()
         {
 
-            _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth, 1.0f, 0);
+            _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth|DX11.DepthStencilClearFlags.Stencil, 1.0f, 0);
             _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(0, 0, 128));
-            OnDraw?.Invoke(1);
-            t.DrawText(s);
+            OnDraw?.Invoke(1);           
             _swapChain.Present(0, PresentFlags.None);
 
 
@@ -158,8 +144,6 @@ namespace SharpDX11GameByWinbringer
         }
         #region IDisposable Support
         private bool disposedValue = false;
-        private Stopwatch sw;
-
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -167,10 +151,10 @@ namespace SharpDX11GameByWinbringer
                 if (disposing)
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты).
-                    t.Dispose();
+                   
                     _presenter.Dispose();
                     _DState.Dispose();
-                    _timer.Stop();
+                   
                     _renderTargetView.Dispose();
                     _swapChain.Dispose();
                     _renderForm.Dispose();

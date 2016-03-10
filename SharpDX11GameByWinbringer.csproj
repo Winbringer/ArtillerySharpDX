@@ -87,7 +87,6 @@
   <ItemGroup>
     <Compile Include="Game.cs" />
     <Compile Include="Models\Drawer.cs" />
-    <Compile Include="Models\GameTimer.cs" />
     <Compile Include="Models\TextWirter.cs" />
     <Compile Include="Models\Wave.cs" />
     <Compile Include="Presenter.cs" />

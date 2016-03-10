@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace SharpDX11GameByWinbringer
 {
@@ -37,8 +38,8 @@ namespace SharpDX11GameByWinbringer
 
         private void InputKeysControl(object sender, EventArgs e)
         {
-            System.Windows.Forms.Keys Key = ((dynamic)e).KeyCode;
-            if ( Key== System.Windows.Forms.Keys.Escape) ((SharpDX.Windows.RenderForm)sender).Close();
+            Keys Key = ((dynamic)e).KeyCode;
+            if ( Key==Keys.Escape) ((SharpDX.Windows.RenderForm)sender).Close();
         }
         
         #region IDisposable Support

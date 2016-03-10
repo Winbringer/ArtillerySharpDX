@@ -1,14 +1,15 @@
-﻿using DX11=SharpDX.Direct3D11;
+﻿using DX11 = SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using SharpDX11GameByWinbringer.Models;
+using System.Diagnostics;
 
 namespace SharpDX11GameByWinbringer
 {
-  public  class Game : System.IDisposable
+    public class Game : System.IDisposable
     {
         public delegate void UpdateDraw(double t);
-        public event UpdateDraw OnUpdate=null;
-        public event UpdateDraw OnDraw=null;
+        public event UpdateDraw OnUpdate = null;
+        public event UpdateDraw OnDraw = null;
         Factory _factory;
         //Форма куда будем вставлять наше представление renderTargetView.
         private SharpDX.Windows.RenderForm _renderForm = null;
@@ -33,9 +34,10 @@ namespace SharpDX11GameByWinbringer
         DX11.DepthStencilState _DState = null;
         DX11.RasterizerStateDescription _rasterizerStateDescription;
         Presenter _presenter = null;
+        TextWirter t;
 
 
-        public float ViewRatio { get; set; }  
+        public float ViewRatio { get; set; }
         public DX11.DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
         public SharpDX.Windows.RenderForm Form { get { return _renderForm; } }
 
@@ -51,15 +53,17 @@ namespace SharpDX11GameByWinbringer
                 ClientSize = new System.Drawing.Size(_Width, _Height),
                 FormBorderStyle = System.Windows.Forms.FormBorderStyle.None
             };
-            _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };           
+            _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };
             InitializeDeviceResources();
             _presenter = new Presenter(this);
+            sw = new Stopwatch();
+            sw.Start();
         }
 
         private void InitializeDeviceResources()
         {
             //Параметры отоборжарежния
-            ModeDescription backBufferDesc = new ModeDescription(_Width, _Height, new Rational(0, 1), Format.R8G8B8A8_UNorm);
+            ModeDescription backBufferDesc = new ModeDescription(_Width, _Height, new Rational(60, 1), Format.R8G8B8A8_UNorm);
             SwapChainDescription swapChainDesc = new SwapChainDescription()
             {
                 ModeDescription = backBufferDesc,
@@ -72,7 +76,7 @@ namespace SharpDX11GameByWinbringer
                 Flags = SwapChainFlags.AllowModeSwitch
             };
             //Создаем Девайс, Цепочку обмена и Девайс контекст
-            DX11.Device.CreateWithSwapChain(SharpDX.Direct3D.DriverType.Hardware, DX11.DeviceCreationFlags.None, new[] { SharpDX.Direct3D.FeatureLevel.Level_11_0 }, swapChainDesc, out _dx11Device, out _swapChain);
+            DX11.Device.CreateWithSwapChain(SharpDX.Direct3D.DriverType.Hardware, DX11.DeviceCreationFlags.None | DX11.DeviceCreationFlags.BgraSupport, new[] { SharpDX.Direct3D.FeatureLevel.Level_11_0 }, swapChainDesc, out _dx11Device, out _swapChain);
             _dx11DeviceContext = _dx11Device.ImmediateContext;
             //Игноровать все события видновс
             _factory = _swapChain.GetParent<Factory>();
@@ -97,11 +101,11 @@ namespace SharpDX11GameByWinbringer
             using (DX11.Texture2D backBuffer = _swapChain.GetBackBuffer<DX11.Texture2D>(0))
             {
                 _renderTargetView = new DX11.RenderTargetView(_dx11Device, backBuffer);
+                t = new TextWirter(backBuffer, _Width, _Height);
             }
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderTargetView);
-            //Устанавливаем цели для рисования
-            _viewport = new SharpDX.Viewport(0, 0, _Width, _Height);
-            _dx11DeviceContext.Rasterizer.SetViewport(_viewport);
+            //Устанавливаем размер конечной картинки            
+            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, (float)_Width, (float)_Height);
             //Устанавливаем параметры рисования.
             _rasterizerStateDescription = DX11.RasterizerStateDescription.Default();
             _rasterizerStateDescription.CullMode = DX11.CullMode.None;
@@ -112,23 +116,31 @@ namespace SharpDX11GameByWinbringer
             DStateDescripshion.DepthWriteMask = DX11.DepthWriteMask.Zero;
             _DState = new DX11.DepthStencilState(_dx11Device, DStateDescripshion);
             _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
+            // (_dx11Device.QueryInterface<SharpDX.DXGI.Device>(), _swapChain.QueryInterface<SharpDX.DXGI.SwapChain>());
         }
-
+        string s;
         private void Update(double time)
         {
+            sw.Stop();
+            s = string.Format("Частота Обновления логики : {0:#####}", 1000.0f / sw.Elapsed.TotalMilliseconds);
+            sw.Reset();
+            sw.Start();
             OnUpdate?.Invoke(time);
-        }       
+        }
 
         private void Draw()
         {
-           
+
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth, 1.0f, 0);
             _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(0, 0, 128));
-            //Рисование объектов             
             OnDraw?.Invoke(1);
-            _swapChain.Present(1, PresentFlags.None);
+            t.DrawText(s);
+            _swapChain.Present(0, PresentFlags.None);
+
+
+
         }
-               
+
         public void Run()
         {
             SharpDX.Windows.RenderLoop.Run(_renderForm, RenderCallback);
@@ -137,11 +149,17 @@ namespace SharpDX11GameByWinbringer
         private void RenderCallback()
         {
             double lag = System.Environment.TickCount - nextFrameTime;
-            if (lag > 30) { nextFrameTime = System.Environment.TickCount; Update(lag); }
+            if (lag > 30)
+            {
+                nextFrameTime = System.Environment.TickCount;
+                Update(lag);
+            }
             Draw();
         }
         #region IDisposable Support
         private bool disposedValue = false;
+        private Stopwatch sw;
+
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -149,6 +167,7 @@ namespace SharpDX11GameByWinbringer
                 if (disposing)
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты).
+                    t.Dispose();
                     _presenter.Dispose();
                     _DState.Dispose();
                     _timer.Stop();

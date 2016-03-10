@@ -34,6 +34,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>LogoVW.ico</ApplicationIcon>
@@ -87,7 +88,7 @@
     <Compile Include="Game.cs" />
     <Compile Include="Models\Drawer.cs" />
     <Compile Include="Models\GameTimer.cs" />
-    <Compile Include="Models\Text.cs" />
+    <Compile Include="Models\TextWirter.cs" />
     <Compile Include="Models\Wave.cs" />
     <Compile Include="Presenter.cs" />
     <Compile Include="Program.cs" />

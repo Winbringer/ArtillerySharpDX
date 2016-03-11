@@ -42,7 +42,7 @@ PS_IN VS(VS_IN input)
     float4 posP = mul(posV,Proj);
     //Установка выходных значений
     height = (height + (float) 1) / (float) 2;
-    output.height = lerp(0.7, 1.0F, height);
+    output.height = lerp(0.7, 1.1F, height);
     output.position = posP;   
     output.TextureUV = input.TextureUV;
     return output;

@@ -20,8 +20,8 @@ namespace SharpDX11GameByWinbringer
         Matrix _Progection;
         Wave _waves = null;
         TextWirter _text2DWriter;
-        string s;
-        Stopwatch sw;
+        string _s;
+        Stopwatch _sw;
                
         public Presenter(Game game, TextWirter Text2D)
         {
@@ -33,23 +33,23 @@ namespace SharpDX11GameByWinbringer
             _World = Matrix.Identity;
             _View = Matrix.LookAtLH(new Vector3(0, 300f, 600f), new Vector3(0, 0, 0), Vector3.Up);
             _Progection = Matrix.PerspectiveFovLH(MathUtil.Pi / 3, game.ViewRatio, 1f, 2000f);
-            sw = new Stopwatch();
-            sw.Start();
+            _sw = new Stopwatch();
+            _sw.Start();
         }
 
         void Update(double time)
         {
-            sw.Stop();
-            s = string.Format("LPS : {0:#####}", 1000.0f / sw.Elapsed.TotalMilliseconds);
-            sw.Reset();
-            sw.Start();
+            _sw.Stop();
+            _s = string.Format("LPS : {0:#####}", 1000.0f / _sw.Elapsed.TotalMilliseconds);
+            _sw.Reset();
+            _sw.Start();
             _waves.Update(_World, _View, _Progection);
         }
 
         void Draw(double time)
         {
             _waves.Draw();
-            _text2DWriter.DrawText(s);
+            _text2DWriter.DrawText(_s);
         }
        
         private void InputKeysControl(object sender, EventArgs e)

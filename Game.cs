@@ -92,7 +92,7 @@ namespace SharpDX11GameByWinbringer
             _depthView = new DX11.DepthStencilView(_dx11Device, _depthBuffer);
             //Создаем цель куда будем рисовать
             using (DX11.Texture2D backBuffer = _swapChain.GetBackBuffer<DX11.Texture2D>(0))
-            {
+            {               
                 _renderTargetView = new DX11.RenderTargetView(_dx11Device, backBuffer);                
                 _presenter = new Presenter(this, new TextWirter(backBuffer, _Width, _Height));
             }
@@ -108,7 +108,8 @@ namespace SharpDX11GameByWinbringer
             DX11.DepthStencilStateDescription DStateDescripshion = DX11.DepthStencilStateDescription.Default();
             DStateDescripshion.DepthWriteMask = DX11.DepthWriteMask.Zero;
             _DState = new DX11.DepthStencilState(_dx11Device, DStateDescripshion);
-           
+            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
+
         }
 
         private void Update(double time)
@@ -119,8 +120,7 @@ namespace SharpDX11GameByWinbringer
         private void Draw()
         {
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth | DX11.DepthStencilClearFlags.Stencil, 1.0f, 0);
-            _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(0, 0, 128));
-            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
+            _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(0, 0, 128));            
             OnDraw?.Invoke(1);
             _swapChain.Present(0, PresentFlags.None);
         }

@@ -16,9 +16,7 @@ namespace SharpDX11GameByWinbringer
         //Поля
         Factory _factory;
         //Форма куда будем вставлять наше представление renderTargetView.
-        private SharpDX.Windows.RenderForm _renderForm = null;
-        private readonly int _Width = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width;
-        private readonly int _Height = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height;
+        private SharpDX.Windows.RenderForm _renderForm = null;      
         //Объектное представление нашей видеокарты
         private DX11.Device _dx11Device = null;
         private DX11.DeviceContext _dx11DeviceContext = null;
@@ -37,23 +35,16 @@ namespace SharpDX11GameByWinbringer
         public DX11.DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
         public SharpDX.Windows.RenderForm Form { get { return _renderForm; } }
         public SwapChain SwapChain { get { return _swapChain; } }
-        public int Width { get { return _Width; } }
-        public int Height { get { return _Height; } }
+        public int Width { get { return _renderForm.ClientSize.Width; } }
+        public int Height { get { return _renderForm.ClientSize.Height; } }
 
-        public Game()
-        {            
-            ViewRatio = (float)_Width / _Height;
-            _renderForm = new SharpDX.Windows.RenderForm("SharpDXGameByWinbringer")
-            {
-                AllowUserResizing = false,
-                IsFullscreen = true,
-                StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen,
-                ClientSize = new System.Drawing.Size(_Width, _Height),
-                FormBorderStyle = System.Windows.Forms.FormBorderStyle.None
-            };
-            _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };
+        public Game(SharpDX.Windows.RenderForm renderForm)
+        {
+            _renderForm = renderForm;
+            ViewRatio = (float)_renderForm.ClientSize.Width / _renderForm.ClientSize.Height;           
             InitializeDeviceResources();
             _presenter = new Presenter(this);
+            _renderForm.Show();
         }
 
         #region IDisposable Support
@@ -102,11 +93,11 @@ namespace SharpDX11GameByWinbringer
                  new SwapChainDescription()
                  {
                      ModeDescription = new ModeDescription(
-                         _Width,
-                         _Height,
+                        _renderForm.ClientSize.Width,
+                        _renderForm.ClientSize.Height,
                          new Rational(60, 1),
                          Format.R8G8B8A8_UNorm),
-                     SampleDescription = new SampleDescription(2, 2),
+                     SampleDescription = new SampleDescription(1, 0),
                      Usage = Usage.BackBuffer | Usage.RenderTargetOutput,
                      BufferCount = 2,
                      OutputHandle = _renderForm.Handle,
@@ -129,7 +120,7 @@ namespace SharpDX11GameByWinbringer
                       MipLevels = 1,
                       Width = _renderForm.ClientSize.Width,
                       Height = _renderForm.ClientSize.Height,
-                      SampleDescription = new SampleDescription(2, 2),
+                      SampleDescription = new SampleDescription(1, 0),
                       Usage = DX11.ResourceUsage.Default,
                       BindFlags = DX11.BindFlags.DepthStencil,
                       CpuAccessFlags = DX11.CpuAccessFlags.None,
@@ -143,7 +134,7 @@ namespace SharpDX11GameByWinbringer
             _dx11DeviceContext = _dx11Device.ImmediateContext;
             CreateState();
             //Устанавливаем размер конечной картинки            
-            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _Width, _Height);
+            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
             _dx11DeviceContext.Rasterizer.State = _rasterizerState;            
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderView);
 

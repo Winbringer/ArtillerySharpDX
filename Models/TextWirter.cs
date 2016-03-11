@@ -41,13 +41,18 @@ namespace SharpDX11GameByWinbringer.Models
             using (var surface = BackBuffer.QueryInterface<Surface>())
             {
                 _RenderTarget2D = new RenderTarget(_Factory2D, surface,
-                                                  new RenderTargetProperties(new PixelFormat(Format.R8G8B8A8_UNorm, AlphaMode.Premultiplied)));
+                                                  new RenderTargetProperties(
+                                                      new PixelFormat(
+                                                      Format.R8G8B8A8_UNorm,
+                                                      AlphaMode.Premultiplied)));
             }
             _RenderTarget2D.AntialiasMode = AntialiasMode.PerPrimitive;
             _FactoryDWrite = new SharpDX.DirectWrite.Factory();
             _SceneColorBrush = new SolidColorBrush(_RenderTarget2D, Color.White);
             // Initialize a TextFormat
-            _TextFormat = new TextFormat(_FactoryDWrite, "Calibri", 14) { TextAlignment = TextAlignment.Leading, ParagraphAlignment = ParagraphAlignment.Near };
+            _TextFormat = new TextFormat(_FactoryDWrite, "Calibri", 14) {
+                TextAlignment = TextAlignment.Leading,
+                ParagraphAlignment = ParagraphAlignment.Near };
             _RenderTarget2D.TextAntialiasMode = TextAntialiasMode.Cleartype;    
             // Initialize a TextLayout
             _TextLayout = new TextLayout(_FactoryDWrite, "SharpDX D2D1 - DWrite", _TextFormat,Width, Height);
@@ -61,7 +66,13 @@ namespace SharpDX11GameByWinbringer.Models
             _sw.Start();
             s = s + "  " + text;
             _RenderTarget2D.BeginDraw();
-            _RenderTarget2D.DrawText(s, s.Length, _TextFormat, new RectangleF(50,50, _width, _heght), _SceneColorBrush, DrawTextOptions.None, MeasuringMode.GdiClassic);
+            _RenderTarget2D.DrawText(
+                s, s.Length,
+                _TextFormat,
+                new RectangleF(50,50, _width, _heght), 
+                _SceneColorBrush,
+                DrawTextOptions.None,
+                MeasuringMode.GdiClassic);
           //  RenderTarget2D.DrawTextLayout(new Vector2(0, 0), TextLayout, SceneColorBrush, DrawTextOptions.None);
             _RenderTarget2D.EndDraw();
         }

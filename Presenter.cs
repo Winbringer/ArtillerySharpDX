@@ -36,8 +36,8 @@ namespace SharpDX11GameByWinbringer
             game.OnUpdate += Update;
             game.Form.KeyDown += InputKeysControl;
             _World = Matrix.Identity;
-            _View = Matrix.LookAtLH(new Vector3(0, 300f, 600f), new Vector3(0, 0, 0), Vector3.Up);
-            _Progection = Matrix.PerspectiveFovLH(MathUtil.Pi / 3, game.ViewRatio, 1f, 2000f);
+            _View = Matrix.LookAtLH(new Vector3(0, 0, 400f), new Vector3(0, 0,0), Vector3.Up);
+            _Progection = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
             InitDrawers(game);
             _waves = new Wave(game.DeviceContext.Device);
             //Привязка событий
@@ -87,6 +87,8 @@ namespace SharpDX11GameByWinbringer
             if (Key == Keys.Escape) ((SharpDX.Windows.RenderForm)sender).Close();
             if (Key == Keys.A) _View *= Matrix.RotationY(MathUtil.DegreesToRadians(1));
             if (Key == Keys.D) _View *= Matrix.RotationY(MathUtil.DegreesToRadians(-1));
+            if (Key == Keys.W) _View *= Matrix.Translation(0,1,0);
+            if (Key == Keys.S) _View *= Matrix.Translation(0, -1, 0);
         }
 
         #region IDisposable Support

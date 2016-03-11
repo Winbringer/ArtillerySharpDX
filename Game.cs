@@ -11,9 +11,11 @@ namespace SharpDX11GameByWinbringer
     /// </summary>
     public class Game : System.IDisposable
     {
+        //События
         public delegate void UpdateDraw(double t);
         public event UpdateDraw OnUpdate = null;
         public event UpdateDraw OnDraw = null;
+        //Поля
         Factory _factory;
         //Форма куда будем вставлять наше представление renderTargetView.
         private SharpDX.Windows.RenderForm _renderForm = null;
@@ -25,91 +27,176 @@ namespace SharpDX11GameByWinbringer
         //Цепочка замены заднего и отображаемого буфера
         private SwapChain _swapChain;
         //Представление куда мы выводим картинку.
-        private DX11.RenderTargetView _renderTargetView = null;       
-        //Буффер и представление глубины
-        DX11.Texture2D _depthBuffer = null;
-        DX11.DepthStencilView _depthView = null;
-        //Параметры растеризации
-        DX11.RasterizerState _rasterizerState = null;
-        DX11.DepthStencilState _DState = null;
-        DX11.RasterizerStateDescription _rasterizerStateDescription;
-        Presenter _presenter = null;
+        private DX11.RenderTargetView _renderView = null;
+        private DX11.DepthStencilView _depthView = null;
+        //Параметры отображения
+        private DX11.RasterizerState _rasterizerState = null;
+        private DX11.DepthStencilState _DState = null;
+        private DX11.BlendState _blendState = null;
+        private Presenter _presenter = null;
+        //Свойства
         public float ViewRatio { get; set; }
         public DX11.DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
         public SharpDX.Windows.RenderForm Form { get { return _renderForm; } }
-        
+
         public Game()
         {
             ViewRatio = (float)_Width / _Height;
             _renderForm = new SharpDX.Windows.RenderForm("SharpDXGameByWinbringer")
             {
                 AllowUserResizing = false,
-                IsFullscreen = false,
+                IsFullscreen = true,
                 StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen,
                 ClientSize = new System.Drawing.Size(_Width, _Height),
                 FormBorderStyle = System.Windows.Forms.FormBorderStyle.None
             };
             _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };
             InitializeDeviceResources();
+            _presenter = new Presenter(
+                this,
+                new TextWirter(_swapChain.GetBackBuffer<DX11.Texture2D>(0),
+                _Width,
+                _Height));
         }
 
+        #region IDisposable Support
+        private bool disposedValue = false;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: освободить управляемое состояние (управляемые объекты).                  
+                    Utilities.Dispose(ref _presenter);
+                    Utilities.Dispose(ref _DState);
+                    Utilities.Dispose(ref _renderView);
+                    Utilities.Dispose(ref _swapChain);
+                    Utilities.Dispose(ref _renderForm);
+                    Utilities.Dispose(ref _factory);
+                    Utilities.Dispose(ref _depthView);
+                    Utilities.Dispose(ref _rasterizerState);
+                    Utilities.Dispose(ref _dx11Device);
+                    Utilities.Dispose(ref _dx11DeviceContext);
+                }
+
+                // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
+                // TODO: задать большим полям значение NULL.
+                disposedValue = true;
+            }
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
+
+        /// <summary>
+        /// Инициализирует объекты связанные с графическим устройство - Девайс его контекст и Свапчейн
+        /// </summary>
         private void InitializeDeviceResources()
         {
-            //Параметры отоборжарежния
-            ModeDescription backBufferDesc = new ModeDescription(_Width, _Height, new Rational(60, 1), Format.R8G8B8A8_UNorm);
-            SwapChainDescription swapChainDesc = new SwapChainDescription()
-            {
-                ModeDescription = backBufferDesc,
-                SampleDescription = new SampleDescription(2, 2),
-                Usage = Usage.BackBuffer | Usage.RenderTargetOutput,
-                BufferCount = 2,
-                OutputHandle = _renderForm.Handle,
-                IsWindowed = true,
-                SwapEffect = SwapEffect.Discard,
-                Flags = SwapChainFlags.AllowModeSwitch
-            };
-            //Создаем Девайс, Цепочку обмена и Девайс контекст
-            DX11.Device.CreateWithSwapChain(SharpDX.Direct3D.DriverType.Hardware, DX11.DeviceCreationFlags.None | DX11.DeviceCreationFlags.BgraSupport, new[] { SharpDX.Direct3D.FeatureLevel.Level_11_0 }, swapChainDesc, out _dx11Device, out _swapChain);
-            _dx11DeviceContext = _dx11Device.ImmediateContext;
+            //Создаем объектное преставление нашего GPU, его контекст и класс который будет менят местами буфферы в которые рисует наша GPU
+            DX11.Device.CreateWithSwapChain(
+                SharpDX.Direct3D.DriverType.Hardware,
+                DX11.DeviceCreationFlags.None | DX11.DeviceCreationFlags.BgraSupport,
+                new[] { SharpDX.Direct3D.FeatureLevel.Level_11_0 },
+                 new SwapChainDescription()
+                 {
+                     ModeDescription = new ModeDescription(
+                         _Width,
+                         _Height,
+                         new Rational(60, 1),
+                         Format.R8G8B8A8_UNorm),
+                     SampleDescription = new SampleDescription(2, 2),
+                     Usage = Usage.BackBuffer | Usage.RenderTargetOutput,
+                     BufferCount = 2,
+                     OutputHandle = _renderForm.Handle,
+                     IsWindowed = true,
+                     SwapEffect = SwapEffect.Discard,
+                     Flags = SwapChainFlags.AllowModeSwitch
+                 },
+                out _dx11Device,
+                out _swapChain);
             //Игноровать все события видновс
             _factory = _swapChain.GetParent<Factory>();
             _factory.MakeWindowAssociation(_renderForm.Handle, WindowAssociationFlags.IgnoreAll);
-            // Создаем буффер глубины
-            _depthBuffer = new DX11.Texture2D(_dx11Device, new DX11.Texture2DDescription()
-            {
-                Format = Format.D32_Float_S8X24_UInt,
-                ArraySize = 1,
-                MipLevels = 1,
-                Width = _renderForm.ClientSize.Width,
-                Height = _renderForm.ClientSize.Height,
-                SampleDescription = new SampleDescription(2, 2),
-                Usage = DX11.ResourceUsage.Default,
-                BindFlags = DX11.BindFlags.DepthStencil,
-                CpuAccessFlags = DX11.CpuAccessFlags.None,
-                OptionFlags = DX11.ResourceOptionFlags.None
-            });
-            // Создавем Отображение глубины
-            _depthView = new DX11.DepthStencilView(_dx11Device, _depthBuffer);
-            //Создаем цель куда будем рисовать
+            // Создаем буффер и вьюшку глубины
+            using (var _depthBuffer = new DX11.Texture2D(
+                  _dx11Device,
+                  new DX11.Texture2DDescription()
+                  {
+                      Format = Format.D32_Float_S8X24_UInt,
+                      ArraySize = 1,
+                      MipLevels = 1,
+                      Width = _renderForm.ClientSize.Width,
+                      Height = _renderForm.ClientSize.Height,
+                      SampleDescription = new SampleDescription(2, 2),
+                      Usage = DX11.ResourceUsage.Default,
+                      BindFlags = DX11.BindFlags.DepthStencil,
+                      CpuAccessFlags = DX11.CpuAccessFlags.None,
+                      OptionFlags = DX11.ResourceOptionFlags.None
+                  }))
+                _depthView = new DX11.DepthStencilView(_dx11Device, _depthBuffer);
+            //Создаем буффер и вьюшку для рисования
             using (DX11.Texture2D backBuffer = _swapChain.GetBackBuffer<DX11.Texture2D>(0))
-            {               
-                _renderTargetView = new DX11.RenderTargetView(_dx11Device, backBuffer);                
-                _presenter = new Presenter(this, new TextWirter(backBuffer, _Width, _Height));
-            }
-            _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderTargetView);
+                _renderView = new DX11.RenderTargetView(_dx11Device, backBuffer);
+            //Создаем контекст нашего GPU
+            _dx11DeviceContext = _dx11Device.ImmediateContext;
+            CreateState();
             //Устанавливаем размер конечной картинки            
-            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, (float)_Width, (float)_Height);
-            //Устанавливаем параметры рисования.
-            _rasterizerStateDescription = DX11.RasterizerStateDescription.Default();
-            _rasterizerStateDescription.CullMode = DX11.CullMode.None;
-            _rasterizerState = new DX11.RasterizerState(_dx11Device, _rasterizerStateDescription);
+            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _Width, _Height);
             _dx11DeviceContext.Rasterizer.State = _rasterizerState;
+            //_dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
+            //_dx11DeviceContext.OutputMerger.SetBlendState(
+            //    _blendState,
+            //     new SharpDX.Mathematics.Interop.RawColor4(0.75f, 0.75f, 0.75f, 1f));
+            //ЭТО ДЛЯ НЕПРОЗРАЧНЫХ _dx11DeviceContext.OutputMerger.SetBlendState(null, null);
+            _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderView);
+
+        }
+        /// <summary>
+        /// Создает параметры рендеринга, глубины и блендинга
+        /// </summary>
+        private void CreateState()
+        {
+            //Устанавливаем параметры растеризации так чтобы обратная сторона объекта не спряталась.
+            DX11.RasterizerStateDescription rasterizerStateDescription = DX11.RasterizerStateDescription.Default();
+            rasterizerStateDescription.CullMode = DX11.CullMode.None;
+            rasterizerStateDescription.FillMode = DX11.FillMode.Solid;
+            _rasterizerState = new DX11.RasterizerState(_dx11Device, rasterizerStateDescription);
             //Устанавливаем параметры буффера глубины
             DX11.DepthStencilStateDescription DStateDescripshion = DX11.DepthStencilStateDescription.Default();
-            DStateDescripshion.DepthWriteMask = DX11.DepthWriteMask.Zero;
             _DState = new DX11.DepthStencilState(_dx11Device, DStateDescripshion);
-            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
-
+            //TODO: донастроить параметры блендинга для прозрачности.
+            //            (FC) - Final Color
+            //(SP) - Source Pixel
+            //(DP) - Destination Pixel
+            //(SBF) - Source Blend Factor
+            //(DBF) - Destination Blend Factor
+            //(FA) - Final Alpha
+            //(SA) - Source Alpha
+            //(DA) - Destination Alpha
+            //(+) - Binaray Operator described below
+            //(X) - Cross Multiply Matrices
+            //Формула для блендинга
+            //(FC) = (SP)(X)(SBF)(+)(DP)(X)(DPF)
+            //(FA) = (SA)(SBF)(+)(DA)(DBF)
+            DX11.RenderTargetBlendDescription targetBlendDescription = new SharpDX.Direct3D11.RenderTargetBlendDescription()
+            {
+                IsBlendEnabled = new SharpDX.Mathematics.Interop.RawBool(true),
+                SourceBlend = DX11.BlendOption.SourceColor,
+                DestinationBlend = DX11.BlendOption.BlendFactor,
+                BlendOperation = DX11.BlendOperation.Add,
+                SourceAlphaBlend = DX11.BlendOption.One,
+                DestinationAlphaBlend = DX11.BlendOption.Zero,
+                AlphaBlendOperation = DX11.BlendOperation.Add,
+                RenderTargetWriteMask = DX11.ColorWriteMaskFlags.All
+            };
+            DX11.BlendStateDescription blendDescription = DX11.BlendStateDescription.Default();
+            blendDescription.AlphaToCoverageEnable = new SharpDX.Mathematics.Interop.RawBool(false);
+            blendDescription.RenderTarget[0] = targetBlendDescription;
+            _blendState = new DX11.BlendState(_dx11Device, blendDescription);
         }
 
         private void Update(double time)
@@ -120,7 +207,7 @@ namespace SharpDX11GameByWinbringer
         private void Draw()
         {
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth | DX11.DepthStencilClearFlags.Stencil, 1.0f, 0);
-            _dx11DeviceContext.ClearRenderTargetView(_renderTargetView, new SharpDX.Color(0, 0, 128));            
+            _dx11DeviceContext.ClearRenderTargetView(_renderView, new SharpDX.Color(0, 0, 128));
             OnDraw?.Invoke(1);
             _swapChain.Present(0, PresentFlags.None);
         }
@@ -142,46 +229,10 @@ namespace SharpDX11GameByWinbringer
             }
             Draw();
         }
-        #region IDisposable Support
-        private bool disposedValue = false;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // TODO: освободить управляемое состояние (управляемые объекты).                  
-                    Utilities.Dispose(ref _presenter);
-                    Utilities.Dispose(ref _DState);
-                    Utilities.Dispose(ref _renderTargetView);
-                    Utilities.Dispose(ref _swapChain);
-                    Utilities.Dispose(ref _renderForm);
-                    Utilities.Dispose(ref _factory);
-                    Utilities.Dispose(ref _depthBuffer);
-                    Utilities.Dispose(ref _depthView);
-                    Utilities.Dispose(ref _rasterizerState);
-                    Utilities.Dispose(ref _dx11Device);
-                    Utilities.Dispose(ref _dx11DeviceContext);
-                }
 
-                // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
-                // TODO: задать большим полям значение NULL.
-                disposedValue = true;
-            }
-        }
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-        #endregion
     }
 }
-// _timer.Tick();
-//const int FPS = 25;
-//const int FrameDuration = 1000 / FPS;
-//const int MaxFrameSkip = 10;
-//double nextFrameTime = Environment.TickCount;
-//// счетчик итераций игрового цикла, произведенных до первого рендера
+
 //int loops;
 //private void RenderCallback()
 //{

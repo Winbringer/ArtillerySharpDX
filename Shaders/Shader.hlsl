@@ -42,7 +42,7 @@ PS_IN VS(VS_IN input)
     float4 posP = mul(posV,Proj);
     //Установка выходных значений
     height = (height + (float) 1) / (float) 2;
-    output.height = lerp(0.7, 1.1F, height);
+    output.height = lerp(0.6, 1.0F, height);
     output.position = posP;   
     output.TextureUV = input.TextureUV;
     return output;
@@ -51,5 +51,7 @@ PS_IN VS(VS_IN input)
 float4 PS(PS_IN input) : SV_Target0
 {
     float4 color = textureMap.Sample(textureSampler, input.TextureUV);
-    return color * input.height;
+    color = color * input.height;
+    color.w = 1;
+    return color;
 }

@@ -2,46 +2,35 @@
 using SharpDX.D3DCompiler;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
+using SharpDX11GameByWinbringer.Models;
 using System.Linq;
 
 namespace SharpDX11GameByWinbringer.Models
 {
     /// <summary>
     /// Рисует 3D примитивы на экране
-    /// </summary>
-    /// <typeparam name="T">Тип в котором храняться данные передаваемы в шейдер, матрицы Мира, Камеры, Проекции и т. д.</typeparam>
-    /// <typeparam name="T1">Тип в котором храняться данные вертекса</typeparam>
-    class Drawer<T, T1> : System.IDisposable where T1 : struct where T : struct
-    {
-        private Buffer _triangleVertexBuffer;
-        private Buffer _indexBuffer;
-        private Buffer _constantBuffer;
+    /// </summary>   
+   public class Drawer :System.IDisposable
+    {     
         private DeviceContext _dx11DeviceContext;
         private VertexShader _vertexShader;
         private PixelShader _pixelShader;
         private ShaderSignature _inputSignature;
         private InputLayout _inputLayout;
         private ShaderResourceView _textureResourse;
-        private SamplerState _samplerState = null;
-        //Используемые данные
-        private int[] _indeces;
-        private T1[] _vertices;
-        /// <summary>
-        /// Задает вид рисуемых примитивов
-        /// </summary>
-        public PrimitiveTopology PTolology { get; set; }
-
-        public Drawer(T1[] vetexes, int[] indexes, string shadersFile, InputElement[] inputElements, DeviceContext dvContext, string texture, SamplerStateDescription description)
+        private SamplerState _samplerState = null;       
+       /// <summary>
+       /// Конструктор
+       /// </summary>
+       /// <param name="shadersFile">Путь к файлу с шейдерами PS и VS</param>
+       /// <param name="inputElements">Какие входные данные ожидает шейдер</param>
+       /// <param name="dvContext">Контекст видеокарты</param>
+       /// <param name="texture">Путь к текстуре</param>
+       /// <param name="description">Самплер текстуры</param>
+        public Drawer( string shadersFile, InputElement[] inputElements, DeviceContext dvContext, string texture, SamplerStateDescription description)
         {
-            _indeces = indexes;
-            _vertices = vetexes;
-            _dx11DeviceContext = dvContext;
-            PTolology = PrimitiveTopology.TriangleList;
-            //Создаем буфферы для видеокарты
-            _triangleVertexBuffer = Buffer.Create<T1>(_dx11DeviceContext.Device, BindFlags.VertexBuffer, _vertices);
-            _indexBuffer = Buffer.Create(_dx11DeviceContext.Device, BindFlags.IndexBuffer, _indeces);
-            int size = Utilities.SizeOf<T>();
-            _constantBuffer = new Buffer(_dx11DeviceContext.Device, size, ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+          
+            _dx11DeviceContext = dvContext;                     
             //Загружаем шейдеры из файлов
             using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "VS", "vs_5_0", ShaderFlags.Debug))
             {
@@ -60,7 +49,11 @@ namespace SharpDX11GameByWinbringer.Models
             //Создание самплера для текстуры
             _samplerState = new SamplerState(_dx11DeviceContext.Device, description);
         }
-
+        /// <summary>
+        /// Создает Ресурс текстуры для шейдера из картинки
+        /// </summary>
+        /// <param name="filename">Путь к картинке</param>
+        /// <returns></returns>
         private ShaderResourceView CreateTextureFromFile(string filename)
         {
             ShaderResourceView SRV;
@@ -90,8 +83,17 @@ namespace SharpDX11GameByWinbringer.Models
             }
             return SRV;
         }
-
-        public void Draw(T shaderData)
+        /// <summary>
+        /// Рисует наши примитивы на экран.
+        /// </summary>
+        /// <typeparam name="T">Тип данных передаваемых в констант буффер</typeparam>
+        /// <param name="data">Данные для шейдера которые будут записаны в констант буффер</param>
+        /// <param name="indexBuffer">Буффер с индексами</param>
+        /// <param name="constantBuffer">Буффер с данными шейдера вроде мировой матрицы</param>
+        /// <param name="vertexBufferBinding">Описание буффера индексов и его данные</param>
+        /// <param name="indexCount">Количество индексов которые будем рисовать</param>
+        /// <param name="PTolology">Тип рисуемых примитивов: линии, треугольники, точки</param>
+        public void Draw<T>(T data, Buffer indexBuffer, Buffer constantBuffer, VertexBufferBinding vertexBufferBinding, int indexCount, PrimitiveTopology PTolology) where T: struct
         {
             //Установка шейдеров
             _dx11DeviceContext.VertexShader.Set(_vertexShader);
@@ -103,17 +105,15 @@ namespace SharpDX11GameByWinbringer.Models
             //Устанавливаем макет для входных данных видеокарты. В нем указано какие данные ожидает шейдер
             _dx11DeviceContext.InputAssembler.InputLayout = _inputLayout;
             //Перенос данных буферов в видеокарту
-            _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding(_triangleVertexBuffer, Utilities.SizeOf<T1>(), 0));
-            _dx11DeviceContext.InputAssembler.SetIndexBuffer(_indexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);
-            //Обновляем данные в буфере переменных шейдера
-            _dx11DeviceContext.UpdateSubresource(ref shaderData, _constantBuffer);
-            _dx11DeviceContext.VertexShader.SetConstantBuffer(0, _constantBuffer);
+            _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, vertexBufferBinding);
+            _dx11DeviceContext.InputAssembler.SetIndexBuffer(indexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);
+            _dx11DeviceContext.UpdateSubresource(ref data, constantBuffer);
+            _dx11DeviceContext.VertexShader.SetConstantBuffer(0, constantBuffer);
             //Отправляем текстуру в шейдер
             _dx11DeviceContext.PixelShader.SetShaderResource(0, _textureResourse);
             //Рисуем в буффер нашего свайпчейна
-            _dx11DeviceContext.DrawIndexed(_indeces.Count(), 0, 0);
+            _dx11DeviceContext.DrawIndexed(indexCount, 0, 0);
         }
-
         #region IDisposable Support
         private bool disposedValue = false;
         protected virtual void Dispose(bool disposing)
@@ -124,14 +124,12 @@ namespace SharpDX11GameByWinbringer.Models
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты).
                     Utilities.Dispose(ref _samplerState);
-                    Utilities.Dispose(ref _textureResourse);
-                    Utilities.Dispose(ref _triangleVertexBuffer);
+                    Utilities.Dispose(ref _textureResourse);                    
                     Utilities.Dispose(ref _vertexShader);
                     Utilities.Dispose(ref _pixelShader);
                     Utilities.Dispose(ref _inputLayout);
                     Utilities.Dispose(ref _inputSignature);
-                    Utilities.Dispose(ref _indexBuffer);
-                    Utilities.Dispose(ref _constantBuffer);
+                 
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.

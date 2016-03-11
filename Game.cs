@@ -1,7 +1,5 @@
 ﻿using DX11 = SharpDX.Direct3D11;
 using SharpDX.DXGI;
-using SharpDX11GameByWinbringer.Models;
-using System.Diagnostics;
 using SharpDX;
 
 namespace SharpDX11GameByWinbringer
@@ -38,9 +36,12 @@ namespace SharpDX11GameByWinbringer
         public float ViewRatio { get; set; }
         public DX11.DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
         public SharpDX.Windows.RenderForm Form { get { return _renderForm; } }
+        public SwapChain SwapChain { get { return _swapChain; } }
+        public int Width { get { return _Width; } }
+        public int Height { get { return _Height; } }
 
         public Game()
-        {
+        {            
             ViewRatio = (float)_Width / _Height;
             _renderForm = new SharpDX.Windows.RenderForm("SharpDXGameByWinbringer")
             {
@@ -52,11 +53,7 @@ namespace SharpDX11GameByWinbringer
             };
             _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };
             InitializeDeviceResources();
-            _presenter = new Presenter(
-                this,
-                new TextWirter(_swapChain.GetBackBuffer<DX11.Texture2D>(0),
-                _Width,
-                _Height));
+            _presenter = new Presenter(this);
         }
 
         #region IDisposable Support
@@ -69,6 +66,7 @@ namespace SharpDX11GameByWinbringer
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты).                  
                     Utilities.Dispose(ref _presenter);
+                    Utilities.Dispose(ref _blendState);
                     Utilities.Dispose(ref _DState);
                     Utilities.Dispose(ref _renderView);
                     Utilities.Dispose(ref _swapChain);
@@ -146,12 +144,7 @@ namespace SharpDX11GameByWinbringer
             CreateState();
             //Устанавливаем размер конечной картинки            
             _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _Width, _Height);
-            _dx11DeviceContext.Rasterizer.State = _rasterizerState;
-            //_dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
-            //_dx11DeviceContext.OutputMerger.SetBlendState(
-            //    _blendState,
-            //     new SharpDX.Mathematics.Interop.RawColor4(0.75f, 0.75f, 0.75f, 1f));
-            //ЭТО ДЛЯ НЕПРОЗРАЧНЫХ _dx11DeviceContext.OutputMerger.SetBlendState(null, null);
+            _dx11DeviceContext.Rasterizer.State = _rasterizerState;            
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderView);
 
         }
@@ -169,7 +162,8 @@ namespace SharpDX11GameByWinbringer
             DX11.DepthStencilStateDescription DStateDescripshion = DX11.DepthStencilStateDescription.Default();
             _DState = new DX11.DepthStencilState(_dx11Device, DStateDescripshion);
             //TODO: донастроить параметры блендинга для прозрачности.
-            //            (FC) - Final Color
+            #region Формула бледнинга
+            //(FC) - Final Color
             //(SP) - Source Pixel
             //(DP) - Destination Pixel
             //(SBF) - Source Blend Factor
@@ -182,6 +176,13 @@ namespace SharpDX11GameByWinbringer
             //Формула для блендинга
             //(FC) = (SP)(X)(SBF)(+)(DP)(X)(DPF)
             //(FA) = (SA)(SBF)(+)(DA)(DBF)
+            //ИСПОЛЬЗОВАНИЕ
+            //_dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
+            //_dx11DeviceContext.OutputMerger.SetBlendState(
+            //    _blendState,
+            //     new SharpDX.Mathematics.Interop.RawColor4(0.75f, 0.75f, 0.75f, 1f));
+            //ЭТО ДЛЯ НЕПРОЗРАЧНЫХ _dx11DeviceContext.OutputMerger.SetBlendState(null, null);
+            #endregion
             DX11.RenderTargetBlendDescription targetBlendDescription = new SharpDX.Direct3D11.RenderTargetBlendDescription()
             {
                 IsBlendEnabled = new SharpDX.Mathematics.Interop.RawBool(true),

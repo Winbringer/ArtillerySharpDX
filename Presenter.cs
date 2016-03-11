@@ -1,4 +1,5 @@
 ﻿using SharpDX;
+using SharpDX.Direct3D11;
 using SharpDX11GameByWinbringer.Models;
 using System;
 using System.Collections.Generic;
@@ -20,21 +21,49 @@ namespace SharpDX11GameByWinbringer
         Matrix _Progection;
         Wave _waves = null;
         TextWirter _text2DWriter;
+        Drawer _WavesDrawer;
         string _s;
         Stopwatch _sw;
-               
-        public Presenter(Game game, TextWirter Text2D)
+
+        public Presenter(Game game)
         {
-            _text2DWriter = Text2D;
+            _text2DWriter =
+                new TextWirter(
+                game.SwapChain.GetBackBuffer<Texture2D>(0),
+                game.Width,
+                game.Height);
             game.OnDraw += Draw;
             game.OnUpdate += Update;
             game.Form.KeyDown += InputKeysControl;
-            _waves = new Wave(game.DeviceContext);
             _World = Matrix.Identity;
             _View = Matrix.LookAtLH(new Vector3(0, 300f, 600f), new Vector3(0, 0, 0), Vector3.Up);
             _Progection = Matrix.PerspectiveFovLH(MathUtil.Pi / 3, game.ViewRatio, 1f, 2000f);
+            InitDrawers(game);
+            _waves = new Wave(game.DeviceContext.Device);
+            //Привязка событий
+            _waves.OnDraw += _WavesDrawer.Draw;
             _sw = new Stopwatch();
             _sw.Start();
+        }
+
+        private void InitDrawers(Game game)
+        {
+            InputElement[] inputElements = new InputElement[]
+           {
+                new InputElement("POSITION", 0, SharpDX.DXGI.Format.R32G32B32_Float,0, 0),
+                new InputElement("TEXCOORD",0,SharpDX.DXGI.Format.R32G32_Float,12,0)
+           };
+            //Установка Сампрелар для текстуры.
+            SamplerStateDescription description = SamplerStateDescription.Default();
+            description.Filter = Filter.MinMagMipLinear;
+            description.AddressU = TextureAddressMode.Wrap;
+            description.AddressV = TextureAddressMode.Wrap;
+            _WavesDrawer = new Drawer(
+                "Shaders\\Shader.hlsl",
+                inputElements,
+                game.DeviceContext,
+                "Textures\\grass.jpg",
+                description);          
         }
 
         void Update(double time)
@@ -51,13 +80,13 @@ namespace SharpDX11GameByWinbringer
             _waves.Draw();
             _text2DWriter.DrawText(_s);
         }
-       
+
         private void InputKeysControl(object sender, EventArgs e)
         {
             Keys Key = ((dynamic)e).KeyCode;
             if (Key == Keys.Escape) ((SharpDX.Windows.RenderForm)sender).Close();
             if (Key == Keys.A) _View *= Matrix.RotationY(MathUtil.DegreesToRadians(1));
-            if (Key == Keys.D) _View *= Matrix.RotationY(MathUtil.DegreesToRadians(-1)) ;           
+            if (Key == Keys.D) _View *= Matrix.RotationY(MathUtil.DegreesToRadians(-1));
         }
 
         #region IDisposable Support
@@ -71,11 +100,11 @@ namespace SharpDX11GameByWinbringer
                     // TODO: освободить управляемое состояние (управляемые объекты).                  
                     Utilities.Dispose(ref _waves);
                     Utilities.Dispose(ref _text2DWriter);
+                    Utilities.Dispose(ref _WavesDrawer);
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.
                 // TODO: задать большим полям значение NULL.
-
                 disposedValue = true;
             }
         }

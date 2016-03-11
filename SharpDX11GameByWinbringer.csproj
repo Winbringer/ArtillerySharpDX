@@ -108,7 +108,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Game.cs" />
+    <Compile Include="Models\DrawableGameObject.cs" />
     <Compile Include="Models\Drawer.cs" />
+    <Compile Include="Models\Structures.cs" />
     <Compile Include="Models\TextWirter.cs" />
     <Compile Include="Models\Wave.cs" />
     <Compile Include="Presenter.cs" />

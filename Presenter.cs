@@ -21,7 +21,8 @@ namespace SharpDX11GameByWinbringer
         Matrix _Progection;
         Wave _waves = null;
         TextWirter _text2DWriter;
-        Drawer _WavesDrawer;       
+        Drawer _WavesDrawer;
+        Drawer _CubeDrawer;       
         string _s;
         Stopwatch _sw;
         TexturedCube _cube;
@@ -38,12 +39,13 @@ namespace SharpDX11GameByWinbringer
             _World = Matrix.Identity;
             _View = Matrix.LookAtLH(new Vector3(0, 0, 400f), new Vector3(0, 0,0), Vector3.Up);
             _Progection = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
+            //Создаем "Художников" для каждого типа объектов
             InitDrawers(game);
             _waves = new Wave(game.DeviceContext.Device);
             _cube = new TexturedCube(game.DeviceContext.Device);
             //Привязка событий
             _waves.OnDraw += _WavesDrawer.Draw;
-            _cube.OnDraw += _WavesDrawer.Draw;
+            _cube.OnDraw += _CubeDrawer.Draw;
             _sw = new Stopwatch();
             _sw.Start();
         }
@@ -65,7 +67,13 @@ namespace SharpDX11GameByWinbringer
                 inputElements,
                 game.DeviceContext,
                 "Textures\\grass.jpg",
-                description);          
+                description);
+            _CubeDrawer = new Drawer(
+                "Shaders\\CubeShader.hlsl",
+                inputElements,
+                game.DeviceContext,
+                "Textures\\grass.jpg",
+                description);
         }
 
         void Update(double time)
@@ -108,6 +116,7 @@ namespace SharpDX11GameByWinbringer
                     Utilities.Dispose(ref _waves);
                     Utilities.Dispose(ref _text2DWriter);
                     Utilities.Dispose(ref _WavesDrawer);
+                    Utilities.Dispose(ref _CubeDrawer);
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.

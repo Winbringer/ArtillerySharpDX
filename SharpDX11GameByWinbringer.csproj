@@ -159,10 +159,12 @@
     <Content Include="LogoVW.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Shaders\kebeShader.hlsl" />
-    <Content Include="Shaders\Shader.hlsl">
+    <None Include="Shaders\CubeShader.hlsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    </None>
+    <None Include="Shaders\Shader.hlsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <Content Include="Textures\brick.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

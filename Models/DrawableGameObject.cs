@@ -14,6 +14,10 @@ namespace SharpDX11GameByWinbringer.Models
     public abstract class DrawableGameObject<V, CB> : IDisposable where V : struct where CB : struct
     {
         public delegate void Drawing(CB data, Buffer indexBuffer, Buffer constantBuffer, VertexBufferBinding vertexBufferBinding, int indexCount, SharpDX.Direct3D.PrimitiveTopology PTolology);
+        /// <summary>
+        /// Событики возникающее когда объект нужно нарисовать
+        /// </summary> 
+        public event Drawing OnDraw;
         private Buffer _triangleVertexBuffer;
         protected Buffer _indexBuffer;
         protected Buffer _constantBuffer;
@@ -34,9 +38,14 @@ namespace SharpDX11GameByWinbringer.Models
             _vertexBinging = new VertexBufferBinding(_triangleVertexBuffer, Utilities.SizeOf<V>(), 0);
         }
 
-        public abstract void Draw();
+        public abstract void Update(Matrix World, Matrix View, Matrix Proj);
+        protected void Draw(CB data, int indexCount, SharpDX.Direct3D.PrimitiveTopology pTopology )
+        {
+            OnDraw?.Invoke(data, _indexBuffer, _constantBuffer, _vertexBinging, indexCount, pTopology);
+        }
         public virtual void Dispose()
-        {        
+        {
+            OnDraw = null;     
             Utilities.Dispose(ref _indexBuffer);
             Utilities.Dispose(ref _constantBuffer);
             Utilities.Dispose(ref _triangleVertexBuffer);

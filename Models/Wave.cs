@@ -5,10 +5,7 @@ namespace SharpDX11GameByWinbringer.Models
 {
 
     class Wave : DrawableGameObject<Vertex, Data>
-    {   /// <summary>
-        /// Событики возникающее когда объект нужно нарисовать
-        /// </summary>
-        public event Drawing OnDraw;
+    {          
         private Matrix _world;
         private Vertex[] _vertices;
         private uint[] _indeces;
@@ -61,7 +58,7 @@ namespace SharpDX11GameByWinbringer.Models
             }
         }
 
-        public void Update(Matrix world, Matrix view, Matrix proj)
+        public override void Update(Matrix world, Matrix view, Matrix proj)
         {          
             _data.World = _world * world;
             _data.View = view;
@@ -70,16 +67,11 @@ namespace SharpDX11GameByWinbringer.Models
             _data.View.Transpose();
             _data.Proj.Transpose();
         }
-        public override void Draw()
+        public void Draw()
         {
             _data.Time = new Vector4(System.Environment.TickCount);
-            OnDraw?.Invoke(_data, _indexBuffer, _constantBuffer, _vertexBinging, _indeces.Count(), SharpDX.Direct3D.PrimitiveTopology.TriangleList);
+            Draw(_data, _indeces.Count(), SharpDX.Direct3D.PrimitiveTopology.TriangleList);          
         }
-        public override void Dispose()
-        {
-            base.Dispose();
-            OnDraw = null;
-        }
-
+       
     }
 }

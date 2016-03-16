@@ -16,7 +16,7 @@ namespace SharpDX11GameByWinbringer
         //Поля
         Factory _factory;
         //Форма куда будем вставлять наше представление renderTargetView.
-        private SharpDX.Windows.RenderForm _renderForm = null;      
+        private SharpDX.Windows.RenderForm _renderForm = null;
         //Объектное представление нашей видеокарты
         private DX11.Device _dx11Device = null;
         private DX11.DeviceContext _dx11DeviceContext = null;
@@ -41,10 +41,9 @@ namespace SharpDX11GameByWinbringer
         public Game(SharpDX.Windows.RenderForm renderForm)
         {
             _renderForm = renderForm;
-            ViewRatio = (float)_renderForm.ClientSize.Width / _renderForm.ClientSize.Height;           
+            ViewRatio = (float)_renderForm.ClientSize.Width / _renderForm.ClientSize.Height;
             InitializeDeviceResources();
             _presenter = new Presenter(this);
-            _renderForm.Show();
         }
 
         #region IDisposable Support
@@ -103,7 +102,7 @@ namespace SharpDX11GameByWinbringer
                      OutputHandle = _renderForm.Handle,
                      IsWindowed = true,
                      SwapEffect = SwapEffect.Discard,
-                     Flags = SwapChainFlags.AllowModeSwitch
+                     Flags = SwapChainFlags.None
                  },
                 out _dx11Device,
                 out _swapChain);
@@ -135,7 +134,7 @@ namespace SharpDX11GameByWinbringer
             CreateState();
             //Устанавливаем размер конечной картинки            
             _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
-            _dx11DeviceContext.Rasterizer.State = _rasterizerState;            
+            _dx11DeviceContext.Rasterizer.State = _rasterizerState;
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderView);
 
         }

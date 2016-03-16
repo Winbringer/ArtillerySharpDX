@@ -1,14 +1,4 @@
-﻿Texture2D textureMap : register(t0);
-SamplerState textureSampler : register(s1)
-{
-    Textur = <textureMap>;
-    Filter = MIN_MAG_MIP_LINEAR;
-    AddressU = Wrap;
-    AddressV = Wrap;
-    AddresW = Wrap;
-};
-
-cbuffer data : register(b0)
+﻿cbuffer data : register(b0)
 {
     float4x4 World;
     float4x4 View;
@@ -36,18 +26,27 @@ PS_IN VS(VS_IN input)
     //Расчет высоты точки
     float height = (sin(Time / 1000 + pos.z / (float) 10) + sin(Time / 1000 + pos.x / (float) 10)) / 2;
     pos.y = height * 5;
+    height = (height + (float) 1) / (float) 2;    
+    height = lerp(0.5, 1.1F, height);
     //Расчет позиции точки на экране
     float4 posW = mul(pos,World);
     float4 posV = mul(posW,View);
     float4 posP = mul(posV,Proj);
     //Установка выходных значений
-    height = (height + (float) 1) / (float) 2;
-    output.height = lerp(0.6, 1.1F, height);
+    output.height = height;
     output.position = posP;   
     output.TextureUV = input.TextureUV;
     return output;
 }
 
+Texture2D textureMap : register(t0);
+SamplerState textureSampler : register(s1)
+{
+    Filter = MIN_MAG_MIP_LINEAR;
+    AddressU = Wrap;
+    AddressV = Wrap;
+    AddresW = Wrap;
+};
 float4 PS(PS_IN input) : SV_Target0
 {
     float4 color = textureMap.Sample(textureSampler, input.TextureUV);

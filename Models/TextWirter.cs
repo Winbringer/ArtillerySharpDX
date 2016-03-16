@@ -69,7 +69,7 @@ namespace SharpDX11GameByWinbringer.Models
             _RenderTarget2D.DrawText(
                 s, s.Length,
                 _TextFormat,
-                new RectangleF(50,50, _width, _heght), 
+                new RectangleF(50,50, 200, 200), 
                 _SceneColorBrush,
                 DrawTextOptions.None,
                 MeasuringMode.GdiClassic);

@@ -21,10 +21,10 @@ namespace SharpDX11GameByWinbringer
         Matrix _Progection;
         Wave _waves = null;
         TextWirter _text2DWriter;
-        Drawer _WavesDrawer;
+        Drawer _WavesDrawer;       
         string _s;
         Stopwatch _sw;
-
+        TexturedCube _cube;
         public Presenter(Game game)
         {
             _text2DWriter =
@@ -40,8 +40,10 @@ namespace SharpDX11GameByWinbringer
             _Progection = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
             InitDrawers(game);
             _waves = new Wave(game.DeviceContext.Device);
+            _cube = new TexturedCube(game.DeviceContext.Device);
             //Привязка событий
             _waves.OnDraw += _WavesDrawer.Draw;
+            _cube.OnDraw += _WavesDrawer.Draw;
             _sw = new Stopwatch();
             _sw.Start();
         }
@@ -73,11 +75,13 @@ namespace SharpDX11GameByWinbringer
             _sw.Reset();
             _sw.Start();
             _waves.Update(_World, _View, _Progection);
+            _cube.Update(_World, _View, _Progection);
         }
 
         void Draw(double time)
         {
             _waves.Draw();
+            _cube.Draw();
             _text2DWriter.DrawText(_s);
         }
 
@@ -99,7 +103,8 @@ namespace SharpDX11GameByWinbringer
             {
                 if (disposing)
                 {
-                    // TODO: освободить управляемое состояние (управляемые объекты).                  
+                    // TODO: освободить управляемое состояние (управляемые объекты). 
+                    Utilities.Dispose(ref _cube);                 
                     Utilities.Dispose(ref _waves);
                     Utilities.Dispose(ref _text2DWriter);
                     Utilities.Dispose(ref _WavesDrawer);

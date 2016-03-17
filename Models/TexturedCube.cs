@@ -60,7 +60,7 @@ namespace SharpDX11GameByWinbringer.Models
         }
         public void Draw()
         {
-            Draw(_data, textureIndices.Count(), SharpDX.Direct3D.PrimitiveTopology.TriangleList);
+            Draw(_data, textureIndices.Count(), SharpDX.Direct3D.PrimitiveTopology.TriangleList, true);
         }
 
     }

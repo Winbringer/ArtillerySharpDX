@@ -5,16 +5,14 @@ using TextAntialiasMode = SharpDX.Direct2D1.TextAntialiasMode;
 using AlphaMode = SharpDX.Direct2D1.AlphaMode;
 using Factory = SharpDX.Direct2D1.Factory;
 using SharpDX.DirectWrite;
-using System;
 using System.Diagnostics;
-using System.Globalization;
 
 namespace SharpDX11GameByWinbringer.Models
 {
     /// <summary>
     /// Рисует текст и 2Д объекты на экран.
     /// </summary>
-  public  class TextWirter : System.IDisposable
+    public  class TextWirter : System.IDisposable
     {
         private Factory _Factory2D;
         private SharpDX.DirectWrite.Factory _FactoryDWrite;

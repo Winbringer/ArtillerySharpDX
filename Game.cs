@@ -24,11 +24,7 @@ namespace SharpDX11GameByWinbringer
         private SwapChain _swapChain;
         //Представление куда мы выводим картинку.
         private DX11.RenderTargetView _renderView = null;
-        private DX11.DepthStencilView _depthView = null;
-        //Параметры отображения
-        private DX11.RasterizerState _rasterizerState = null;
-        private DX11.DepthStencilState _DState = null;
-        private DX11.BlendState _blendState = null;
+        private DX11.DepthStencilView _depthView = null;       
         private Presenter _presenter = null;
         //Свойства
         public float ViewRatio { get; set; }
@@ -55,15 +51,12 @@ namespace SharpDX11GameByWinbringer
                 if (disposing)
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты).                  
-                    Utilities.Dispose(ref _presenter);
-                    Utilities.Dispose(ref _blendState);
-                    Utilities.Dispose(ref _DState);
+                    Utilities.Dispose(ref _presenter);                                
                     Utilities.Dispose(ref _renderView);
                     Utilities.Dispose(ref _swapChain);
                     Utilities.Dispose(ref _renderForm);
                     Utilities.Dispose(ref _factory);
-                    Utilities.Dispose(ref _depthView);
-                    Utilities.Dispose(ref _rasterizerState);
+                    Utilities.Dispose(ref _depthView);                   
                     Utilities.Dispose(ref _dx11Device);
                     Utilities.Dispose(ref _dx11DeviceContext);
                 }
@@ -119,77 +112,30 @@ namespace SharpDX11GameByWinbringer
                       MipLevels = 1,
                       Width = _renderForm.ClientSize.Width,
                       Height = _renderForm.ClientSize.Height,
-                      SampleDescription = new SampleDescription(1, 0),
+                      SampleDescription = _swapChain.Description.SampleDescription,
                       Usage = DX11.ResourceUsage.Default,
                       BindFlags = DX11.BindFlags.DepthStencil,
                       CpuAccessFlags = DX11.CpuAccessFlags.None,
                       OptionFlags = DX11.ResourceOptionFlags.None
                   }))
-                _depthView = new DX11.DepthStencilView(_dx11Device, _depthBuffer);
+                _depthView = new DX11.DepthStencilView(_dx11Device, _depthBuffer, new SharpDX.Direct3D11.DepthStencilViewDescription()
+                {
+                    Dimension = (SwapChain.Description.SampleDescription.Count > 1 ||
+                     SwapChain.Description.SampleDescription.Quality > 0) ?
+                     DX11.DepthStencilViewDimension.Texture2DMultisampled :
+                     DX11.DepthStencilViewDimension.Texture2D,
+                    Flags = DX11.DepthStencilViewFlags.None
+                });
             //Создаем буффер и вьюшку для рисования
             using (DX11.Texture2D backBuffer = _swapChain.GetBackBuffer<DX11.Texture2D>(0))
                 _renderView = new DX11.RenderTargetView(_dx11Device, backBuffer);
             //Создаем контекст нашего GPU
-            _dx11DeviceContext = _dx11Device.ImmediateContext;
-            CreateState();
+            _dx11DeviceContext = _dx11Device.ImmediateContext;         
             //Устанавливаем размер конечной картинки            
-            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
-            _dx11DeviceContext.Rasterizer.State = _rasterizerState;
+            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);                    
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderView);
-
         }
-        /// <summary>
-        /// Создает параметры рендеринга, глубины и блендинга
-        /// </summary>
-        private void CreateState()
-        {
-            //Устанавливаем параметры растеризации так чтобы обратная сторона объекта не спряталась.
-            DX11.RasterizerStateDescription rasterizerStateDescription = DX11.RasterizerStateDescription.Default();
-            rasterizerStateDescription.CullMode = DX11.CullMode.None;
-            rasterizerStateDescription.FillMode = DX11.FillMode.Solid;
-            _rasterizerState = new DX11.RasterizerState(_dx11Device, rasterizerStateDescription);
-            //Устанавливаем параметры буффера глубины
-            DX11.DepthStencilStateDescription DStateDescripshion = DX11.DepthStencilStateDescription.Default();
-            _DState = new DX11.DepthStencilState(_dx11Device, DStateDescripshion);
-            //TODO: донастроить параметры блендинга для прозрачности.
-            #region Формула бледнинга
-            //(FC) - Final Color
-            //(SP) - Source Pixel
-            //(DP) - Destination Pixel
-            //(SBF) - Source Blend Factor
-            //(DBF) - Destination Blend Factor
-            //(FA) - Final Alpha
-            //(SA) - Source Alpha
-            //(DA) - Destination Alpha
-            //(+) - Binaray Operator described below
-            //(X) - Cross Multiply Matrices
-            //Формула для блендинга
-            //(FC) = (SP)(X)(SBF)(+)(DP)(X)(DPF)
-            //(FA) = (SA)(SBF)(+)(DA)(DBF)
-            //ИСПОЛЬЗОВАНИЕ
-            //_dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
-            //_dx11DeviceContext.OutputMerger.SetBlendState(
-            //    _blendState,
-            //     new SharpDX.Mathematics.Interop.RawColor4(0.75f, 0.75f, 0.75f, 1f));
-            //ЭТО ДЛЯ НЕПРОЗРАЧНЫХ _dx11DeviceContext.OutputMerger.SetBlendState(null, null);
-            #endregion
-            DX11.RenderTargetBlendDescription targetBlendDescription = new SharpDX.Direct3D11.RenderTargetBlendDescription()
-            {
-                IsBlendEnabled = new SharpDX.Mathematics.Interop.RawBool(true),
-                SourceBlend = DX11.BlendOption.SourceColor,
-                DestinationBlend = DX11.BlendOption.BlendFactor,
-                BlendOperation = DX11.BlendOperation.Add,
-                SourceAlphaBlend = DX11.BlendOption.One,
-                DestinationAlphaBlend = DX11.BlendOption.Zero,
-                AlphaBlendOperation = DX11.BlendOperation.Add,
-                RenderTargetWriteMask = DX11.ColorWriteMaskFlags.All
-            };
-            DX11.BlendStateDescription blendDescription = DX11.BlendStateDescription.Default();
-            blendDescription.AlphaToCoverageEnable = new SharpDX.Mathematics.Interop.RawBool(false);
-            blendDescription.RenderTarget[0] = targetBlendDescription;
-            _blendState = new DX11.BlendState(_dx11Device, blendDescription);
-        }
-
+       
         private void Update(double time)
         {
             OnUpdate?.Invoke(time);

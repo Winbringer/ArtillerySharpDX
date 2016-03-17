@@ -19,12 +19,10 @@ namespace SharpDX11GameByWinbringer
     {
         Matrix _World;
         Matrix _View;
-        Matrix _Progection;
-        Wave _waves = null;
+        Matrix _Progection;       
         TexturedCube _cube;       
         XYZ _XYZ;
-        TextWirter _text2DWriter;
-        Drawer _WavesDrawer;
+        TextWirter _text2DWriter;        
         Drawer _CubeDrawer;
         Drawer _LineDrawer;
         string _s;
@@ -46,7 +44,7 @@ namespace SharpDX11GameByWinbringer
             //Создаем "Художников" для каждого типа объектов
             InitDrawers(game);
             //Создаем объеты нашей сцены
-            _waves = new Wave();
+          
             _cube = new TexturedCube();
             _XYZ = new XYZ();
             //Привязка событий            

@@ -20,16 +20,6 @@ namespace SharpDX11GameByWinbringer.Models
                     0,2,
                     0,3
                 };
-        }
-
-        public override void Update(Matrix World, Matrix View, Matrix Proj)
-        {
-            ConstantBufferData.World = Matrix.Identity;
-            ConstantBufferData.View = View;
-            ConstantBufferData.Proj = Proj;
-            ConstantBufferData.World.Transpose();
-            ConstantBufferData.View.Transpose();
-            ConstantBufferData.Proj.Transpose();
-        }
+        }       
     }
 }

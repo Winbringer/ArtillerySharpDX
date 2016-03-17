@@ -71,8 +71,8 @@ namespace SharpDX11GameByWinbringer.Models
             _DState = new DepthStencilState(_dx11DeviceContext.Device, DStateDescripshion);
             _rasterizerState = new RasterizerState(_dx11DeviceContext.Device, rasterizerStateDescription);
             _blendState = new BlendState(_dx11DeviceContext.Device, blendDescription);
-        }  
-          
+        }
+
         /// <summary>
         /// Рисует наши примитивы на экран.
         /// </summary>
@@ -83,14 +83,8 @@ namespace SharpDX11GameByWinbringer.Models
         /// <param name="vertexBufferBinding">Описание буффера индексов и его данные</param>
         /// <param name="indexCount">Количество индексов которые будем рисовать</param>
         /// <param name="PTolology">Тип рисуемых примитивов: линии, треугольники, точки</param>
-        public void Draw<V,CB>(V[] vertices, CB data,uint[] indeces, PrimitiveTopology PTolology, bool isBlending=false) where V : struct where CB : struct
-        {
-            //Создаем буфферы для видеокарты
-            using (var triangleVertexBuffer = Buffer.Create<V>(_dx11DeviceContext.Device, BindFlags.VertexBuffer, vertices))
-            using (var indexBuffer = Buffer.Create(_dx11DeviceContext.Device, BindFlags.IndexBuffer, indeces))
-            using (var constantBuffer = new Buffer(_dx11DeviceContext.Device, Utilities.SizeOf<CB>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, Utilities.SizeOf<CB>()))
-            {
-                var vertexBinging = new VertexBufferBinding(triangleVertexBuffer, Utilities.SizeOf<V>(), 0);                
+        public void Draw<T>(T data, VertexBufferBinding vertexBinging, Buffer indexBuffer, Buffer constantBuffer, int indexCount, PrimitiveTopology PTolology, bool isBlending = false) where T: struct
+        {                              
                 //Установка шейдеров
                 _dx11DeviceContext.VertexShader.Set(_vertexShader);
                 _dx11DeviceContext.PixelShader.Set(_pixelShader);
@@ -112,8 +106,7 @@ namespace SharpDX11GameByWinbringer.Models
                 _dx11DeviceContext.OutputMerger.SetBlendState(null, null);
                 if (isBlending) _dx11DeviceContext.OutputMerger.SetBlendState(_blendState, blendFactor);
                 //Рисуем в буффер нашего свайпчейна
-                _dx11DeviceContext.DrawIndexed(indeces.Length, 0, 0);
-            }
+                _dx11DeviceContext.DrawIndexed(indexCount, 0, 0);            
         }
 
         /// <summary>

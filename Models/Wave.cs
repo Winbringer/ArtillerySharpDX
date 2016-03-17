@@ -1,18 +1,18 @@
 ﻿using SharpDX;
+using SharpDX.Direct3D11;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-
     class Wave:GameObject<Vertex,DataT>
     {   
         private readonly float _size = 500F;
         readonly int _N = 500;
-
-        public Wave()
+        public Wave(Device device)
         {
             World = Matrix.Translation(-_size / 2, 0, _size / 2) * Matrix.RotationY(MathUtil.PiOverFour);
             InitializeTriangle();
-            ConstantBufferData = new DataT();          
+            ConstantBufferData = new DataT();
+            CreateBuffers(device);     
         }
 
         private void InitializeTriangle()

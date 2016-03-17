@@ -24,10 +24,10 @@ PS_IN VS(VS_IN input)
    
     float4 pos = float4(input.position, (float) 1);
     //Расчет высоты точки
-    float height = (sin(Time / 1000 + pos.z / (float) 10) + sin(Time / 1000 + pos.x / (float) 10)) / 2;
-    pos.y = height * 5;
+    float height = (sin(Time / 1000 + pos.z ) + sin(Time / 2000 + pos.x/2 )) / 2;
+    pos.y = height;
     height = (height + (float) 1) / (float) 2;    
-    height = lerp(0.5, 1.1F, height);
+    height = lerp(0.5, 1.0F, height);
     //Расчет позиции точки на экране
     float4 posW = mul(pos,World);
     float4 posV = mul(posW,View);

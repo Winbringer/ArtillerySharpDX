@@ -5,13 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using SharpDX11GameByWinbringer.Models;
 using SharpDX;
+using SharpDX.Direct3D11;
 
 namespace SharpDX11GameByWinbringer.Models
 {
     class TexturedCube:GameObject<Vertex,Data>
     {        
         float size = 100;
-        public TexturedCube()
+        public TexturedCube(Device device)
         {
             World = Matrix.Identity;
             Indeces = new uint[]
@@ -44,7 +45,7 @@ namespace SharpDX11GameByWinbringer.Models
             Verteces[5] = new Vertex(new Vector3(size, size, -size), new Vector2(1, 0));
             Verteces[6] = new Vertex(new Vector3(size, -size, -size), new Vector2(1, 1));
             Verteces[7] = new Vertex(new Vector3(-size, -size, -size), new Vector2(0, 1));
-
+            CreateBuffers(device);
         }
         public override void  Update(Matrix world, Matrix view, Matrix proj)
         {

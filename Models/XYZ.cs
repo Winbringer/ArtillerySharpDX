@@ -1,11 +1,12 @@
 ﻿
 using SharpDX;
+using SharpDX.Direct3D11;
 
 namespace SharpDX11GameByWinbringer.Models
 {
     class XYZ : GameObject<ColoredVertex, Data>
     {
-        public XYZ()
+        public XYZ(Device device)
         {
             Verteces = new ColoredVertex[]
             {
@@ -20,6 +21,7 @@ namespace SharpDX11GameByWinbringer.Models
                     0,2,
                     0,3
                 };
+            CreateBuffers(device);
         }
 
         public override void Update(Matrix World, Matrix View, Matrix Proj)

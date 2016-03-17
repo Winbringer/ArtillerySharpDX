@@ -41,14 +41,14 @@ namespace SharpDX11GameByWinbringer
             game.OnUpdate += Update;
             game.Form.KeyDown += InputKeysControl;
             _World = Matrix.Identity;
-            _View = Matrix.LookAtLH(new Vector3(0, 0, -400f), new Vector3(0, 0, 0), Vector3.Up);
+            _View = Matrix.LookAtLH(new Vector3(0, 0, -360f), new Vector3(0, 0, 0), Vector3.Up);
             _Progection = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
             //Создаем "Художников" для каждого типа объектов
             InitDrawers(game);
             //Создаем объеты нашей сцены
-            _waves = new Wave();
-            _cube = new TexturedCube();
-            _XYZ = new XYZ();
+            _waves = new Wave(game.DeviceContext.Device);
+            _cube = new TexturedCube(game.DeviceContext.Device);
+            _XYZ = new XYZ(game.DeviceContext.Device);
             //Привязка событий            
             _sw = new Stopwatch();
             _sw.Start();
@@ -67,9 +67,10 @@ namespace SharpDX11GameByWinbringer
 
         void Draw(double time)
         {
-            _WavesDrawer.Draw(_waves.Verteces, _waves.ConstantBufferData, _waves.Indeces, PrimitiveTopology.TriangleList);
-            _CubeDrawer.Draw(_cube.Verteces, _cube.ConstantBufferData, _cube.Indeces, PrimitiveTopology.TriangleList);
-            _LineDrawer.Draw(_XYZ.Verteces, _XYZ.ConstantBufferData, _XYZ.Indeces, PrimitiveTopology.LineList);
+            _WavesDrawer.Draw(_waves.ConstantBufferData,_waves._vertexBinging,_waves._indexBuffer,_waves._constantBuffer,_waves.IndexCount, PrimitiveTopology.TriangleList);
+            _CubeDrawer.Draw(_cube.ConstantBufferData, _cube._vertexBinging, _cube._indexBuffer, _cube._constantBuffer, _cube.IndexCount, PrimitiveTopology.TriangleList);
+            _LineDrawer.Draw(_XYZ.ConstantBufferData, _XYZ._vertexBinging, _XYZ._indexBuffer, _XYZ._constantBuffer, _XYZ.IndexCount, PrimitiveTopology.LineList);
+          
             _text2DWriter.DrawText(_s);
         }
 

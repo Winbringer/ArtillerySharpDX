@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace SharpDX11GameByWinbringer.Models
 {
     [StructLayout(LayoutKind.Explicit, Size = (64 * 3) + 16)]
-    struct DataT
+  public  struct DataT
     {
         [FieldOffset(0)]
         public Matrix World;
@@ -17,7 +17,7 @@ namespace SharpDX11GameByWinbringer.Models
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    struct Data
+  public  struct Data
     {   public Matrix World;
         public Matrix View;
         public Matrix Proj;        

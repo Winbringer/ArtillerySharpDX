@@ -14,7 +14,7 @@ namespace SharpDX11GameByWinbringer
             System.Console.ReadLine();
             if (!SharpDX.Direct3D11.Device.IsSupportedFeatureLevel(SharpDX.Direct3D.FeatureLevel.Level_11_0))
             {
-                MessageBox.Show("Для запуска этой игры нужен DirectX11 ОБЯЗАТЕЛЬНО!");
+                MessageBox.Show("Для запуска этой игры нужен DirectX 11 ОБЯЗАТЕЛЬНО!");
                 return;
             }
 #if DEBUG  
@@ -36,6 +36,7 @@ namespace SharpDX11GameByWinbringer
                     game.Run();
                 }
             }
+            System.Console.WriteLine("...");
         }
     }
 }

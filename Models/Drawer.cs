@@ -3,6 +3,7 @@ using SharpDX.D3DCompiler;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.Mathematics.Interop;
+using SharpDX11GameByWinbringer.ViewModels;
 
 namespace SharpDX11GameByWinbringer.Models
 {
@@ -22,7 +23,7 @@ namespace SharpDX11GameByWinbringer.Models
         private BlendState _blendState = null;
         private SamplerState _samplerState = null;
         private DepthStencilState _DState = null;
-        RawColor4? blendFactor =null;
+        RawColor4? blendFactor = null;
 
         /// <summary>
         /// Конструктор
@@ -83,30 +84,31 @@ namespace SharpDX11GameByWinbringer.Models
         /// <param name="vertexBufferBinding">Описание буффера индексов и его данные</param>
         /// <param name="indexCount">Количество индексов которые будем рисовать</param>
         /// <param name="PTolology">Тип рисуемых примитивов: линии, треугольники, точки</param>
-        public void Draw<T>(T data, VertexBufferBinding vertexBinging, Buffer indexBuffer, Buffer constantBuffer, int indexCount, PrimitiveTopology PTolology, bool isBlending = false) where T: struct
-        {                              
-                //Установка шейдеров
-                _dx11DeviceContext.VertexShader.Set(_vertexShader);
-                _dx11DeviceContext.PixelShader.Set(_pixelShader);
-                //Устанавливаем самплер текстуры для шейдера
-                _dx11DeviceContext.PixelShader.SetSampler(0, _samplerState);
-                //Задаем тип рисуемых примитивов
-                _dx11DeviceContext.InputAssembler.PrimitiveTopology = PTolology;
-                //Устанавливаем макет для входных данных видеокарты. В нем указано какие данные ожидает шейдер
-                _dx11DeviceContext.InputAssembler.InputLayout = _inputLayout;
-                //Перенос данных буферов в видеокарту
-                _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, vertexBinging);
-                _dx11DeviceContext.InputAssembler.SetIndexBuffer(indexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);
-                _dx11DeviceContext.VertexShader.SetConstantBuffer(0, constantBuffer);
-                _dx11DeviceContext.UpdateSubresource(ref data, constantBuffer);
-                //Отправляем текстуру в шейдер
-                _dx11DeviceContext.PixelShader.SetShaderResource(0, _textureResourse);
-                _dx11DeviceContext.Rasterizer.State = _rasterizerState;
-                _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
-                _dx11DeviceContext.OutputMerger.SetBlendState(null, null);
-                if (isBlending) _dx11DeviceContext.OutputMerger.SetBlendState(_blendState, blendFactor);
-                //Рисуем в буффер нашего свайпчейна
-                _dx11DeviceContext.DrawIndexed(indexCount, 0, 0);            
+        public void Draw<T>(ViewModel<T> VM, PrimitiveTopology PTolology, bool isBlending = false) where T :struct
+        {
+            //Установка шейдеров
+            _dx11DeviceContext.VertexShader.Set(_vertexShader);
+            _dx11DeviceContext.PixelShader.Set(_pixelShader);
+            //Устанавливаем самплер текстуры для шейдера
+            _dx11DeviceContext.PixelShader.SetSampler(0, _samplerState);
+            //Задаем тип рисуемых примитивов
+            _dx11DeviceContext.InputAssembler.PrimitiveTopology = PTolology;
+            //Устанавливаем макет для входных данных видеокарты. В нем указано какие данные ожидает шейдер
+            _dx11DeviceContext.InputAssembler.InputLayout = _inputLayout;
+            //Перенос данных буферов в видеокарту
+            _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, VM.VertexBinging);
+            _dx11DeviceContext.InputAssembler.SetIndexBuffer(VM.IndexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);
+            _dx11DeviceContext.VertexShader.SetConstantBuffer(0, VM.ConstantBuffer);
+            T data = VM.ConstantBufferData;
+            _dx11DeviceContext.UpdateSubresource(ref data, VM.ConstantBuffer);
+            //Отправляем текстуру в шейдер
+            _dx11DeviceContext.PixelShader.SetShaderResource(0, _textureResourse);
+            _dx11DeviceContext.Rasterizer.State = _rasterizerState;
+            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
+            _dx11DeviceContext.OutputMerger.SetBlendState(null, null);
+            if (isBlending) _dx11DeviceContext.OutputMerger.SetBlendState(_blendState, blendFactor);
+            //Рисуем в буффер нашего свайпчейна
+            _dx11DeviceContext.DrawIndexed(VM.IndexCount, 0, 0);
         }
 
         /// <summary>

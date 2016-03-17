@@ -1,5 +1,6 @@
 ﻿using SharpDX;
 using SharpDX.Direct3D11;
+using SharpDX11GameByWinbringer.ViewModels;
 using System.Linq;
 
 namespace SharpDX11GameByWinbringer.Models
@@ -9,12 +10,12 @@ namespace SharpDX11GameByWinbringer.Models
         private Buffer _triangleVertexBuffer;
         protected V[] Verteces;
         protected uint[] Indeces;
-        public Matrix World;
-        public B ConstantBufferData;
-        public Buffer _indexBuffer;
-        public Buffer _constantBuffer;
-        public VertexBufferBinding _vertexBinging;
-        public int IndexCount { get { return Indeces.Count(); } }
+        protected Matrix World;
+        protected B ConstantBufferData;
+        protected Buffer _indexBuffer;
+        protected Buffer _constantBuffer;
+        protected VertexBufferBinding _vertexBinging;
+        protected int IndexCount { get { return Indeces.Count(); } }
         protected void CreateBuffers(Device Device)
         {
             //Создаем буфферы для видеокарты
@@ -22,6 +23,15 @@ namespace SharpDX11GameByWinbringer.Models
             _indexBuffer = Buffer.Create(Device, BindFlags.IndexBuffer, Indeces);
             _constantBuffer = new Buffer(Device, Utilities.SizeOf<B>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, Utilities.SizeOf<B>());
             _vertexBinging = new VertexBufferBinding(_triangleVertexBuffer, Utilities.SizeOf<V>(), 0);
+        }
+        public void FillViewModel( ViewModel<B> VM)
+        {           
+            VM.ConstantBufferData = ConstantBufferData;
+            VM.ConstantBuffer = _constantBuffer;
+            VM.IndexBuffer = _indexBuffer;
+            VM.IndexCount = IndexCount;
+            VM.VertexBinging = _vertexBinging;
+            VM.World = World;
         }
         public abstract void Update(Matrix world, Matrix view, Matrix proj);
 

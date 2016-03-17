@@ -128,6 +128,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Game.cs" />
+    <Compile Include="Models\3DCubeMeneger.cs" />
+    <Compile Include="Models\3DLineMaganer.cs" />
+    <Compile Include="Models\3DWaveManager.cs" />
     <Compile Include="Models\DrawableGameObject.cs" />
     <Compile Include="Models\Drawer.cs" />
     <Compile Include="Models\GameObject.cs" />
@@ -140,6 +143,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Models\TextureLoader.cs" />
+    <Compile Include="ViewModels\ViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

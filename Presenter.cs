@@ -1,4 +1,5 @@
 ﻿using SharpDX;
+using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX11GameByWinbringer.Models;
 using System;
@@ -20,12 +21,15 @@ namespace SharpDX11GameByWinbringer
         Matrix _View;
         Matrix _Progection;
         Wave _waves = null;
+        TexturedCube _cube;       
+        XYZ _XYZ;
         TextWirter _text2DWriter;
         Drawer _WavesDrawer;
         Drawer _CubeDrawer;
+        Drawer _LineDrawer;
         string _s;
         Stopwatch _sw;
-        TexturedCube _cube;
+       
         public Presenter(Game game)
         {
             _text2DWriter =
@@ -37,16 +41,15 @@ namespace SharpDX11GameByWinbringer
             game.OnUpdate += Update;
             game.Form.KeyDown += InputKeysControl;
             _World = Matrix.Identity;
-            _View = Matrix.LookAtLH(new Vector3(0, 0, 400f), new Vector3(0, 0, 0), Vector3.Up);
+            _View = Matrix.LookAtLH(new Vector3(0, 0, -400f), new Vector3(0, 0, 0), Vector3.Up);
             _Progection = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
             //Создаем "Художников" для каждого типа объектов
             InitDrawers(game);
             //Создаем объеты нашей сцены
-            _waves = new Wave(game.DeviceContext.Device);
-            _cube = new TexturedCube(game.DeviceContext.Device);
-            //Привязка событий
-            _waves.OnDraw += _WavesDrawer.Draw;
-            _cube.OnDraw += _CubeDrawer.Draw;
+            _waves = new Wave();
+            _cube = new TexturedCube();
+            _XYZ = new XYZ();
+            //Привязка событий            
             _sw = new Stopwatch();
             _sw.Start();
         }
@@ -59,12 +62,14 @@ namespace SharpDX11GameByWinbringer
             _sw.Start();
             _waves.Update(_World, _View, _Progection);
             _cube.Update(_World, _View, _Progection);
+            _XYZ.Update(_World, _View, _Progection);
         }
 
         void Draw(double time)
         {
-            _waves.Draw();
-            _cube.Draw();
+            _WavesDrawer.Draw(_waves.Verteces, _waves.ConstantBufferData, _waves.Indeces, PrimitiveTopology.TriangleList);
+            _CubeDrawer.Draw(_cube.Verteces, _cube.ConstantBufferData, _cube.Indeces, PrimitiveTopology.TriangleList);
+            _LineDrawer.Draw(_XYZ.Verteces, _XYZ.ConstantBufferData, _XYZ.Indeces, PrimitiveTopology.LineList);
             _text2DWriter.DrawText(_s);
         }
 
@@ -75,6 +80,12 @@ namespace SharpDX11GameByWinbringer
            {
                 new InputElement("POSITION", 0, SharpDX.DXGI.Format.R32G32B32_Float,0, 0),
                 new InputElement("TEXCOORD",0,SharpDX.DXGI.Format.R32G32_Float,12,0)
+           };
+
+            InputElement[] inputElements1 = new InputElement[]
+           {
+                new InputElement("POSITION", 0, SharpDX.DXGI.Format.R32G32B32_Float,0, 0),
+                new InputElement("COLOR",0,SharpDX.DXGI.Format.R32G32B32A32_Float,12,0)
            };
             //Установка Сампрелар для текстуры.
             SamplerStateDescription description = SamplerStateDescription.Default();
@@ -167,16 +178,28 @@ namespace SharpDX11GameByWinbringer
                 rasterizerStateDescription,
                 blendDescription,
                 blenF);
+            _LineDrawer = new Drawer(
+                "Shaders\\ColoredVertex.hlsl",
+                inputElements1,
+                game.DeviceContext,
+                "Textures\\grass.jpg",
+                description,
+                DStateDescripshion,
+                rasterizerStateDescription,
+                blendDescription,
+                blenF);
         }
-
+       
         private void InputKeysControl(object sender, EventArgs e)
         {
             Keys Key = ((dynamic)e).KeyCode;
             if (Key == Keys.Escape) ((SharpDX.Windows.RenderForm)sender).Close();
             if (Key == Keys.A) _View *= Matrix.RotationY(MathUtil.DegreesToRadians(1));
             if (Key == Keys.D) _View *= Matrix.RotationY(MathUtil.DegreesToRadians(-1));
-            if (Key == Keys.W) _View *= Matrix.Translation(0, 1, 0);
-            if (Key == Keys.S) _View *= Matrix.Translation(0, -1, 0);
+            if (Key == Keys.W) _View = Matrix.RotationX(MathUtil.DegreesToRadians(1))*_View;           
+            if (Key == Keys.S) _View = Matrix.RotationX(MathUtil.DegreesToRadians(-1))*_View;
+            if (Key == Keys.Q) _View *= Matrix.RotationX(MathUtil.DegreesToRadians(1));
+            if (Key == Keys.E) _View *= Matrix.RotationX(MathUtil.DegreesToRadians(-1));
         }
         #endregion
 
@@ -188,9 +211,8 @@ namespace SharpDX11GameByWinbringer
             {
                 if (disposing)
                 {
-                    // TODO: освободить управляемое состояние (управляемые объекты). 
-                    Utilities.Dispose(ref _cube);
-                    Utilities.Dispose(ref _waves);
+                    // TODO: освободить управляемое состояние (управляемые объекты).                    
+                    Utilities.Dispose(ref _LineDrawer);
                     Utilities.Dispose(ref _text2DWriter);
                     Utilities.Dispose(ref _WavesDrawer);
                     Utilities.Dispose(ref _CubeDrawer);

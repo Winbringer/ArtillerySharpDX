@@ -8,15 +8,13 @@ using SharpDX;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    class TexturedCube : DrawableGameObject<Vertex, Data>
+    class TexturedCube:GameObject<Vertex,Data>
     {        
-        Vertex[] verts;
-        uint[] textureIndices;
-        private Data _data;
         float size = 100;
-        public TexturedCube(SharpDX.Direct3D11.Device device)
+        public TexturedCube()
         {
-            textureIndices =new uint[]
+            World = Matrix.Identity;
+            Indeces = new uint[]
                 {
                 0,1,2, // передняя сторона
                 2,3,0,
@@ -37,31 +35,25 @@ namespace SharpDX11GameByWinbringer.Models
                 6,7,3,
          };
 
-            verts = new Vertex[8];
-            verts[0] = new Vertex(new Vector3(-size, size, size), new Vector2(0, 0));
-            verts[1] = new Vertex(new Vector3(size, size, size), new Vector2(1, 0));
-            verts[2] = new Vertex(new Vector3(size, -size, size), new Vector2(1, 1));
-            verts[3] = new Vertex(new Vector3(-size, -size, size), new Vector2(0, 1));
-            verts[4] = new Vertex(new Vector3(-size, size, -size), new Vector2(0, 0));
-            verts[5] = new Vertex(new Vector3(size, size, -size), new Vector2(1, 0));
-            verts[6] = new Vertex(new Vector3(size, -size, -size), new Vector2(1, 1));
-            verts[7] = new Vertex(new Vector3(-size, -size, -size), new Vector2(0, 1));
+            Verteces = new Vertex[8];
+            Verteces[0] = new Vertex(new Vector3(-size, size, size), new Vector2(0, 0));
+            Verteces[1] = new Vertex(new Vector3(size, size, size), new Vector2(1, 0));
+            Verteces[2] = new Vertex(new Vector3(size, -size, size), new Vector2(1, 1));
+            Verteces[3] = new Vertex(new Vector3(-size, -size, size), new Vector2(0, 1));
+            Verteces[4] = new Vertex(new Vector3(-size, size, -size), new Vector2(0, 0));
+            Verteces[5] = new Vertex(new Vector3(size, size, -size), new Vector2(1, 0));
+            Verteces[6] = new Vertex(new Vector3(size, -size, -size), new Vector2(1, 1));
+            Verteces[7] = new Vertex(new Vector3(-size, -size, -size), new Vector2(0, 1));
 
-            CreateBuffers(device, verts, textureIndices);           
         }
-        public override void Update(Matrix world, Matrix view, Matrix proj)
+        public override void  Update(Matrix world, Matrix view, Matrix proj)
         {
-            _data.World =Matrix.Translation(0,100,0) * world;
-            _data.View = view;
-            _data.Proj = proj;
-            _data.World.Transpose();
-            _data.View.Transpose();
-            _data.Proj.Transpose();
+            ConstantBufferData.World = World * world;
+            ConstantBufferData.View = view;
+            ConstantBufferData.Proj = proj;
+            ConstantBufferData.World.Transpose();
+            ConstantBufferData.View.Transpose();
+            ConstantBufferData.Proj.Transpose();
         }
-        public void Draw()
-        {
-            Draw(_data, textureIndices.Count(), SharpDX.Direct3D.PrimitiveTopology.TriangleList, true);
-        }
-
     }
 }

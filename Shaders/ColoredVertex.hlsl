@@ -7,27 +7,27 @@
 struct VS_IN
 {
     float3 position : POSITION;
-    float2 TextureUV : TEXCOORD;
+    float4 color : COLOR;
 };
 
 struct PS_IN
 {
     float4 position : SV_Position;
-    float2 TextureUV : TEXCOORD;   
+    float4 color : COLOR;
 };
 
 PS_IN VS(VS_IN input)
 {
     PS_IN output = (PS_IN) 0;
    
-    float4 pos = float4(input.position, (float) 1);   
+    float4 pos = float4(input.position, (float) 1);
     //Расчет позиции точки на экране
     float4 posW = mul(pos, World);
     float4 posV = mul(posW, View);
     float4 posP = mul(posV, Proj);
     //Установка выходных значений   
     output.position = posP;
-    output.TextureUV = input.TextureUV;
+    output.color = input.color;
     return output;
 }
 
@@ -41,6 +41,6 @@ SamplerState textureSampler : register(s1)
 };
 float4 PS(PS_IN input) : SV_Target
 {
-    float4 color = textureMap.Sample(textureSampler, input.TextureUV);   
+    float4 color = input.color;
     return color;
 }

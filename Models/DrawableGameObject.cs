@@ -33,7 +33,7 @@ namespace SharpDX11GameByWinbringer.Models
             //Создаем буфферы для видеокарты
             _triangleVertexBuffer = Buffer.Create<V>(Device, BindFlags.VertexBuffer, vertices);
             _indexBuffer = Buffer.Create(Device, BindFlags.IndexBuffer, indeces);
-            _constantBuffer = new Buffer(Device, Utilities.SizeOf<CB>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+            _constantBuffer = new Buffer(Device, Utilities.SizeOf<CB>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, Utilities.SizeOf<CB>());
             _vertexBinging = new VertexBufferBinding(_triangleVertexBuffer, Utilities.SizeOf<V>(), 0);
         }
 

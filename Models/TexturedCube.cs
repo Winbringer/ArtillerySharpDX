@@ -12,7 +12,8 @@ namespace SharpDX11GameByWinbringer.Models
     {        
         float size = 100;
         public TexturedCube()
-        {           
+        {
+            World = Matrix.Identity;
             Indeces = new uint[]
                 {
                 0,1,2, // передняя сторона
@@ -44,6 +45,15 @@ namespace SharpDX11GameByWinbringer.Models
             Verteces[6] = new Vertex(new Vector3(size, -size, -size), new Vector2(1, 1));
             Verteces[7] = new Vertex(new Vector3(-size, -size, -size), new Vector2(0, 1));
 
-        }       
+        }
+        public override void  Update(Matrix world, Matrix view, Matrix proj)
+        {
+            ConstantBufferData.World = World * world;
+            ConstantBufferData.View = view;
+            ConstantBufferData.Proj = proj;
+            ConstantBufferData.World.Transpose();
+            ConstantBufferData.View.Transpose();
+            ConstantBufferData.Proj.Transpose();
+        }
     }
 }

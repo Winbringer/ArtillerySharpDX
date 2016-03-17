@@ -135,7 +135,6 @@
     <Compile Include="Models\TexturedCube.cs" />
     <Compile Include="Models\TextWirter.cs" />
     <Compile Include="Models\Wave.cs" />
-    <Compile Include="Models\WavesMesh.cs" />
     <Compile Include="Models\XYZ.cs" />
     <Compile Include="Presenter.cs" />
     <Compile Include="Program.cs" />

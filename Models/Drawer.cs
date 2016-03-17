@@ -23,7 +23,6 @@ namespace SharpDX11GameByWinbringer.Models
         private SamplerState _samplerState = null;
         private DepthStencilState _DState = null;
         RawColor4? blendFactor =null;
-        //Буфферы для данных
 
         /// <summary>
         /// Конструктор

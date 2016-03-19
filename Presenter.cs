@@ -57,6 +57,7 @@ namespace SharpDX11GameByWinbringer
             _s = string.Format("LPS : {0:#####}", 1000.0f / _sw.Elapsed.TotalMilliseconds);
             _sw.Reset();
             _sw.Start();
+
             _lineManager.Update(time, _World, _View, _Progection);
             _waveManager.Update(time, _World, _View, _Progection);
             _cubeManager.Update(time, _World, _View, _Progection);

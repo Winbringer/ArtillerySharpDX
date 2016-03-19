@@ -8,13 +8,13 @@
 struct VS_IN
 {
     float3 position : POSITION;
-    float2 TextureUV : TEXCOORD;
+    float2 TextureUV : TEXCOORD0;
 };
 
 struct PS_IN
 {
     float4 position : SV_Position;
-    float2 TextureUV : TEXCOORD;
+    float2 TextureUV : TEXCOORD0;
     float height : FOG;
 };
 

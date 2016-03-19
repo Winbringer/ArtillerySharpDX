@@ -31,7 +31,6 @@ namespace SharpDX11GameByWinbringer.Models
             VM.IndexBuffer = _indexBuffer;
             VM.IndexCount = IndexCount;
             VM.VertexBinging = _vertexBinging;
-            VM.World = World;
         }
         public abstract void Update(Matrix world, Matrix view, Matrix proj);
 

@@ -89,7 +89,7 @@ namespace SharpDX11GameByWinbringer
                         _renderForm.ClientSize.Height,
                          new Rational(60, 1),
                          Format.R8G8B8A8_UNorm),
-                     SampleDescription = new SampleDescription(1, 0),
+                     SampleDescription = new SampleDescription(4, 0),
                      Usage = Usage.BackBuffer | Usage.RenderTargetOutput,
                      BufferCount = 2,
                      OutputHandle = _renderForm.Handle,

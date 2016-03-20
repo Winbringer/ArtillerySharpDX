@@ -56,7 +56,7 @@ namespace SharpDX11GameByWinbringer.Models
         {
             ConstantBufferData.WVP = World * world * view * proj;
             ConstantBufferData.WVP.Transpose();
-            ConstantBufferData.Time = new Vector4(System.Environment.TickCount);
+            ConstantBufferData.Time = System.Environment.TickCount;
         }       
     }
 }

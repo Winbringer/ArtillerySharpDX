@@ -1,7 +1,7 @@
 ﻿cbuffer data : register(b0)
 {
-    float4x4 WVP;   
     float Time;
+    float4x4 WVP;
 };
 struct VS_IN
 {
@@ -18,14 +18,14 @@ struct PS_IN
 
 PS_IN VS(VS_IN input)
 {
-    PS_IN output = (PS_IN) 0;   
+    PS_IN output = (PS_IN) 0;
     //Расчет высоты точки
-    float height = (sin(Time / 1000 + input.position.z/2) + sin(Time / 2000 + input.position.x / 4))/2 ;
-    input.position.y = height*2;
-    height = (height + (float) 1) / (float) 2;    
+    float height = (sin(Time / 1000 + input.position.z / 2) + sin(Time / 2000 + input.position.x / 4)) / 2;
+    input.position.y = height * 2;
+    height = (height + (float) 1) / (float) 2;
     height = lerp(0.5, 1.0F, height);
     output.position = mul(input.position, WVP);
-    output.height = height;   
+    output.height = height;
     output.TextureUV = input.TextureUV;
     return output;
 }

@@ -1,44 +1,64 @@
-﻿using System;
+﻿using SharpDX.Direct3D11;
+using SharpDX.Mathematics.Interop;
+
+using Format = SharpDX.DXGI.Format;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using SharpDX;
 using SharpDX.Direct3D;
-using SharpDX.Direct3D11;
-using SharpDX.Mathematics.Interop;
-using SharpDX11GameByWinbringer.Models;
 
-
-namespace SharpDX11GameByWinbringer
+namespace SharpDX11GameByWinbringer.Models
 {
-    sealed class Triangle : Component<ColoredVertex,Data>
+    class ShadedCube : Component<VertexN, PerObject>
     {
-        public Triangle(DeviceContext dc)
+        Buffer _perFrameBuffer;
+
+        public ShadedCube(DeviceContext dc)
         {
             World = Matrix.Identity;
             _dx11DeviceContext = dc;
             CreateVertexAndIndeces();
             CreateBuffers();
+            _perFrameBuffer = new Buffer(_dx11DeviceContext.Device, Utilities.SizeOf<PerFrame>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
             CreateState();
         }
 
-        public void DrawTriangle(PrimitiveTopology PrimitiveTopology, bool isBlending =false, RawColor4? BlendFactor = null)
+        public void Draw(PrimitiveTopology PrimitiveTopology, bool isBlending = false, RawColor4? BlendFactor = null)
         {
             PreDraw(PrimitiveTopology, isBlending, BlendFactor);
+            _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _perFrameBuffer);            
+            _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _perFrameBuffer); 
             Draw();
         }
 
         public override void UpdateConsBufData(Matrix world, Matrix view, Matrix proj)
         {
-            _constantBufferData.WVP = World * world * view * proj;
-            _constantBufferData.WVP.Transpose();
-            _dx11DeviceContext.UpdateSubresource(ref _constantBufferData, _constantBuffer);
+            // Extract camera position from view matrix 
+            var camPosition = Matrix.Transpose(Matrix.Invert(view)).Column4;
+            // Update the per frame constant buffer
+            var perFrame = new PerFrame();
+            perFrame.CameraPosition = new Vector3(camPosition.X, camPosition.Y, camPosition.Z);
+            var perObject = new PerObject();
+            perObject.World = World * world;
+            perObject.WorldInverseTranspose = Matrix.Transpose(Matrix.Invert(perObject.World));
+            perObject.WorldViewProjection = perObject.World * view *proj;
+            perObject.Transpose();
+
+            _dx11DeviceContext.UpdateSubresource(ref perObject, _constantBuffer);
+            _dx11DeviceContext.UpdateSubresource(ref perFrame, _perFrameBuffer);
         }
 
         protected override void CreateState()
         {
             InputElement[] inputElements = new InputElement[]
-          {
-                new InputElement("POSITION", 0, SharpDX.DXGI.Format.R32G32B32_Float,0, 0),
-                new InputElement("COLOR",0,SharpDX.DXGI.Format.R32G32B32A32_Float,12,0)
-          };
+         {
+             new InputElement("SV_Position",0,Format.R32G32B32_Float,0,0),
+             new InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
+             new InputElement("COLOR", 0, Format.R8G8B8A8_UNorm, 24, 0),
+             new InputElement("TEXCOORD", 0, Format.R32G32_Float,28, 0)
+         };
             //Установка Сампрелар для текстуры.
             SamplerStateDescription description = SamplerStateDescription.Default();
             description.Filter = Filter.MinMagMipLinear;
@@ -111,7 +131,7 @@ namespace SharpDX11GameByWinbringer
             blendDescription.IndependentBlendEnable = new RawBool(true);
             //  blendDescription.RenderTarget[0] = targetBlendDescription;
 
-            InitDrawer("Shaders\\ColoredVertex.hlsl",
+            InitDrawer("Shaders\\ShadedCube.hlsl",
                inputElements,
                 "Textures\\grass.jpg",
                 description,
@@ -123,15 +143,33 @@ namespace SharpDX11GameByWinbringer
 
         protected override void CreateVertexAndIndeces()
         {
-            _verteces = new ColoredVertex[]
+            float size = 100;
+            _verteces = new VertexN[]
             {
-               new ColoredVertex(new Vector3(-100,0,0), new Vector4(1,0,0,0.5f)),
-               new ColoredVertex(new Vector3(0,100,0), new Vector4(0,1,0,0.5f)),
-               new ColoredVertex(new Vector3(100,0,0), new Vector4(0,0,1,0.5f))
-           };
+                new VertexN(new Vector3(-size, size, -size), new Vector2(0,0)), // 0-Top-left 
+                new VertexN(new Vector3(size, size, -size), new Vector2(0,1)), // 1-Top-right 
+                new VertexN(new Vector3(size, -size, -size), new Vector2(1,1)), // 2-Base-right 
+                new VertexN(new Vector3(-size, -size, -size), new Vector2(1,0)), // 3-Base-left
+                new VertexN(new Vector3(-size, size, size), new Vector2(0,0)), // 4-Topleft
+                new VertexN(new Vector3(size, size, size), new Vector2(0,1)), // 5-Top-right
+                new VertexN(new Vector3(size, -size, size), new Vector2(1,1)), // 6-Base-right
+                new VertexN(new Vector3(-size, -size, size), new Vector2(1,0)), // 7-Base-left 
+            };
+
             _indeces = new uint[]
             {
-                0,1,2
+                0, 1, 2, // Front A  
+                0, 2, 3, // Front B   
+                1, 5, 6, // Right A  
+                1, 6, 2, // Right B  
+                1, 0, 4, // Top A
+                1, 4, 5, // Top B 
+                5, 4, 7, // Back A 
+                5, 7, 6, // Back B 
+                4, 0, 3, // Left A  
+                4, 3, 7, // Left B  
+                3, 2, 6, // Bottom A
+                3, 6, 7, // Bottom B 
             };
         }
     }

@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace SharpDX11GameByWinbringer
 {
-    public abstract class Component<V>:System.IDisposable where V : struct
+    public abstract class Component<V,B>:System.IDisposable where V : struct where B:struct
     {
         // .............................................///
         protected DeviceContext _dx11DeviceContext;
@@ -25,9 +25,9 @@ namespace SharpDX11GameByWinbringer
         protected V[] _verteces;
         protected uint[] _indeces;
         private Matrix _world;
-        private Data _constantBufferData;
+        protected B _constantBufferData;
         private Buffer _indexBuffer;
-        private Buffer _constantBuffer;
+        protected Buffer _constantBuffer;
         private Buffer _triangleVertexBuffer;
         private VertexBufferBinding _vertexBinging;
         //.................................................//
@@ -59,7 +59,7 @@ namespace SharpDX11GameByWinbringer
             //Создаем буфферы для видеокарты
             _triangleVertexBuffer = Buffer.Create<V>(_dx11DeviceContext.Device, BindFlags.VertexBuffer, _verteces);
             _indexBuffer = Buffer.Create(_dx11DeviceContext.Device, BindFlags.IndexBuffer, _indeces);
-            _constantBuffer = new Buffer(_dx11DeviceContext.Device, Utilities.SizeOf<Data>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, Utilities.SizeOf<Data>());
+            _constantBuffer = new Buffer(_dx11DeviceContext.Device, Utilities.SizeOf<B>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
             _vertexBinging = new VertexBufferBinding(_triangleVertexBuffer, Utilities.SizeOf<V>(), 0);
         }
 
@@ -99,12 +99,7 @@ namespace SharpDX11GameByWinbringer
             _blendState = new BlendState(_dx11DeviceContext.Device, blendDescription);
         }
 
-        public void UpdateConsBufData(Matrix world, Matrix view, Matrix proj)
-        {
-            _constantBufferData.WVP=_world*world* view* proj;
-            _constantBufferData.WVP.Transpose();
-            _dx11DeviceContext.UpdateSubresource(ref _constantBufferData, _constantBuffer);
-        }
+        public abstract void UpdateConsBufData(Matrix world, Matrix view, Matrix proj);       
 
         protected void PreDraw(SharpDX.Direct3D.PrimitiveTopology PTolology, bool isBlending = false, RawColor4? blendFactor = null)
         {

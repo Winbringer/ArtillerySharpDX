@@ -72,7 +72,7 @@ namespace SharpDX11GameByWinbringer
             _waveManager.Draw();
             _lineManager.Draw();
             _cubeManager.Draw();
-            _triangle.DrawTriangle(PrimitiveTopology.TriangleList,true, new SharpDX.Mathematics.Interop.RawColor4(0.5f, 0.5f, 0.5f, 0.5f));            
+            _triangle.DrawTriangle(PrimitiveTopology.TriangleList, true, new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));            
             _text2DWriter.DrawText(_s);
         }
 

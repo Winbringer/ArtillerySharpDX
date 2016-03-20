@@ -89,18 +89,19 @@ namespace SharpDX11GameByWinbringer
             #endregion
             RenderTargetBlendDescription targetBlendDescription = new RenderTargetBlendDescription()
             {
-                IsBlendEnabled = new SharpDX.Mathematics.Interop.RawBool(true),
+                IsBlendEnabled = new RawBool(true),
                 SourceBlend = BlendOption.SourceColor,
                 DestinationBlend = BlendOption.BlendFactor,
                 BlendOperation = BlendOperation.Add,
-                SourceAlphaBlend = BlendOption.One,
-                DestinationAlphaBlend = BlendOption.Zero,
+                SourceAlphaBlend = BlendOption.SourceAlpha,
+                DestinationAlphaBlend = BlendOption.DestinationAlpha,
                 AlphaBlendOperation = BlendOperation.Add,
                 RenderTargetWriteMask = ColorWriteMaskFlags.All
             };
             BlendStateDescription blendDescription = BlendStateDescription.Default();
-            blendDescription.AlphaToCoverageEnable = new SharpDX.Mathematics.Interop.RawBool(false);
-            blendDescription.RenderTarget[0] = targetBlendDescription;
+            blendDescription.AlphaToCoverageEnable = new RawBool(true);
+            blendDescription.IndependentBlendEnable = new RawBool(true);
+            //  blendDescription.RenderTarget[0] = targetBlendDescription;
 
             InitDrawer("Shaders\\ColoredVertex.hlsl",
                inputElements,

@@ -11,9 +11,9 @@ namespace SharpDX11GameByWinbringer.Models
             Verteces = new ColoredVertex[]
             {
                 new ColoredVertex(new Vector3(0,0,0) ,new Vector4(1,1,1,1)),
-                new ColoredVertex(new Vector3(500, 0, 0), new Vector4(1, 0, 0, 1)),
-                new ColoredVertex(new Vector3(0, 500, 0), new Vector4(0, 1, 0, 1)),
-                new ColoredVertex(new Vector3(0, 0, 500), new Vector4(0, 0, 1, 1))
+                new ColoredVertex(new Vector3(400, 0, 0), new Vector4(1, 0, 0, 1)),
+                new ColoredVertex(new Vector3(0, 400, 0), new Vector4(0, 1, 0, 1)),
+                new ColoredVertex(new Vector3(0, 0, 400), new Vector4(0, 0, 1, 1))
             };
             Indeces = new uint[]
                 {

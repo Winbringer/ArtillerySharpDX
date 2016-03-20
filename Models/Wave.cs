@@ -6,7 +6,7 @@ namespace SharpDX11GameByWinbringer.Models
     class Wave:GameObject<Vertex,DataT>
     {   
         private readonly float _size = 500F;
-        readonly int _N = 500;
+        readonly int _N = 1000;
         public Wave(Device device)
         {
             World = Matrix.Translation(-_size / 2, 0, _size / 2) * Matrix.RotationY(MathUtil.PiOverFour);

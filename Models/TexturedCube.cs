@@ -9,9 +9,9 @@ using SharpDX.Direct3D11;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    class TexturedCube:GameObject<Vertex,Data>
-    {        
-        float size = 100;
+    class TexturedCube : GameObject<Vertex, Data>
+    {
+        float size = 10;
         public TexturedCube(Device device)
         {
             World = Matrix.Identity;
@@ -41,13 +41,13 @@ namespace SharpDX11GameByWinbringer.Models
             Verteces[1] = new Vertex(new Vector3(size, size, size), new Vector2(1, 0));
             Verteces[2] = new Vertex(new Vector3(size, -size, size), new Vector2(1, 1));
             Verteces[3] = new Vertex(new Vector3(-size, -size, size), new Vector2(0, 1));
-            Verteces[4] = new Vertex(new Vector3(-size, size, -size), new Vector2(1, 1));
-            Verteces[5] = new Vertex(new Vector3(size, size, -size), new Vector2(2, 1));
-            Verteces[6] = new Vertex(new Vector3(size, -size, -size), new Vector2(2, 2));
-            Verteces[7] = new Vertex(new Vector3(-size, -size, -size), new Vector2(1, 2));
+            Verteces[4] = new Vertex(new Vector3(-size, size, -size), new Vector2(0, 1));
+            Verteces[5] = new Vertex(new Vector3(size, size, -size), new Vector2(1, 1));
+            Verteces[6] = new Vertex(new Vector3(size, -size, -size), new Vector2(1, 1));
+            Verteces[7] = new Vertex(new Vector3(-size, -size, -size), new Vector2(0, 1));
             CreateBuffers(device);
         }
-        public override void  Update(Matrix world, Matrix view, Matrix proj)
+        public override void Update(Matrix world, Matrix view, Matrix proj)
         {
             ConstantBufferData.World = World * world;
             ConstantBufferData.View = view;

@@ -53,8 +53,7 @@ namespace SharpDX11GameByWinbringer
                     // TODO: освободить управляемое состояние (управляемые объекты).                  
                     Utilities.Dispose(ref _presenter);                                
                     Utilities.Dispose(ref _renderView);
-                    Utilities.Dispose(ref _swapChain);
-                    Utilities.Dispose(ref _renderForm);
+                    Utilities.Dispose(ref _swapChain);                    
                     Utilities.Dispose(ref _factory);
                     Utilities.Dispose(ref _depthView);                   
                     Utilities.Dispose(ref _dx11Device);

@@ -36,6 +36,7 @@ namespace SharpDX11GameByWinbringer.Models
 
         public void Dispose()
         {
+            _vertexBinging.Buffer.Dispose();
             Utilities.Dispose(ref _triangleVertexBuffer);
             Utilities.Dispose(ref _indexBuffer);
             Utilities.Dispose(ref _constantBuffer);

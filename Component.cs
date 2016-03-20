@@ -32,6 +32,7 @@ namespace SharpDX11GameByWinbringer
         private VertexBufferBinding _vertexBinging;
         //.................................................//
         public Matrix World { get { return _world; } set { _world = value; } }
+
         public void Dispose()
         {
             _vertexBinging.Buffer.Dispose();
@@ -50,7 +51,9 @@ namespace SharpDX11GameByWinbringer
         }
 
         protected abstract void CreateVertexAndIndeces();
+
         protected abstract void CreateState();
+
         protected void CreateBuffers()
         {
             //Создаем буфферы для видеокарты
@@ -59,6 +62,7 @@ namespace SharpDX11GameByWinbringer
             _constantBuffer = new Buffer(_dx11DeviceContext.Device, Utilities.SizeOf<Data>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, Utilities.SizeOf<Data>());
             _vertexBinging = new VertexBufferBinding(_triangleVertexBuffer, Utilities.SizeOf<V>(), 0);
         }
+
         protected void InitDrawer( string shadersFile,
             InputElement[] inputElements,
             string texture,
@@ -105,7 +109,7 @@ namespace SharpDX11GameByWinbringer
             _constantBufferData.Proj.Transpose();
         }
 
-        public void Draw(SharpDX.Direct3D.PrimitiveTopology PTolology, bool isBlending = false, RawColor4? blendFactor = null)
+        protected void PreDraw(SharpDX.Direct3D.PrimitiveTopology PTolology, bool isBlending = false, RawColor4? blendFactor = null)
         {
             //Установка шейдеров
             _dx11DeviceContext.VertexShader.Set(_vertexShader);
@@ -126,12 +130,16 @@ namespace SharpDX11GameByWinbringer
             _dx11DeviceContext.Rasterizer.State = _rasterizerState;
             _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
             _dx11DeviceContext.OutputMerger.SetBlendState(null, null);
-            if (isBlending) _dx11DeviceContext.OutputMerger.SetBlendState(_blendState, blendFactor);
+            if (isBlending) _dx11DeviceContext.OutputMerger.SetBlendState(_blendState, blendFactor);           
+        }
+
+        protected void Draw()
+        {
             //Рисуем в буффер нашего свайпчейна
             _dx11DeviceContext.DrawIndexed(_indeces.Count(), 0, 0);
         }
 
-        protected ShaderResourceView CreateTextureFromFile(string filename)
+        private ShaderResourceView CreateTextureFromFile(string filename)
         {
             ShaderResourceView SRV;
             using (System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(filename))

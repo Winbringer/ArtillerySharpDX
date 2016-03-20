@@ -1,11 +1,9 @@
 ﻿using SharpDX;
+using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
+using SharpDX.Mathematics.Interop;
 using SharpDX11GameByWinbringer.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace SharpDX11GameByWinbringer
 {
@@ -19,6 +17,13 @@ namespace SharpDX11GameByWinbringer
             CreateBuffers();
             CreateState();
         }
+
+        public void DrawTriangle(PrimitiveTopology PrimitiveTopology, bool isBlending =false, RawColor4? BlendFactor = null)
+        {
+            PreDraw(PrimitiveTopology, isBlending, BlendFactor);
+            Draw();
+        }
+
         protected override void CreateState()
         {
             InputElement[] inputElements = new InputElement[]
@@ -106,6 +111,7 @@ namespace SharpDX11GameByWinbringer
                 blendDescription
                );
         }
+
         protected override void CreateVertexAndIndeces()
         {
             _verteces = new ColoredVertex[]

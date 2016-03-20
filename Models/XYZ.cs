@@ -4,7 +4,7 @@ using SharpDX.Direct3D11;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    class XYZ : GameObject<ColoredVertex, Data>
+    sealed class XYZ : GameObject<ColoredVertex, Data>
     {
         public XYZ(Device device)
         {
@@ -26,12 +26,8 @@ namespace SharpDX11GameByWinbringer.Models
 
         public override void Update(Matrix World, Matrix View, Matrix Proj)
         {
-            ConstantBufferData.World = Matrix.Identity;
-            ConstantBufferData.View = View;
-            ConstantBufferData.Proj = Proj;
-            ConstantBufferData.World.Transpose();
-            ConstantBufferData.View.Transpose();
-            ConstantBufferData.Proj.Transpose();
+            ConstantBufferData.WVP = Matrix.Identity * World * View * Proj;
+            ConstantBufferData.WVP.Transpose();
         }
     }
 }

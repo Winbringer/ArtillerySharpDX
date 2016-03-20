@@ -3,24 +3,18 @@ using System.Runtime.InteropServices;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    [StructLayout(LayoutKind.Explicit, Size = (64 * 3) + 16)]
+    [StructLayout(LayoutKind.Sequential,Pack =1)]
   public  struct DataT
     {
-        [FieldOffset(0)]
-        public Matrix World;
-        [FieldOffset(sizeof(float)*4*4)]
-        public Matrix View;
-        [FieldOffset((sizeof(float) * 4 * 4)*2)]
-        public Matrix Proj;
-        [FieldOffset((sizeof(float) * 4 * 4) * 3)]
+        
+        public Matrix WVP;        
         public Vector4 Time;           
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential,Pack =1)]
   public  struct Data
-    {   public Matrix World;
-        public Matrix View;
-        public Matrix Proj;        
+    {
+        public Matrix WVP;              
     }
 
     [StructLayout(LayoutKind.Sequential)]

@@ -6,7 +6,7 @@ using System;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-   public class _3DCubeMeneger:IDisposable
+   public sealed class _3DCubeMeneger:IDisposable
     {
         Drawer _CubeDrawer;
         ViewModel<Data> _cubeVM = new ViewModel<Data>();
@@ -99,7 +99,7 @@ namespace SharpDX11GameByWinbringer.Models
                "Shaders\\CubeShader.hlsl",
                inputElements,
                DeviceContext,
-               "Textures\\grass.jpg",
+               "Textures\\brick.jpg",
                description,
                DStateDescripshion,
                rasterizerStateDescription,

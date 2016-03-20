@@ -9,7 +9,7 @@ using SharpDX.Direct3D11;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    class TexturedCube : GameObject<Vertex, Data>
+    sealed class TexturedCube : GameObject<Vertex, Data>
     {
         float size = 10;
         public TexturedCube(Device device)
@@ -49,12 +49,8 @@ namespace SharpDX11GameByWinbringer.Models
         }
         public override void Update(Matrix world, Matrix view, Matrix proj)
         {
-            ConstantBufferData.World = World * world;
-            ConstantBufferData.View = view;
-            ConstantBufferData.Proj = proj;
-            ConstantBufferData.World.Transpose();
-            ConstantBufferData.View.Transpose();
-            ConstantBufferData.Proj.Transpose();
+            ConstantBufferData.WVP = World * world * view * proj;
+            ConstantBufferData.WVP.Transpose();
         }
     }
 }

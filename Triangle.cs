@@ -7,7 +7,7 @@ using SharpDX11GameByWinbringer.Models;
 
 namespace SharpDX11GameByWinbringer
 {
-    class Triangle : Component<ColoredVertex>
+    sealed class Triangle : Component<ColoredVertex>
     {
         public Triangle(DeviceContext dc)
         {

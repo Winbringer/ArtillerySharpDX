@@ -101,12 +101,9 @@ namespace SharpDX11GameByWinbringer
 
         public void UpdateConsBufData(Matrix world, Matrix view, Matrix proj)
         {
-            _constantBufferData.World =_world*world;
-            _constantBufferData.View = view;
-            _constantBufferData.Proj = proj;
-            _constantBufferData.World.Transpose();
-            _constantBufferData.View.Transpose();
-            _constantBufferData.Proj.Transpose();
+            _constantBufferData.WVP=_world*world* view* proj;
+            _constantBufferData.WVP.Transpose();
+            _dx11DeviceContext.UpdateSubresource(ref _constantBufferData, _constantBuffer);
         }
 
         protected void PreDraw(SharpDX.Direct3D.PrimitiveTopology PTolology, bool isBlending = false, RawColor4? blendFactor = null)
@@ -123,8 +120,7 @@ namespace SharpDX11GameByWinbringer
             //Перенос данных буферов в видеокарту
             _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, _vertexBinging);
             _dx11DeviceContext.InputAssembler.SetIndexBuffer(_indexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);
-            _dx11DeviceContext.VertexShader.SetConstantBuffer(0, _constantBuffer);
-            _dx11DeviceContext.UpdateSubresource(ref _constantBufferData, _constantBuffer);
+            _dx11DeviceContext.VertexShader.SetConstantBuffer(0, _constantBuffer);            
             //Отправляем текстуру в шейдер
             _dx11DeviceContext.PixelShader.SetShaderResource(0, _textureResourse);
             _dx11DeviceContext.Rasterizer.State = _rasterizerState;

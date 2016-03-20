@@ -15,9 +15,11 @@ namespace SharpDX11GameByWinbringer.Models
         protected Buffer _indexBuffer;
         protected Buffer _constantBuffer;
         protected VertexBufferBinding _vertexBinging;
+        Device _device;
         protected int IndexCount { get { return Indeces.Count(); } }
         protected void CreateBuffers(Device Device)
         {
+            _device = Device;
             //Создаем буфферы для видеокарты
             _triangleVertexBuffer = Buffer.Create<V>(Device, BindFlags.VertexBuffer, Verteces);
             _indexBuffer = Buffer.Create(Device, BindFlags.IndexBuffer, Indeces);
@@ -25,8 +27,8 @@ namespace SharpDX11GameByWinbringer.Models
             _vertexBinging = new VertexBufferBinding(_triangleVertexBuffer, Utilities.SizeOf<V>(), 0);
         }
         public void FillViewModel( ViewModel<B> VM)
-        {           
-            VM.ConstantBufferData = ConstantBufferData;
+        {
+            _device.ImmediateContext.UpdateSubresource(ref ConstantBufferData, _constantBuffer);    
             VM.ConstantBuffer = _constantBuffer;
             VM.IndexBuffer = _indexBuffer;
             VM.IndexCount = IndexCount;

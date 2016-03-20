@@ -12,7 +12,7 @@ namespace SharpDX11GameByWinbringer.Models
     /// <summary>
     /// Рисует текст и 2Д объекты на экран.
     /// </summary>
-    public  class TextWirter : System.IDisposable
+    public sealed class TextWirter : System.IDisposable
     {
         private Factory _Factory2D;
         private SharpDX.DirectWrite.Factory _FactoryDWrite;

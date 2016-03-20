@@ -3,7 +3,7 @@ using SharpDX.Direct3D11;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    class Wave:GameObject<Vertex,DataT>
+    sealed class Wave:GameObject<Vertex,DataT>
     {   
         private readonly float _size = 500F;
         readonly int _N = 1000;
@@ -53,13 +53,9 @@ namespace SharpDX11GameByWinbringer.Models
         }
 
         public override  void Update(Matrix world, Matrix view, Matrix proj)
-        {          
-            ConstantBufferData.World =World * world;
-            ConstantBufferData.View = view;
-            ConstantBufferData.Proj = proj;
-            ConstantBufferData.World.Transpose();
-            ConstantBufferData.View.Transpose();
-            ConstantBufferData.Proj.Transpose();
+        {
+            ConstantBufferData.WVP = World * world * view * proj;
+            ConstantBufferData.WVP.Transpose();
             ConstantBufferData.Time = new Vector4(System.Environment.TickCount);
         }       
     }

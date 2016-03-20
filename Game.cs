@@ -7,7 +7,7 @@ namespace SharpDX11GameByWinbringer
     /// <summary>
     /// Основной класс игры. Наша Вьюшка. Отвечает за инициализацию графики и игровой цкил отображения данных на экран.
     /// </summary>
-    public class Game : System.IDisposable
+    public sealed class Game : System.IDisposable
     {
         //События
         public delegate void UpdateDraw(double t);
@@ -44,7 +44,7 @@ namespace SharpDX11GameByWinbringer
 
         #region IDisposable Support
         private bool disposedValue = false;
-        protected virtual void Dispose(bool disposing)
+        void Dispose(bool disposing)
         {
             if (!disposedValue)
             {

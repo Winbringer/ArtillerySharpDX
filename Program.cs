@@ -5,7 +5,7 @@ using System.Drawing;
 namespace SharpDX11GameByWinbringer
 {
 
-    class Program
+    sealed class Program
     {
         [System.STAThread]
         static void Main(string[] args)

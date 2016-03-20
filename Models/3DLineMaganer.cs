@@ -10,11 +10,12 @@ using System.Threading.Tasks;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    class _3DLineMaganer: IDisposable
+    sealed class _3DLineMaganer: IDisposable
     {
         Drawer _CubeDrawer;
         ViewModel<Data> _cubeVM = new ViewModel<Data>();
         XYZ _cube;
+        
         public _3DLineMaganer(DeviceContext DeviceContext)
         {
             InputElement[] inputElements = new InputElement[]

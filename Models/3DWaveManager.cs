@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    class _3DWaveManager: IDisposable
+    sealed class _3DWaveManager: IDisposable
     {
         Drawer _CubeDrawer;
         ViewModel<DataT> _cubeVM = new ViewModel<DataT>();

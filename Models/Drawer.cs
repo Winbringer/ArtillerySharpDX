@@ -10,7 +10,7 @@ namespace SharpDX11GameByWinbringer.Models
     /// <summary>
     /// Рисует 3D примитивы на экране
     /// </summary>   
-    public class Drawer : System.IDisposable
+    public sealed class Drawer : System.IDisposable
     {
         private DeviceContext _dx11DeviceContext;
         private VertexShader _vertexShader;
@@ -98,9 +98,7 @@ namespace SharpDX11GameByWinbringer.Models
             //Перенос данных буферов в видеокарту
             _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, VM.VertexBinging);
             _dx11DeviceContext.InputAssembler.SetIndexBuffer(VM.IndexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);
-            _dx11DeviceContext.VertexShader.SetConstantBuffer(0, VM.ConstantBuffer);
-            T data = VM.ConstantBufferData;
-            _dx11DeviceContext.UpdateSubresource(ref data, VM.ConstantBuffer);
+            _dx11DeviceContext.VertexShader.SetConstantBuffer(0, VM.ConstantBuffer);           
             //Отправляем текстуру в шейдер
             _dx11DeviceContext.PixelShader.SetShaderResource(0, _textureResourse);
             _dx11DeviceContext.Rasterizer.State = _rasterizerState;
@@ -148,7 +146,7 @@ namespace SharpDX11GameByWinbringer.Models
 
         #region IDisposable Support
         private bool disposedValue = false;
-        protected virtual void Dispose(bool disposing)
+         void Dispose(bool disposing)
         {
             if (!disposedValue)
             {

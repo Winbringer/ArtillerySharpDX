@@ -16,7 +16,7 @@ namespace SharpDX11GameByWinbringer
     /// <summary>
     /// Наш презентер. Отвечает за работу с моделями и расчеты.
     /// </summary>
-    public class Presenter : IDisposable
+    public sealed class Presenter : IDisposable
     {
         Matrix _World;
         Matrix _View;
@@ -63,6 +63,7 @@ namespace SharpDX11GameByWinbringer
             _lineManager.Update(time, _World, _View, _Progection);
             _waveManager.Update(time, _World, _View, _Progection);
             _cubeManager.Update(time, _World, _View, _Progection);
+            _triangle.World = Matrix.RotationY(MathUtil.PiOverFour) * Matrix.Translation(0, -50, 0);
             _triangle.UpdateConsBufData(_World, _View, _Progection);
         }
 
@@ -80,18 +81,20 @@ namespace SharpDX11GameByWinbringer
         {
             Keys Key = ((dynamic)e).KeyCode;
             if (Key == Keys.Escape) ((SharpDX.Windows.RenderForm)sender).Close();
-            if (Key == Keys.A) _View *= Matrix.RotationY(MathUtil.DegreesToRadians(1));
-            if (Key == Keys.D) _View *= Matrix.RotationY(MathUtil.DegreesToRadians(-1));
-            if (Key == Keys.W) _View = Matrix.RotationX(MathUtil.DegreesToRadians(1)) * _View;
-            if (Key == Keys.S) _View = Matrix.RotationX(MathUtil.DegreesToRadians(-1)) * _View;
-            if (Key == Keys.Q) _View *= Matrix.RotationX(MathUtil.DegreesToRadians(1));
-            if (Key == Keys.E) _View *= Matrix.RotationX(MathUtil.DegreesToRadians(-1));
+            if (Key == Keys.A) _View *= Matrix.Translation(1,0,0);
+            if (Key == Keys.D) _View *= Matrix.Translation(-1, 0, 0);
+            if (Key == Keys.W) _View *= Matrix.Translation(0, 0, -1);
+            if (Key == Keys.S) _View *= Matrix.Translation(0, 0, 1);
+            if (Key == Keys.Q) _View *= Matrix.RotationY(0.01f);
+            if (Key == Keys.E) _View *= Matrix.RotationY(-0.01f);
+            if (Key == Keys.Z) _View *= Matrix.Translation(0, -1, 0);
+            if (Key == Keys.X) _View *= Matrix.Translation(0, 1,0);
         }
         #endregion
 
         #region IDisposable Support
         private bool disposedValue = false;
-        protected virtual void Dispose(bool disposing)
+         void Dispose(bool disposing)
         {
             if (!disposedValue)
             {

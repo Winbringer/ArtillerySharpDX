@@ -31,9 +31,10 @@ namespace SharpDX11GameByWinbringer
         private Buffer _triangleVertexBuffer;
         private VertexBufferBinding _vertexBinging;
         //.................................................//
+
         public Matrix World { get { return _world; } set { _world = value; } }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             _vertexBinging.Buffer.Dispose();
             _vertexBinging = new VertexBufferBinding();

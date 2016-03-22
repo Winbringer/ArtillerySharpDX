@@ -10,10 +10,28 @@
     float4x4 WorldInverseTranspose;
 }; 
 
+struct DirectionalLight
+{
+    float4 Color;
+    float3 Direction;
+};
+
 cbuffer PerFrame : register(b1)
 {
+    DirectionalLight Light;
     float3 CameraPosition;
 }; 
+
+cbuffer PerMaterial : register(b2)
+{
+    float4 MaterialAmbient;
+    float4 MaterialDiffuse;
+    float4 MaterialSpecular;
+    float MaterialSpecularPower;
+    bool HasTexture;
+    float4 MaterialEmissive;
+    float4 UVTransform;
+};
 
 struct VertexShaderInput
 {
@@ -38,14 +56,18 @@ struct PixelShaderInput
 PixelShaderInput VS(VertexShaderInput vertex)
 {
     PixelShaderInput result = (PixelShaderInput) 0;
+
+    result.Diffuse = vertex.Color * MaterialDiffuse;
+    result.TextureUV = mul(float4(vertex.TextureUV.x, vertex.TextureUV.y, 0, 1), (float4x2) UVTransform).xy;
+
     // Apply WVP matrix transformation 
-    result.Position = mul(vertex.Position, WorldViewProjection);
-    result.Diffuse = vertex.Color;
+    result.Position = mul(vertex.Position, WorldViewProjection);   
     result.TextureUV = vertex.TextureUV;
     // transform normal to world space   
     result.WorldNormal = mul(vertex.Normal, (float3x3) WorldInverseTranspose);
     // transform input position to world   
     result.WorldPosition = mul(vertex.Position, World).xyz;
+
     return result;
 }
 

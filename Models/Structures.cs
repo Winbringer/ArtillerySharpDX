@@ -4,9 +4,32 @@ using System.Runtime.InteropServices;
 namespace SharpDX11GameByWinbringer.Models
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct PerMaterial
+    {
+        public Color4 Ambient;
+        public Color4 Diffuse;
+        public Color4 Specular;
+        public float SpecularPower;
+        /// <summary>
+        /// Has texture 0 false, 1 true
+        /// </summary>
+        public uint HasTexture; 
+        Vector2 _padding0;
+        public Color4 Emissive;
+        public Matrix UVTransform; // Support UV transforms 
+    } 
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct DirectionalLight
+    {
+        public SharpDX.Color4 Color;
+        public SharpDX.Vector3 Direction;
+        float _padding0;
+    }
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PerFrame
     {
-        public SharpDX.Vector3 CameraPosition;
+        public DirectionalLight Light;
+        public Vector3 CameraPosition;
         float _padding0;
     }
 

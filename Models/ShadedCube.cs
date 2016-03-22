@@ -14,7 +14,7 @@ namespace SharpDX11GameByWinbringer.Models
     class ShadedCube : Component<VertexN, PerObject>
     {
         Buffer _perFrameBuffer;
-
+        Buffer _perMaterialBuffer;
         public ShadedCube(DeviceContext dc)
         {
             World = Matrix.Identity;
@@ -22,6 +22,7 @@ namespace SharpDX11GameByWinbringer.Models
             CreateVertexAndIndeces();
             CreateBuffers();
             _perFrameBuffer = new Buffer(_dx11DeviceContext.Device, Utilities.SizeOf<PerFrame>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+            _perMaterialBuffer = new Buffer(_dx11DeviceContext.Device, Utilities.SizeOf<PerMaterial>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
             CreateState();
         }
 
@@ -29,7 +30,7 @@ namespace SharpDX11GameByWinbringer.Models
         {
             PreDraw(PrimitiveTopology, isBlending, BlendFactor);
             _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _perFrameBuffer);            
-            _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _perFrameBuffer); 
+            _dx11DeviceContext.PixelShader.SetConstantBuffer(2, _perMaterialBuffer); 
             Draw();
         }
 
@@ -46,6 +47,15 @@ namespace SharpDX11GameByWinbringer.Models
             perObject.WorldViewProjection = perObject.World * view *proj;
             perObject.Transpose();
 
+            var perMaterial = new PerMaterial();
+            perMaterial.Ambient = new Color4(0.2f);
+            perMaterial.Diffuse = Color.White;
+            perMaterial.Emissive = new Color4(0);
+            perMaterial.Specular = Color.White;
+            perMaterial.SpecularPower = 20f;
+            perMaterial.HasTexture = 0;
+            perMaterial.UVTransform = Matrix.Identity;
+            _dx11DeviceContext.UpdateSubresource(ref perMaterial, _perMaterialBuffer);
             _dx11DeviceContext.UpdateSubresource(ref perObject, _constantBuffer);
             _dx11DeviceContext.UpdateSubresource(ref perFrame, _perFrameBuffer);
         }
@@ -172,5 +182,13 @@ namespace SharpDX11GameByWinbringer.Models
                 3, 6, 7, // Bottom B 
             };
         }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            Utilities.Dispose(ref _perFrameBuffer);
+            Utilities.Dispose(ref _perMaterialBuffer);
+        }
+
     }
 }

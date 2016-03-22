@@ -15,10 +15,10 @@ namespace SharpDX11GameByWinbringer.Models
     {
         Buffer _perFrameBuffer;
         Buffer _perMaterialBuffer;
-        public ShadedCube(DeviceContext dc)
+        public ShadedCube(DeviceContext DeviceContext)
         {
             World = Matrix.Identity;
-            _dx11DeviceContext = dc;
+            _dx11DeviceContext = DeviceContext;
             CreateVertexAndIndeces();
             CreateBuffers();
             _perFrameBuffer = new Buffer(_dx11DeviceContext.Device, Utilities.SizeOf<PerFrame>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
@@ -36,13 +36,18 @@ namespace SharpDX11GameByWinbringer.Models
 
         public override void UpdateConsBufData(Matrix world, Matrix view, Matrix proj)
         {
+            Matrix oWorld = World * world;
             // Extract camera position from view matrix 
             var camPosition = Matrix.Transpose(Matrix.Invert(view)).Column4;
             // Update the per frame constant buffer
             var perFrame = new PerFrame();
             perFrame.CameraPosition = new Vector3(camPosition.X, camPosition.Y, camPosition.Z);
+            perFrame.Light.Color = Color.White;
+            var lightDir = Vector3.Transform(new Vector3(1f, -1f, -1f), oWorld);            
+            perFrame.Light.Direction = new Vector3(lightDir.X, lightDir.Y, lightDir.Z);
+
             var perObject = new PerObject();
-            perObject.World = World * world;
+            perObject.World = oWorld;
             perObject.WorldInverseTranspose = Matrix.Transpose(Matrix.Invert(perObject.World));
             perObject.WorldViewProjection = perObject.World * view *proj;
             perObject.Transpose();

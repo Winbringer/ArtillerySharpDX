@@ -15,6 +15,7 @@ namespace SharpDX11GameByWinbringer.Models
     {
         Buffer _perFrameBuffer;
         Buffer _perMaterialBuffer;
+
         public ShadedCube(DeviceContext DeviceContext)
         {
             World = Matrix.Identity;
@@ -26,15 +27,7 @@ namespace SharpDX11GameByWinbringer.Models
             CreateState();
         }
 
-        public void Draw(PrimitiveTopology PrimitiveTopology, bool isBlending = false, RawColor4? BlendFactor = null)
-        {
-            PreDraw(PrimitiveTopology, isBlending, BlendFactor);
-            _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _perFrameBuffer);            
-            _dx11DeviceContext.PixelShader.SetConstantBuffer(2, _perMaterialBuffer); 
-            Draw();
-        }
-
-        public override void UpdateConsBufData(Matrix world, Matrix view, Matrix proj)
+         public override void UpdateConsBufData(Matrix world, Matrix view, Matrix proj)
         {
             Matrix oWorld = World * world;
             // Extract camera position from view matrix 
@@ -54,15 +47,26 @@ namespace SharpDX11GameByWinbringer.Models
 
             var perMaterial = new PerMaterial();
             perMaterial.Ambient = new Color4(0.2f);
-            perMaterial.Diffuse = Color.White;
+            perMaterial.Diffuse = Color4.White;
             perMaterial.Emissive = new Color4(0);
-            perMaterial.Specular = Color.White;
+            perMaterial.Specular = Color4.White;
             perMaterial.SpecularPower = 20f;
             perMaterial.HasTexture = 0;
             perMaterial.UVTransform = Matrix.Identity;
+
             _dx11DeviceContext.UpdateSubresource(ref perMaterial, _perMaterialBuffer);
             _dx11DeviceContext.UpdateSubresource(ref perObject, _constantBuffer);
             _dx11DeviceContext.UpdateSubresource(ref perFrame, _perFrameBuffer);
+        }
+
+        public void Draw(PrimitiveTopology PrimitiveTopology, bool isBlending = false, RawColor4? BlendFactor = null)
+        {
+            PreDraw(PrimitiveTopology, isBlending, BlendFactor);
+            _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _perFrameBuffer);
+            _dx11DeviceContext.VertexShader.SetConstantBuffer(2, _perMaterialBuffer);
+            _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _perFrameBuffer);
+            _dx11DeviceContext.PixelShader.SetConstantBuffer(2, _perMaterialBuffer);
+            Draw();
         }
 
         protected override void CreateState()
@@ -84,7 +88,7 @@ namespace SharpDX11GameByWinbringer.Models
             {
                 IsDepthEnabled = true,
                 DepthComparison = Comparison.Less,
-                DepthWriteMask = SharpDX.Direct3D11.DepthWriteMask.All,
+                DepthWriteMask = DepthWriteMask.All,
                 IsStencilEnabled = false,
                 StencilReadMask = 0xff, // 0xff (no mask) 
                 StencilWriteMask = 0xff,// 0xff (no mask) 

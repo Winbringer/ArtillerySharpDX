@@ -1,6 +1,4 @@
-﻿
-using System;
-using SharpDX;
+﻿using SharpDX;
 using SharpDX.Direct3D11;
 
 namespace SharpDX11GameByWinbringer.Models

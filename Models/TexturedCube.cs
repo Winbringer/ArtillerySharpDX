@@ -52,8 +52,8 @@ namespace SharpDX11GameByWinbringer.Models
             _verteces[1] = new Vertex(new Vector3(size, size, size), new Vector2(1, 0));
             _verteces[2] = new Vertex(new Vector3(size, -size, size), new Vector2(1, 1));
             _verteces[3] = new Vertex(new Vector3(-size, -size, size), new Vector2(0, 1));
-            _verteces[4] = new Vertex(new Vector3(-size, size, -size), new Vector2(0, 1));
-            _verteces[5] = new Vertex(new Vector3(size, size, -size), new Vector2(1, 1));
+            _verteces[4] = new Vertex(new Vector3(-size, size, -size), new Vector2(0, 0));
+            _verteces[5] = new Vertex(new Vector3(size, size, -size), new Vector2(1, 0));
             _verteces[6] = new Vertex(new Vector3(size, -size, -size), new Vector2(1, 1));
             _verteces[7] = new Vertex(new Vector3(-size, -size, -size), new Vector2(0, 1));
         }

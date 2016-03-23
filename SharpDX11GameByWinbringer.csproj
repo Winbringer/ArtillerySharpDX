@@ -138,6 +138,7 @@
     <Compile Include="Models\ShadedCube.cs" />
     <Compile Include="Models\Structures.cs" />
     <Compile Include="Models\TexturedCube.cs" />
+    <Compile Include="Models\TextureResouse.cs" />
     <Compile Include="Models\TextWirter.cs" />
     <Compile Include="Models\Wave.cs" />
     <Compile Include="Models\XYZ.cs" />
@@ -171,6 +172,9 @@
     <Content Include="Shaders\ShadedCube.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Textures\CubeMap.dds">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Content Include="Textures\grass_10.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -92,7 +92,7 @@ namespace SharpDX11GameByWinbringer
             //Создаем шаблон ввода данных для шейдера
             _inputLayout = new InputLayout(_dx11DeviceContext.Device, _inputSignature, inputElements);
             //Загружаем текстуру           
-            _textureResourse = CreateTextureFromFile(texture);
+            _textureResourse = _dx11DeviceContext.LoadTextureFromFile(texture);
             //Создание самплера для текстуры
             _samplerState = new SamplerState(_dx11DeviceContext.Device, description);
             _DState = new DepthStencilState(_dx11DeviceContext.Device, DStateDescripshion);
@@ -131,35 +131,7 @@ namespace SharpDX11GameByWinbringer
             _dx11DeviceContext.DrawIndexed(_indeces.Count(), 0, 0);
         }
 
-        private ShaderResourceView CreateTextureFromFile(string filename)
-        {
-            ShaderResourceView SRV;
-            using (System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(filename))
-            {
-                int width = bitmap.Width;
-                int height = bitmap.Height;
-                // Определить и создать Texture2D.
-                Texture2DDescription textureDesc = new Texture2DDescription()
-                {
-                    MipLevels = 1,
-                    Format = SharpDX.DXGI.Format.B8G8R8A8_UNorm,
-                    Width = width,
-                    Height = height,
-                    ArraySize = 1,
-                    BindFlags = BindFlags.ShaderResource,
-                    Usage = ResourceUsage.Default,
-                    SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0)
-                };
-                System.Drawing.Imaging.BitmapData data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                DataRectangle dataRectangle = new DataRectangle(data.Scan0, data.Stride);
-                using (var buffer = new Texture2D(_dx11DeviceContext.Device, textureDesc, dataRectangle))
-                {
-                    bitmap.UnlockBits(data);
-                    SRV = new ShaderResourceView(_dx11DeviceContext.Device, buffer);
-                }
-            }
-            return SRV;
-        }
+       
                
     }
 }

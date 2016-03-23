@@ -36,13 +36,13 @@ namespace SharpDX11GameByWinbringer
                 new TextWirter(
                 game.SwapChain.GetBackBuffer<Texture2D>(0),
                 game.Width,
-                game.Height);
+                game.Height);           
             game.OnDraw += Draw;
             game.OnUpdate += Update;
             game.Form.KeyDown += InputKeysControl;
             _World = Matrix.Identity;
-            _View = Matrix.LookAtLH(new Vector3(0, 0, -355f), new Vector3(0, 0, 0), Vector3.Up);
-            _Progection = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
+            _View = Matrix.LookAtRH(new Vector3(0, 0, 355f), new Vector3(0, 0, 0), Vector3.Up);
+            _Progection = Matrix.PerspectiveFovRH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
 
             //Создаем объеты нашей сцены
             _waveManager = new _3DWaveManager(game.DeviceContext);

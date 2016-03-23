@@ -27,7 +27,7 @@ namespace SharpDX11GameByWinbringer.Models
             CreateState();
         }
 
-         public override void UpdateConsBufData(Matrix world, Matrix view, Matrix proj)
+        public override void UpdateConsBufData(Matrix world, Matrix view, Matrix proj)
         {
             Matrix oWorld = World * world;
             // Extract camera position from view matrix 
@@ -36,13 +36,13 @@ namespace SharpDX11GameByWinbringer.Models
             var perFrame = new PerFrame();
             perFrame.CameraPosition = new Vector3(camPosition.X, camPosition.Y, camPosition.Z);
             perFrame.Light.Color = Color.White;
-            var lightDir = Vector3.Transform(new Vector3(1f, -1f, -1f), oWorld);            
+            var lightDir = Vector3.Transform(new Vector3(1f, -1f, -1f), oWorld);
             perFrame.Light.Direction = new Vector3(lightDir.X, lightDir.Y, lightDir.Z);
 
             var perObject = new PerObject();
             perObject.World = oWorld;
             perObject.WorldInverseTranspose = Matrix.Transpose(Matrix.Invert(perObject.World));
-            perObject.WorldViewProjection = perObject.World * view *proj;
+            perObject.WorldViewProjection = perObject.World * view * proj;
             perObject.Transpose();
 
             var perMaterial = new PerMaterial();
@@ -51,7 +51,7 @@ namespace SharpDX11GameByWinbringer.Models
             perMaterial.Emissive = new Color4(0);
             perMaterial.Specular = Color4.White;
             perMaterial.SpecularPower = 20f;
-            perMaterial.HasTexture = 0;
+            perMaterial.HasTexture = 1;
             perMaterial.UVTransform = Matrix.Identity;
 
             _dx11DeviceContext.UpdateSubresource(ref perMaterial, _perMaterialBuffer);
@@ -152,7 +152,7 @@ namespace SharpDX11GameByWinbringer.Models
 
             InitDrawer("Shaders\\ShadedCube.hlsl",
                inputElements,
-                "Textures\\grass.jpg",
+                "Textures\\brick.jpg",
                 description,
                 DStateDescripshion,
                 rasterizerStateDescription,
@@ -163,32 +163,48 @@ namespace SharpDX11GameByWinbringer.Models
         protected override void CreateVertexAndIndeces()
         {
             float size = 100;
-            _verteces = new VertexN[]
+            _verteces = new[]
             {
-                new VertexN(new Vector3(-size, size, -size), new Vector2(0,0)), // 0-Top-left 
-                new VertexN(new Vector3(size, size, -size), new Vector2(0,1)), // 1-Top-right 
-                new VertexN(new Vector3(size, -size, -size), new Vector2(1,1)), // 2-Base-right 
-                new VertexN(new Vector3(-size, -size, -size), new Vector2(1,0)), // 3-Base-left
-                new VertexN(new Vector3(-size, size, size), new Vector2(0,0)), // 4-Topleft
-                new VertexN(new Vector3(size, size, size), new Vector2(0,1)), // 5-Top-right
-                new VertexN(new Vector3(size, -size, size), new Vector2(1,1)), // 6-Base-right
-                new VertexN(new Vector3(-size, -size, size), new Vector2(1,0)), // 7-Base-left 
+
+                new VertexN(new Vector3(-size,size,size),  new Vector2(0, 0)),
+                new VertexN(new Vector3(size,size,size),   new Vector2(1, 0)),
+                new VertexN(new Vector3(size,size,-size),  new Vector2(1, 1)),
+                new VertexN(new Vector3(-size,size,-size), new Vector2(0, 1)),
+
+                new VertexN(new Vector3(-size,-size,size), new Vector2(0, 0)),
+                new VertexN(new Vector3(size,-size,size),  new Vector2(1, 0)),
+                new VertexN(new Vector3(size,-size,-size), new Vector2(1, 1)),
+                new VertexN(new Vector3(-size,-size,-size),new Vector2(0, 1)),
+
+                new VertexN(new Vector3(-size,-size,size), new Vector2(0, 0)),
+                new VertexN(new Vector3(-size,size,size),  new Vector2(1, 0)),
+                new VertexN(new Vector3(-size,size,-size), new Vector2(1, 1)),
+                new VertexN(new Vector3(-size,-size,-size),new Vector2(0, 1)),
+
+                new VertexN(new Vector3(size,-size,size), new Vector2(0, 0)),
+                new VertexN(new Vector3(size,size,size),  new Vector2(1, 0)),
+                new VertexN(new Vector3(size,size,-size), new Vector2(1, 1)),
+                new VertexN(new Vector3(size,-size,-size),new Vector2(0, 1)),
+
+                new VertexN(new Vector3(-size,size,size), new Vector2(0, 0)),
+                new VertexN(new Vector3(size,size,size),  new Vector2(1, 0)),
+                new VertexN(new Vector3(size,-size,size), new Vector2(1, 1)),
+                new VertexN(new Vector3(-size,-size,size),new Vector2(0, 1)),
+
+                new VertexN(new Vector3(-size,size,-size), new Vector2(0, 0)),
+                new VertexN(new Vector3(size,size,-size),  new Vector2(1, 0)),
+                new VertexN(new Vector3(size,-size,-size), new Vector2(1, 1)),
+                new VertexN(new Vector3(-size,-size,-size),new Vector2(0, 1)),
             };
 
             _indeces = new uint[]
             {
-                0, 1, 2, // Front A  
-                0, 2, 3, // Front B   
-                1, 5, 6, // Right A  
-                1, 6, 2, // Right B  
-                1, 0, 4, // Top A
-                1, 4, 5, // Top B 
-                5, 4, 7, // Back A 
-                5, 7, 6, // Back B 
-                4, 0, 3, // Left A  
-                4, 3, 7, // Left B  
-                3, 2, 6, // Bottom A
-                3, 6, 7, // Bottom B 
+                0,1,2,0,2,3,
+                4,6,5,4,7,6,
+                8,9,10,8,10,11,
+                12,14,13,12,15,14,
+                16,18,17,16,19,18,
+                20,21,22,20,22,23
             };
         }
 

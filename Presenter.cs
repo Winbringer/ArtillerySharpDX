@@ -1,6 +1,7 @@
 ﻿using SharpDX;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
+using SharpDX.DirectInput;
 using SharpDX11GameByWinbringer.Models;
 using SharpDX11GameByWinbringer.ViewModels;
 using System;
@@ -30,16 +31,18 @@ namespace SharpDX11GameByWinbringer
         string _s;
         Stopwatch _sw;
 
+        DirectInput _directInput;
+        Keyboard _keyboard;
+
         public Presenter(Game game)
         {
             _text2DWriter =
                 new TextWirter(
                 game.SwapChain.GetBackBuffer<Texture2D>(0),
                 game.Width,
-                game.Height);           
+                game.Height);
             game.OnDraw += Draw;
             game.OnUpdate += Update;
-            game.Form.KeyDown += InputKeysControl;
             _World = Matrix.Identity;
             _View = Matrix.LookAtRH(new Vector3(0, 0, 355f), new Vector3(0, 0, 0), Vector3.Up);
             _Progection = Matrix.PerspectiveFovRH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
@@ -51,16 +54,23 @@ namespace SharpDX11GameByWinbringer
             _triangle = new Triangle(game.DeviceContext);
             _sCube = new ShadedCube(game.DeviceContext);
 
+
+            // Initialize DirectInput
+            _directInput = new DirectInput();
+            // Instantiate the keyboard
+            _keyboard = new Keyboard(_directInput);
+            // Acquire the keyboard
+            _keyboard.Properties.BufferSize = 128;
+            _keyboard.Acquire();
+
             _sw = new Stopwatch();
             _sw.Start();
         }
 
         void Update(double time)
         {
-            _sw.Stop();
-            _s = string.Format("LPS : {0:#####}", 1000.0f / _sw.Elapsed.TotalMilliseconds);
-            _sw.Reset();
-            _sw.Start();
+            UpdateKeyboardState((float)time);
+            LPS();
             _sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time, _World, _View, _Progection);
             //_waveManager.Update(time, _World, _View, _Progection);
@@ -69,10 +79,18 @@ namespace SharpDX11GameByWinbringer
             //_triangle.UpdateConsBufData(_World, _View, _Progection);
         }
 
+        private void LPS()
+        {
+            _sw.Stop();
+            _s = string.Format("LPS : {0:#####}", 1000.0f / _sw.Elapsed.TotalMilliseconds);
+            _sw.Reset();
+            _sw.Start();
+        }
+
         void Draw(double time)
         {
             //    _waveManager.Draw();
-               _lineManager.Draw();
+            _lineManager.Draw();
             //    _cubeManager.Draw();
             //    _triangle.DrawTriangle(
             //        PrimitiveTopology.TriangleList,
@@ -88,18 +106,19 @@ namespace SharpDX11GameByWinbringer
         }
 
         #region Вспомогательные методы
-        private void InputKeysControl(object sender, EventArgs e)
+        private void UpdateKeyboardState(float time)
         {
-            Keys Key = ((dynamic)e).KeyCode;
-            if (Key == Keys.Escape) ((SharpDX.Windows.RenderForm)sender).Close();
-            if (Key == Keys.A) _View *= Matrix.Translation(1, 0, 0);
-            if (Key == Keys.D) _View *= Matrix.Translation(-1, 0, 0);
-            if (Key == Keys.W) _View *= Matrix.Translation(0, 0, -1);
-            if (Key == Keys.S) _View *= Matrix.Translation(0, 0, 1);
-            if (Key == Keys.Q) _View *= Matrix.RotationY(0.01f);
-            if (Key == Keys.E) _View *= Matrix.RotationY(-0.01f);
-            if (Key == Keys.Z) _View *= Matrix.Translation(0, -1, 0);
-            if (Key == Keys.X) _View *= Matrix.Translation(0, 1, 0);
+            // Poll events from joystick
+            // keyboard.Poll();
+            var m = _keyboard.GetCurrentState();            
+            if (m.IsPressed(Key.A)) _View *= Matrix.Translation(1*time , 0, 0);
+            if (m.IsPressed(Key.D)) _View *= Matrix.Translation(-1 * time, 0, 0);
+            if (m.IsPressed(Key.W)) _View *= Matrix.Translation(0, 0, 1 * time);
+            if (m.IsPressed(Key.S)) _View *= Matrix.Translation(0, 0, -1 * time);
+            if (m.IsPressed(Key.Q)) _View *= Matrix.RotationY(0.001f * time);
+            if (m.IsPressed(Key.E)) _View *= Matrix.RotationY(-0.001f * time);
+            if (m.IsPressed(Key.Z)) _View *= Matrix.Translation(0, -1 * time, 0);
+            if (m.IsPressed(Key.X)) _View *= Matrix.Translation(0, 1 * time, 0);
         }
         #endregion
 
@@ -111,7 +130,9 @@ namespace SharpDX11GameByWinbringer
             {
                 if (disposing)
                 {
-                    // TODO: освободить управляемое состояние (управляемые объекты).                     
+                    // TODO: освободить управляемое состояние (управляемые объекты). 
+                    Utilities.Dispose(ref _keyboard);
+                    Utilities.Dispose(ref _directInput);
                     Utilities.Dispose(ref _lineManager);
                     Utilities.Dispose(ref _cubeManager);
                     Utilities.Dispose(ref _waveManager);

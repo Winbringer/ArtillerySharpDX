@@ -158,7 +158,7 @@ namespace SharpDX11GameByWinbringer
         private void RenderCallback()
         {
             double lag = System.Environment.TickCount - nextFrameTime;
-            if (lag > 30)
+           // if (lag > 30)
             {
                 nextFrameTime = System.Environment.TickCount;
                 Update(lag);

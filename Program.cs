@@ -2,6 +2,7 @@
 using System.Windows.Forms;
 using System.Drawing;
 
+
 namespace SharpDX11GameByWinbringer
 {
 
@@ -17,7 +18,7 @@ namespace SharpDX11GameByWinbringer
                 MessageBox.Show("Для запуска этой игры нужен DirectX 11 ОБЯЗАТЕЛЬНО!");
                 return;
             }
-#if DEBUG  
+#if DEBUG
             SharpDX.Configuration.EnableObjectTracking = true;
 #endif
             using (var _renderForm = new RenderForm("SharpDX game by Winbringer")
@@ -31,6 +32,7 @@ namespace SharpDX11GameByWinbringer
             })
             {
                 _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };
+                _renderForm.KeyDown += (sender, e) => { if (e.KeyCode == Keys.Escape) _renderForm.Close(); };
                 using (Game game = new Game(_renderForm))
                 {
                     game.Run();

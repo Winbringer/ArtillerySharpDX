@@ -97,11 +97,8 @@ namespace SharpDX11GameByWinbringer
             //        true,
             //        new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f)
             //        );   
-            _sCube.Draw(
-                   PrimitiveTopology.TriangleList,
-                 true,
-                   new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f)
-                  );
+            _sCube.Draw(PrimitiveTopology.TriangleList,true,
+                   new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
             _text2DWriter.DrawText(_s);
         }
 
@@ -110,13 +107,13 @@ namespace SharpDX11GameByWinbringer
         {
             // Poll events from joystick
             // keyboard.Poll();
-            var m = _keyboard.GetCurrentState();            
-            if (m.IsPressed(Key.A)) _View *= Matrix.Translation(1*time , 0, 0);
+            var m = _keyboard.GetCurrentState();
+            if (m.IsPressed(Key.A)) _View *= Matrix.Translation(1 * time, 0, 0);
             if (m.IsPressed(Key.D)) _View *= Matrix.Translation(-1 * time, 0, 0);
             if (m.IsPressed(Key.W)) _View *= Matrix.Translation(0, 0, 1 * time);
             if (m.IsPressed(Key.S)) _View *= Matrix.Translation(0, 0, -1 * time);
-            if (m.IsPressed(Key.Q)) _View *= Matrix.RotationY(0.001f * time);
-            if (m.IsPressed(Key.E)) _View *= Matrix.RotationY(-0.001f * time);
+            if (m.IsPressed(Key.Q)) _View *= Matrix.RotationY(0.002f * time);
+            if (m.IsPressed(Key.E)) _View *= Matrix.RotationY(-0.002f * time);
             if (m.IsPressed(Key.Z)) _View *= Matrix.Translation(0, -1 * time, 0);
             if (m.IsPressed(Key.X)) _View *= Matrix.Translation(0, 1 * time, 0);
         }

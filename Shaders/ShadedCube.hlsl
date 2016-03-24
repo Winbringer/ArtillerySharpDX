@@ -91,32 +91,7 @@ PixelShaderInput VS(VertexShaderInput vertex)
 }
 
 
-////DiffusePS
-//float4 PS(PixelShaderInput pixel) : SV_Target
-//{
-//   // After interpolation the values are not necessarily
-//     // normalized 
-//    float3 normal = normalize(pixel.WorldNormal);
-//    float3 toEye = normalize(CameraPosition - pixel.WorldPosition);
-//    float3 toLight = normalize(-Light.Direction);
-//      // Texture sample (use white if no texture)
-//    float4 sample = (float4) 1.0f;
-//    if (HasTexture)
-//        sample = Texture0.Sample(Sampler, pixel.TextureUV);
-//    float3 ambient = MaterialAmbient.rgb;
-//    float3 emissive = MaterialEmissive.rgb;
-//    float3 diffuse = Lambert(pixel.Diffuse, normal, toLight);
-//// Calculate final color component 
-//    float3 color = (saturate(ambient + diffuse) * sample.rgb) * Light.Color.rgb + emissive;
-//    // We saturate ambient+diffuse to ensure there is no over
-//    // brightness on the texture sample if the sum is greater 
-//    // than 1 (we would not do this for HDR rendering)  
-//      // Calculate final alpha value
-//    float alpha = pixel.Diffuse.a * sample.a;
-//    return float4(color, alpha);
-//}
-
-//FongPS
+//DiffusePS
 float4 PS(PixelShaderInput pixel) : SV_Target
 {
    // After interpolation the values are not necessarily
@@ -130,20 +105,45 @@ float4 PS(PixelShaderInput pixel) : SV_Target
         sample = Texture0.Sample(Sampler, pixel.TextureUV);
     float3 ambient = MaterialAmbient.rgb;
     float3 emissive = MaterialEmissive.rgb;
-
     float3 diffuse = Lambert(pixel.Diffuse, normal, toLight);
-    float3 specular = SpecularPhong(normal, toLight, toEye);
-
 // Calculate final color component 
-    float3 color = (saturate(ambient + diffuse) * sample.rgb + specular) * Light.Color.rgb + emissive;
+    float3 color = (saturate(ambient + diffuse) * sample.rgb) * Light.Color.rgb + emissive;
     // We saturate ambient+diffuse to ensure there is no over
     // brightness on the texture sample if the sum is greater 
     // than 1 (we would not do this for HDR rendering)  
       // Calculate final alpha value
     float alpha = pixel.Diffuse.a * sample.a;
-
     return float4(color, alpha);
 }
+
+////FongPS
+//float4 PS(PixelShaderInput pixel) : SV_Target
+//{
+//   // After interpolation the values are not necessarily
+//     // normalized 
+//    float3 normal = normalize(pixel.WorldNormal);
+//    float3 toEye = normalize(CameraPosition - pixel.WorldPosition);
+//    float3 toLight = normalize(-Light.Direction);
+//      // Texture sample (use white if no texture)
+//    float4 sample = (float4) 1.0f;
+//    if (HasTexture)
+//        sample = Texture0.Sample(Sampler, pixel.TextureUV);
+//    float3 ambient = MaterialAmbient.rgb;
+//    float3 emissive = MaterialEmissive.rgb;
+
+//    float3 diffuse = Lambert(pixel.Diffuse, normal, toLight);
+//    float3 specular = SpecularPhong(normal, toLight, toEye);
+
+//// Calculate final color component 
+//    float3 color = (saturate(ambient + diffuse) * sample.rgb + specular) * Light.Color.rgb + emissive;
+//    // We saturate ambient+diffuse to ensure there is no over
+//    // brightness on the texture sample if the sum is greater 
+//    // than 1 (we would not do this for HDR rendering)  
+//      // Calculate final alpha value
+//    float alpha = pixel.Diffuse.a * sample.a;
+
+//    return float4(color, alpha);
+//}
 
 ////BlinFongPS
 //float4 PS(PixelShaderInput pixel) : SV_Target

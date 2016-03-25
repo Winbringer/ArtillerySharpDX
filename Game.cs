@@ -1,6 +1,7 @@
 ﻿using DX11 = SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using SharpDX;
+using SharpDX.DirectInput;
 
 namespace SharpDX11GameByWinbringer
 {
@@ -11,6 +12,9 @@ namespace SharpDX11GameByWinbringer
     {
         //События
         public delegate void UpdateDraw(double t);
+        public delegate void KeyPress(KeyboardState kState, float time);
+
+        public event KeyPress OnKeyPressed = null;
         public event UpdateDraw OnUpdate = null;
         public event UpdateDraw OnDraw = null;
         //Поля
@@ -26,6 +30,9 @@ namespace SharpDX11GameByWinbringer
         private DX11.RenderTargetView _renderView = null;
         private DX11.DepthStencilView _depthView = null;       
         private Presenter _presenter = null;
+        //Управление через клавиатуру
+        DirectInput _directInput;
+        Keyboard _keyboard;
         //Свойства
         public float ViewRatio { get; set; }
         public DX11.DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
@@ -33,12 +40,20 @@ namespace SharpDX11GameByWinbringer
         public SwapChain SwapChain { get { return _swapChain; } }
         public int Width { get { return _renderForm.ClientSize.Width; } }
         public int Height { get { return _renderForm.ClientSize.Height; } }
-
+                
         public Game(SharpDX.Windows.RenderForm renderForm)
         {
             _renderForm = renderForm;
+
             ViewRatio = (float)_renderForm.ClientSize.Width / _renderForm.ClientSize.Height;
+
             InitializeDeviceResources();
+
+            _directInput = new DirectInput();
+            _keyboard = new Keyboard(_directInput);            
+            _keyboard.Properties.BufferSize = 128;
+            _keyboard.Acquire();
+
             _presenter = new Presenter(this);
         }
 
@@ -50,7 +65,9 @@ namespace SharpDX11GameByWinbringer
             {
                 if (disposing)
                 {
-                    // TODO: освободить управляемое состояние (управляемые объекты).                  
+                    // TODO: освободить управляемое состояние (управляемые объекты).
+                    Utilities.Dispose(ref _keyboard);
+                    Utilities.Dispose(ref _directInput);
                     Utilities.Dispose(ref _presenter);                                
                     Utilities.Dispose(ref _renderView);
                     Utilities.Dispose(ref _swapChain);                    
@@ -137,6 +154,11 @@ namespace SharpDX11GameByWinbringer
        
         private void Update(double time)
         {
+            // Poll events from joystick
+            // keyboard.Poll();
+              var m = _keyboard.GetCurrentState();
+            if(m.PressedKeys.Count>0)
+            OnKeyPressed?.Invoke(m,(float)time);
             OnUpdate?.Invoke(time);
         }
 

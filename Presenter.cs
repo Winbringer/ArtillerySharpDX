@@ -30,10 +30,7 @@ namespace SharpDX11GameByWinbringer
         ShadedCube _sCube;
         EarthFromOBJ _earth;
         string _s;
-        Stopwatch _sw;
-
-        DirectInput _directInput;
-        Keyboard _keyboard;
+        Stopwatch _sw;        
 
         public Presenter(Game game)
         {
@@ -42,8 +39,11 @@ namespace SharpDX11GameByWinbringer
                 game.SwapChain.GetBackBuffer<Texture2D>(0),
                 game.Width,
                 game.Height);
+
             game.OnDraw += Draw;
             game.OnUpdate += Update;
+            game.OnKeyPressed += UpdateKeyboardState;
+
             _World = Matrix.Identity;
             _View = Matrix.LookAtRH(new Vector3(0, 0, 355f), new Vector3(0, 0, 0), Vector3.Up);
             _Progection = Matrix.PerspectiveFovRH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
@@ -55,15 +55,6 @@ namespace SharpDX11GameByWinbringer
             _triangle = new Triangle(game.DeviceContext);
             _sCube = new ShadedCube(game.DeviceContext);
 
-
-            // Initialize DirectInput
-            _directInput = new DirectInput();
-            // Instantiate the keyboard
-            _keyboard = new Keyboard(_directInput);
-            // Acquire the keyboard
-            _keyboard.Properties.BufferSize = 128;
-            _keyboard.Acquire();
-
             _sw = new Stopwatch();
             _sw.Start();
 
@@ -71,8 +62,7 @@ namespace SharpDX11GameByWinbringer
         }
 
         void Update(double time)
-        {
-            UpdateKeyboardState((float)time);
+        {            
             LPS();
            // _sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time, _World, _View, _Progection);
@@ -107,19 +97,17 @@ namespace SharpDX11GameByWinbringer
         }
 
         #region Вспомогательные методы
-        private void UpdateKeyboardState(float time)
+        private void UpdateKeyboardState(KeyboardState KeyState, float time)
         {
-            // Poll events from joystick
-            // keyboard.Poll();
-            var m = _keyboard.GetCurrentState();
-            if (m.IsPressed(Key.A)) _View *= Matrix.Translation(1 * time, 0, 0);
-            if (m.IsPressed(Key.D)) _View *= Matrix.Translation(-1 * time, 0, 0);
-            if (m.IsPressed(Key.W)) _View *= Matrix.Translation(0, 0, 1 * time);
-            if (m.IsPressed(Key.S)) _View *= Matrix.Translation(0, 0, -1 * time);
-            if (m.IsPressed(Key.Q)) _View *= Matrix.RotationY(0.002f * time);
-            if (m.IsPressed(Key.E)) _View *= Matrix.RotationY(-0.002f * time);
-            if (m.IsPressed(Key.Z)) _View *= Matrix.Translation(0, -1 * time, 0);
-            if (m.IsPressed(Key.X)) _View *= Matrix.Translation(0, 1 * time, 0);
+            const float speed = 0.5f;             
+            if (KeyState.IsPressed(Key.A)) _View *= Matrix.Translation(speed * time, 0, 0);
+            if (KeyState.IsPressed(Key.D)) _View *= Matrix.Translation(-speed * time, 0, 0);
+            if (KeyState.IsPressed(Key.W)) _View *= Matrix.Translation(0, 0, speed * time);
+            if (KeyState.IsPressed(Key.S)) _View *= Matrix.Translation(0, 0, -speed * time);
+            if (KeyState.IsPressed(Key.Q)) _View *= Matrix.RotationY(-0.002f * time);
+            if (KeyState.IsPressed(Key.E)) _View *= Matrix.RotationY(0.002f * time);
+            if (KeyState.IsPressed(Key.Z)) _View *= Matrix.Translation(0, -speed * time, 0);
+            if (KeyState.IsPressed(Key.X)) _View *= Matrix.Translation(0, speed * time, 0);
         }
         #endregion
 
@@ -132,9 +120,7 @@ namespace SharpDX11GameByWinbringer
                 if (disposing)
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты). 
-                    Utilities.Dispose(ref _earth);
-                    Utilities.Dispose(ref _keyboard);
-                    Utilities.Dispose(ref _directInput);
+                    Utilities.Dispose(ref _earth);                   
                     Utilities.Dispose(ref _lineManager);
                     Utilities.Dispose(ref _cubeManager);
                     Utilities.Dispose(ref _waveManager);

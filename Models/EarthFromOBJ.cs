@@ -67,6 +67,8 @@ namespace SharpDX11GameByWinbringer.Models
         Buffer _constantBuffer;
         Buffer _materialsBuffer;
         Buffer _lightBuffer;
+        Buffer _indexBuffer;
+
         VertexBufferBinding _vertexBinding;
         Light _light = new Light();
         Matrices _matrices = new Matrices();
@@ -97,10 +99,11 @@ namespace SharpDX11GameByWinbringer.Models
             const string mtl = "3DModelsFiles\\Earth\\earth.mtl";
             const string jpg = "3DModelsFiles\\Earth\\earthmap.jpg";
             const string shadersFile = "Shaders\\Earth.hlsl";
+            Tuple<List<Face>, List<uint>> tuple = GetFaces(obj);           
+            _facesCount = tuple.Item2.Count;
 
-            List<Face> faces = GetFaces(obj);
-            _facesCount = faces.Count;
-            _vertexBuffer = Buffer.Create(dx11Context.Device, BindFlags.VertexBuffer, faces.ToArray());
+            _vertexBuffer = Buffer.Create(dx11Context.Device, BindFlags.VertexBuffer, tuple.Item1.ToArray());
+            _indexBuffer = Buffer.Create(dx11Context.Device, BindFlags.IndexBuffer, tuple.Item2.ToArray());
             _vertexBinding = new VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<Face>(), 0);
 
             MtlMaterial materil = GetMaterial(mtl);
@@ -140,7 +143,7 @@ namespace SharpDX11GameByWinbringer.Models
             {
                 _pixelShader = new PixelShader(_dx11Context.Device, pixelShaderByteCode);
             }
-           
+
             _inputLayout = new InputLayout(_dx11Context.Device, _inputSignature, inputElements);
 
             RasterizerStateDescription rasterizerStateDescription = RasterizerStateDescription.Default();
@@ -161,7 +164,7 @@ namespace SharpDX11GameByWinbringer.Models
         {
             Matrix oWorld = World * world;
 
-            var lightDir = Vector3.Transform(new Vector3(1f, -1f, -1f), oWorld);
+            var lightDir =Vector3.Transform(new Vector3(1f, -1f, 1f), oWorld);
             _light.Direction = new Vector3(lightDir.X, lightDir.Y, lightDir.Z);
             _dx11Context.UpdateSubresource(ref _light, _lightBuffer);
 
@@ -185,13 +188,14 @@ namespace SharpDX11GameByWinbringer.Models
             _dx11Context.PixelShader.SetShaderResource(0, _textureResourse);
 
             _dx11Context.InputAssembler.SetVertexBuffers(0, _vertexBinding);
+            _dx11Context.InputAssembler.SetIndexBuffer(_indexBuffer, Format.R32_UInt, 0);
             _dx11Context.InputAssembler.InputLayout = _inputLayout;
             _dx11Context.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
 
             _dx11Context.Rasterizer.State = _rasterizerState;
             _dx11Context.OutputMerger.DepthStencilState = _DState;
 
-            _dx11Context.Draw(_facesCount, 0);
+            _dx11Context.DrawIndexed(_facesCount, 0, 0);// Draw(_facesCount, 0);
         }
 
         private MtlMaterial GetMaterial(string mtlFile)
@@ -246,7 +250,7 @@ namespace SharpDX11GameByWinbringer.Models
             return material;
         }
 
-        private List<Face> GetFaces(string objFile)
+        private Tuple<List<Face>, List<uint>> GetFaces(string objFile)
         {
             CultureInfo infos = CultureInfo.InvariantCulture;
             List<string> lines = ReadOBJFile(objFile);
@@ -254,28 +258,53 @@ namespace SharpDX11GameByWinbringer.Models
             List<Vector3> normals = GetVectors("vn ", lines);
             List<Vector3> textureUVW = GetVectors("vt ", lines);
             List<Face> faces = new List<Face>();
+            List<uint> index = new List<uint>();
+            uint Count = 0;
             foreach (string line in lines)
             {
                 if (line.Contains("f "))
                 {
-                    string[] coords = line.Replace("f ", "").Trim().Split(' ');
+                    var coords = line.Replace("f ", "").Trim().Split(' ');
                     foreach (var item in coords)
                     {
-                        string[] indeces = item.Split('/');
+                        var indeces = item.Split('/').Select(s => int.Parse(s, infos)).ToArray();
+
+                        Vector3 V = verteces[indeces[0] - 1];
+                        V.Z = -1f * V.Z;
+
+                        Vector3 Vt = textureUVW[indeces[1] - 1];
+                        Vt.Y = -1f * Vt.Y;
+
+                        Vector3 Vn = normals[indeces[2] - 1];
+                        Vn.Z = -1f * Vn.Z;
+
                         Face face = new Face();
-                        face.V = verteces[int.Parse(indeces[0], infos) - 1];
-                        Vector3 Vt = textureUVW[int.Parse(indeces[1], infos) - 1];
-                        Vt.Y = 1f - Vt.Y;
+                        face.V = V;
                         face.Vt = Vt;
-                        face.Vn = normals[int.Parse(indeces[2], infos) - 1];
-                        faces.Add(face);
+                        face.Vn = Vn;
+                        int i = faces.FindIndex(t =>  (t.V == face.V) && (t.Vn == face.Vn) && (t.Vt == face.Vt));
+                        if (i>=0)
+                        {
+                            index.Add((uint)i);                           
+                        }
+                        else
+                        {
+                            faces.Add(face);                          
+                            index.Add(Count);
+                            ++Count;
+                        }
+                        
                     }
                 }
 
             }
-            return faces;
+            return new Tuple<List<Face>, List<uint>>(faces, index);
         }
 
+        private bool FindFace(Face face)
+        {
+            return true;
+        }
         private List<string> ReadOBJFile(string obj)
         {
             List<string> lines = new List<string>();

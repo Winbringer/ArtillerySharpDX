@@ -45,8 +45,8 @@ namespace SharpDX11GameByWinbringer
             game.OnKeyPressed += UpdateKeyboardState;
 
             _World = Matrix.Identity;
-            _View = Matrix.LookAtRH(new Vector3(0, 0, 355f), new Vector3(0, 0, 0), Vector3.Up);
-            _Progection = Matrix.PerspectiveFovRH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
+            _View = Matrix.LookAtLH(new Vector3(0, 0, -355f), new Vector3(0, 0, 0), Vector3.Up);
+            _Progection = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
 
             //Создаем объеты нашей сцены
             _waveManager = new _3DWaveManager(game.DeviceContext);
@@ -64,7 +64,7 @@ namespace SharpDX11GameByWinbringer
         void Update(double time)
         {            
             LPS();
-           // _sCube.UpdateConsBufData(_World, _View, _Progection);
+            _sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time, _World, _View, _Progection);
             //_waveManager.Update(time, _World, _View, _Progection);
             //_cubeManager.Update(time, _World, _View, _Progection);
@@ -90,8 +90,8 @@ namespace SharpDX11GameByWinbringer
             //        true,
             //        new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f)
             //        );   
-            //_sCube.Draw(PrimitiveTopology.TriangleList,true,
-            //       new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
+            _sCube.Draw(PrimitiveTopology.TriangleList,true,
+                  new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
             _earth.Draw(_World, _View, _Progection);
             _text2DWriter.DrawText(_s);
         }
@@ -99,13 +99,13 @@ namespace SharpDX11GameByWinbringer
         #region Вспомогательные методы
         private void UpdateKeyboardState(KeyboardState KeyState, float time)
         {
-            const float speed = 0.5f;             
+            const float speed = 0.3f;             
             if (KeyState.IsPressed(Key.A)) _View *= Matrix.Translation(speed * time, 0, 0);
             if (KeyState.IsPressed(Key.D)) _View *= Matrix.Translation(-speed * time, 0, 0);
-            if (KeyState.IsPressed(Key.W)) _View *= Matrix.Translation(0, 0, speed * time);
-            if (KeyState.IsPressed(Key.S)) _View *= Matrix.Translation(0, 0, -speed * time);
-            if (KeyState.IsPressed(Key.Q)) _View *= Matrix.RotationY(-0.002f * time);
-            if (KeyState.IsPressed(Key.E)) _View *= Matrix.RotationY(0.002f * time);
+            if (KeyState.IsPressed(Key.W)) _View *= Matrix.Translation(0, 0, -speed * time);
+            if (KeyState.IsPressed(Key.S)) _View *= Matrix.Translation(0, 0, speed * time);
+            if (KeyState.IsPressed(Key.Q)) _View *= Matrix.RotationY(0.002f * time);
+            if (KeyState.IsPressed(Key.E)) _View *= Matrix.RotationY(-0.002f * time);
             if (KeyState.IsPressed(Key.Z)) _View *= Matrix.Translation(0, -speed * time, 0);
             if (KeyState.IsPressed(Key.X)) _View *= Matrix.Translation(0, speed * time, 0);
         }

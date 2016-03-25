@@ -13,12 +13,13 @@ namespace SharpDX11GameByWinbringer.Models
 {
     class ShadedCube : Component<VertexN, PerObject>
     {
+        float _size = 50;
         Buffer _perFrameBuffer;
         Buffer _perMaterialBuffer;
 
         public ShadedCube(DeviceContext DeviceContext)
         {
-            World = Matrix.Identity;
+            World = Matrix.RotationZ(MathUtil.Pi)* Matrix.Translation(100, 100,100);
             _dx11DeviceContext = DeviceContext;
             CreateVertexAndIndeces();
             CreateBuffers();
@@ -29,14 +30,14 @@ namespace SharpDX11GameByWinbringer.Models
 
         public override void UpdateConsBufData(Matrix world, Matrix view, Matrix proj)
         {
-            Matrix oWorld = World * world;
+            Matrix oWorld = world*World ;
             // Extract camera position from view matrix 
             var camPosition = Matrix.Transpose(Matrix.Invert(view)).Column4;
             // Update the per frame constant buffer
             var perFrame = new PerFrame();
             perFrame.CameraPosition = new Vector3(camPosition.X, camPosition.Y, camPosition.Z);
             perFrame.Light.Color = Color.White;
-            var lightDir = Vector3.Transform(new Vector3(1f, -1f, -1f), oWorld);
+            var lightDir = new Vector3(1f, -1f, 1f);// Vector3.Transform(new Vector3(1f, -1f, 1f), oWorld);
             perFrame.Light.Direction = new Vector3(lightDir.X, lightDir.Y, lightDir.Z);
 
             var perObject = new PerObject();
@@ -48,12 +49,12 @@ namespace SharpDX11GameByWinbringer.Models
             var perMaterial = new PerMaterial();
             perMaterial.Ambient = new Color4(0.2f);
             perMaterial.Diffuse = new Color4(1f,1,1,1);
-            perMaterial.Emissive = new Color4(0,0, 0.1f, 0.1f);
+            perMaterial.Emissive = new Color4(0);
             perMaterial.HasTexture = 1;
             perMaterial.UVTransform = Matrix.Identity;
             //Только для блика
-            perMaterial.Specular = new Color4(0);
-            perMaterial.SpecularPower = 20f;
+            perMaterial.Specular =new Color4(0.5f,0.5f,0.5f,0);
+            perMaterial.SpecularPower = 10f;
           
 
             _dx11DeviceContext.UpdateSubresource(ref perMaterial, _perMaterialBuffer);
@@ -154,7 +155,7 @@ namespace SharpDX11GameByWinbringer.Models
 
             InitDrawer("Shaders\\ShadedCube.hlsl",
                inputElements,
-                "Textures\\brick.jpg",
+                "Textures\\Cube\\crate.jpg",
                 description,
                 DStateDescripshion,
                 rasterizerStateDescription,
@@ -163,40 +164,39 @@ namespace SharpDX11GameByWinbringer.Models
         }
 
         protected override void CreateVertexAndIndeces()
-        {
-            float size = 100;
+        {          
             _verteces = new[]
             {
 
-                new VertexN(new Vector3(-size,size,size),  new Vector2(0, 0)),
-                new VertexN(new Vector3(size,size,size),   new Vector2(1, 0)),
-                new VertexN(new Vector3(size,size,-size),  new Vector2(1, 1)),
-                new VertexN(new Vector3(-size,size,-size), new Vector2(0, 1)),
+                new VertexN(new Vector3(-_size,_size,_size),  new Vector2(0, 0)),
+                new VertexN(new Vector3(_size,_size,_size),   new Vector2(1, 0)),
+                new VertexN(new Vector3(_size,_size,-_size),  new Vector2(1, 1)),
+                new VertexN(new Vector3(-_size,_size,-_size), new Vector2(0, 1)),
 
-                new VertexN(new Vector3(-size,-size,size), new Vector2(0, 0)),
-                new VertexN(new Vector3(size,-size,size),  new Vector2(1, 0)),
-                new VertexN(new Vector3(size,-size,-size), new Vector2(1, 1)),
-                new VertexN(new Vector3(-size,-size,-size),new Vector2(0, 1)),
+                new VertexN(new Vector3(-_size,-_size,_size), new Vector2(0, 0)),
+                new VertexN(new Vector3(_size,-_size,_size),  new Vector2(1, 0)),
+                new VertexN(new Vector3(_size,-_size,-_size), new Vector2(1, 1)),
+                new VertexN(new Vector3(-_size,-_size,-_size),new Vector2(0, 1)),
 
-                new VertexN(new Vector3(-size,-size,size), new Vector2(0, 0)),
-                new VertexN(new Vector3(-size,size,size),  new Vector2(1, 0)),
-                new VertexN(new Vector3(-size,size,-size), new Vector2(1, 1)),
-                new VertexN(new Vector3(-size,-size,-size),new Vector2(0, 1)),
+                new VertexN(new Vector3(-_size,-_size,_size), new Vector2(0, 0)),
+                new VertexN(new Vector3(-_size,_size,_size),  new Vector2(1, 0)),
+                new VertexN(new Vector3(-_size,_size,-_size), new Vector2(1, 1)),
+                new VertexN(new Vector3(-_size,-_size,-_size),new Vector2(0, 1)),
 
-                new VertexN(new Vector3(size,-size,size), new Vector2(0, 0)),
-                new VertexN(new Vector3(size,size,size),  new Vector2(1, 0)),
-                new VertexN(new Vector3(size,size,-size), new Vector2(1, 1)),
-                new VertexN(new Vector3(size,-size,-size),new Vector2(0, 1)),
+                new VertexN(new Vector3(_size,-_size,_size), new Vector2(0, 0)),
+                new VertexN(new Vector3(_size,_size,_size),  new Vector2(1, 0)),
+                new VertexN(new Vector3(_size,_size,-_size), new Vector2(1, 1)),
+                new VertexN(new Vector3(_size,-_size,-_size),new Vector2(0, 1)),
 
-                new VertexN(new Vector3(-size,size,size), new Vector2(0, 0)),
-                new VertexN(new Vector3(size,size,size),  new Vector2(1, 0)),
-                new VertexN(new Vector3(size,-size,size), new Vector2(1, 1)),
-                new VertexN(new Vector3(-size,-size,size),new Vector2(0, 1)),
+                new VertexN(new Vector3(-_size,_size,_size), new Vector2(0, 0)),
+                new VertexN(new Vector3(_size,_size,_size),  new Vector2(1, 0)),
+                new VertexN(new Vector3(_size,-_size,_size), new Vector2(1, 1)),
+                new VertexN(new Vector3(-_size,-_size,_size),new Vector2(0, 1)),
 
-                new VertexN(new Vector3(-size,size,-size), new Vector2(0, 0)),
-                new VertexN(new Vector3(size,size,-size),  new Vector2(1, 0)),
-                new VertexN(new Vector3(size,-size,-size), new Vector2(1, 1)),
-                new VertexN(new Vector3(-size,-size,-size),new Vector2(0, 1)),
+                new VertexN(new Vector3(-_size,_size,-_size), new Vector2(0, 0)),
+                new VertexN(new Vector3(_size,_size,-_size),  new Vector2(1, 0)),
+                new VertexN(new Vector3(_size,-_size,-_size), new Vector2(1, 1)),
+                new VertexN(new Vector3(-_size,-_size,-_size),new Vector2(0, 1)),
             };
 
             _indeces = new uint[]

@@ -47,12 +47,14 @@ namespace SharpDX11GameByWinbringer.Models
 
             var perMaterial = new PerMaterial();
             perMaterial.Ambient = new Color4(0.2f);
-            perMaterial.Diffuse = Color4.White;
-            perMaterial.Emissive = new Color4(0);
-            perMaterial.Specular = Color4.White;
-            perMaterial.SpecularPower = 20f;
+            perMaterial.Diffuse = new Color4(1f,1,1,1);
+            perMaterial.Emissive = new Color4(0,0, 0.1f, 0.1f);
             perMaterial.HasTexture = 1;
             perMaterial.UVTransform = Matrix.Identity;
+            //Только для блика
+            perMaterial.Specular = new Color4(0);
+            perMaterial.SpecularPower = 20f;
+          
 
             _dx11DeviceContext.UpdateSubresource(ref perMaterial, _perMaterialBuffer);
             _dx11DeviceContext.UpdateSubresource(ref perObject, _constantBuffer);

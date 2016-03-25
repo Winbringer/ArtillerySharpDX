@@ -65,6 +65,8 @@ namespace SharpDX11GameByWinbringer
 
             _sw = new Stopwatch();
             _sw.Start();
+
+            EarthFromOBJ e = new EarthFromOBJ(game.DeviceContext);
         }
 
         void Update(double time)

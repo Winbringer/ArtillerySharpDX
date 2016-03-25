@@ -2,7 +2,6 @@
 using System.Windows.Forms;
 using System.Drawing;
 
-
 namespace SharpDX11GameByWinbringer
 {
 
@@ -12,7 +11,7 @@ namespace SharpDX11GameByWinbringer
         static void Main(string[] args)
         {
             System.Console.WriteLine("Для начала игры нажмите Enter");
-            System.Console.ReadLine();
+            System.Console.ReadLine();            
             if (!SharpDX.Direct3D11.Device.IsSupportedFeatureLevel(SharpDX.Direct3D.FeatureLevel.Level_11_0))
             {
                 MessageBox.Show("Для запуска этой игры нужен DirectX 11 ОБЯЗАТЕЛЬНО!");

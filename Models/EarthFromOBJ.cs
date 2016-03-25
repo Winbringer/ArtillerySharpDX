@@ -20,6 +20,8 @@ namespace SharpDX11GameByWinbringer.Models
         public Color4 Color;
         public Vector3 Direction;
         float padding0;
+        public Vector3 CameraPosition;
+        float padding1;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -81,6 +83,7 @@ namespace SharpDX11GameByWinbringer.Models
         int _facesCount;
         private SamplerState _samplerState;
         private ShaderResourceView _textureResourse;
+        private ShaderResourceView _textureResourse1;
         private ShaderSignature _inputSignature;
         private VertexShader _vertexShader;
         private PixelShader _pixelShader;
@@ -92,7 +95,7 @@ namespace SharpDX11GameByWinbringer.Models
         public EarthFromOBJ(DeviceContext dx11Context)
         {
             _dx11Context = dx11Context;
-            World = Matrix.Identity;
+            World =Matrix.Translation(100,100,100)* Matrix.Identity;
             _light.Color = Color4.White;
 
             const string obj = "3DModelsFiles\\Earth\\earth.obj";
@@ -106,13 +109,15 @@ namespace SharpDX11GameByWinbringer.Models
             _indexBuffer = Buffer.Create(dx11Context.Device, BindFlags.IndexBuffer, tuple.Item2.ToArray());
             _vertexBinding = new VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<Face>(), 0);
 
-            MtlMaterial materil = GetMaterial(mtl);
-            _materialsBuffer = Buffer.Create(_dx11Context.Device, BindFlags.ConstantBuffer, ref materil);
+            MtlMaterial material = GetMaterial(mtl);           
+            _materialsBuffer = Buffer.Create(_dx11Context.Device, BindFlags.ConstantBuffer, ref material);
 
             _constantBuffer = new Buffer(_dx11Context.Device, Utilities.SizeOf<Matrices>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
             _lightBuffer = new Buffer(_dx11Context.Device, Utilities.SizeOf<Light>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
 
             _textureResourse = _dx11Context.LoadTextureFromFile(jpg);
+            _textureResourse1 = _dx11Context.LoadTextureFromFile("3DModelsFiles\\Earth\\map.jpg");
+
 
             SamplerStateDescription description = SamplerStateDescription.Default();
             description.Filter = Filter.MinMagMipLinear;
@@ -155,17 +160,19 @@ namespace SharpDX11GameByWinbringer.Models
 
             _DState = new DepthStencilState(_dx11Context.Device, DStateDescripshion);
             _rasterizerState = new RasterizerState(_dx11Context.Device, rasterizerStateDescription);
+
+            _light.Direction = new Vector3(1f, -1f, 1f);
         }
 
 
         #region Методы
-
+        float r = 0;
         public void Draw(Matrix world, Matrix view, Matrix proj)
         {
-            Matrix oWorld = World * world;
-
-            var lightDir =Vector3.Transform(new Vector3(1f, -1f, 1f), oWorld);
-            _light.Direction = new Vector3(lightDir.X, lightDir.Y, lightDir.Z);
+            r += 0.001f;
+            Matrix oWorld = Matrix.RotationY(r)*World* world ;
+            var camPosition = Matrix.Transpose(Matrix.Invert(view)).Column4;            
+           _light.CameraPosition = new Vector3(camPosition.X, camPosition.Y, camPosition.Z);           
             _dx11Context.UpdateSubresource(ref _light, _lightBuffer);
 
             _matrices.World = oWorld;
@@ -186,6 +193,7 @@ namespace SharpDX11GameByWinbringer.Models
 
             _dx11Context.PixelShader.SetSampler(0, _samplerState);
             _dx11Context.PixelShader.SetShaderResource(0, _textureResourse);
+            _dx11Context.PixelShader.SetShaderResource(1, _textureResourse1);
 
             _dx11Context.InputAssembler.SetVertexBuffers(0, _vertexBinding);
             _dx11Context.InputAssembler.SetIndexBuffer(_indexBuffer, Format.R32_UInt, 0);
@@ -342,6 +350,7 @@ namespace SharpDX11GameByWinbringer.Models
 
         public void Dispose()
         {
+            Utilities.Dispose(ref _textureResourse1);
             Utilities.Dispose(ref _vertexBuffer);
             Utilities.Dispose(ref _constantBuffer);
             Utilities.Dispose(ref _materialsBuffer);

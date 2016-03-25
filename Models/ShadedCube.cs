@@ -13,13 +13,13 @@ namespace SharpDX11GameByWinbringer.Models
 {
     class ShadedCube : Component<VertexN, PerObject>
     {
-        float _size = 50;
+        float _size = 60;
         Buffer _perFrameBuffer;
         Buffer _perMaterialBuffer;
 
         public ShadedCube(DeviceContext DeviceContext)
         {
-            World = Matrix.RotationZ(MathUtil.Pi)* Matrix.Translation(100, 100,100);
+            World = Matrix.Identity;
             _dx11DeviceContext = DeviceContext;
             CreateVertexAndIndeces();
             CreateBuffers();
@@ -30,7 +30,7 @@ namespace SharpDX11GameByWinbringer.Models
 
         public override void UpdateConsBufData(Matrix world, Matrix view, Matrix proj)
         {
-            Matrix oWorld = world*World ;
+            Matrix oWorld = World* world;
             // Extract camera position from view matrix 
             var camPosition = Matrix.Transpose(Matrix.Invert(view)).Column4;
             // Update the per frame constant buffer

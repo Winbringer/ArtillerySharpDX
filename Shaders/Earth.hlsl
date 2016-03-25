@@ -22,6 +22,7 @@ cbuffer data2 : register(b2)
 {
     float4 Color;
     float3 Direction;
+    float3 CameraPosition;
 };  
 
 struct VS_IN
@@ -33,24 +34,29 @@ struct VS_IN
 
 struct PS_IN
 {
-    float4 Position : SV_Position;
-    float4 Diffuse : COLOR;
+    float4 Position : SV_Position;    
     float3 TextureUV : TEXCOORD;
     float3 WorldNormal : NORMAL;
     float3 WorldPosition : WORLDPOS;
 };
 
+float3 SpecularBlinnPhong(float3 normal, float3 toLight, float3 toEye)
+{ 
+    float3 halfway = normalize(toLight + toEye);     
+    float specularAmount = pow(saturate(dot(normal, halfway)), max(Ns_SpecularPower, 0.00001f));
+    return Ks_SpecularColor.rgb * specularAmount;
+}
+
 float3 Lambert(float4 pixelDiffuse, float3 normal, float3 toLight)
 {
-    float3 diffuseAmount = saturate(dot(normal, toLight));
-    return pixelDiffuse.rgb * diffuseAmount;
+    float3 diffuseAmount = Kd_DiffuseColor * saturate(dot(normal, toLight));
+    return pixelDiffuse.rgb * diffuseAmount.r;
 }
 
 PS_IN VS(VS_IN input)
 {
-    PS_IN output = (PS_IN) 0;
-   
-    output.Diffuse = Kd_DiffuseColor;    
+    PS_IN output = (PS_IN) 0;  
+    
     output.Position = mul(input.position, WorldViewProjection);
     output.TextureUV = input.textureUV;
     output.WorldNormal = mul(input.normal, (float3x3) WorldInverseTranspose);
@@ -60,22 +66,27 @@ PS_IN VS(VS_IN input)
 }
 
 Texture2D textureMap : register(t0);
+Texture2D specularMap : register(t1);
 SamplerState textureSampler : register(s0);
 
 float4 PS(PS_IN input) : SV_Target
-{    
+{
     float4 sample = textureMap.Sample(textureSampler, input.TextureUV);
+    float4 specularColor = specularMap.Sample(textureSampler, input.TextureUV);
 
-    float3 normal = normalize(input.WorldNormal);    
+    float3 normal = normalize(input.WorldNormal);
     float3 toLight = normalize(-Direction);
+    float3 toEye = normalize(CameraPosition - input.WorldPosition);
 
+    float3 H = normalize(toLight + toEye);
+    float D = saturate(dot(normal, H));
     float3 emissive = Ke_EmissiveColor.rgb;
-    float3 ambient = Ka_AmbientColor.rgb;
+    float3 ambient = sample * Ka_AmbientColor.r;
+    float3 diffuse = sample * Kd_DiffuseColor.r * saturate(dot(normal, toLight));  
+    float3 specular = specularColor * (Ks_SpecularColor.r * D / (Ns_SpecularPower - D * Ns_SpecularPower + D));
 
-    float3 diffuse = Lambert(input.Diffuse, normal, toLight);
-
-    float3 color = (saturate(ambient + diffuse) * sample.rgb) * Color.rgb + emissive; 
-    float alpha = input.Diffuse.a * sample.a;
+    float3 color = ambient + diffuse + specular+emissive;
+    float alpha =sample.a;
 
     return float4(color, alpha);
 }

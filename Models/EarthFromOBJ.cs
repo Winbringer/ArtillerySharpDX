@@ -177,7 +177,9 @@ namespace SharpDX11GameByWinbringer.Models
             _dx11Context.VertexShader.SetConstantBuffer(0, _constantBuffer);
             _dx11Context.VertexShader.SetConstantBuffer(1, _materialsBuffer);
             _dx11Context.VertexShader.SetConstantBuffer(2, _lightBuffer);
+
             _dx11Context.PixelShader.SetConstantBuffer(1, _materialsBuffer);
+            _dx11Context.PixelShader.SetConstantBuffer(2, _lightBuffer);
 
             _dx11Context.PixelShader.SetSampler(0, _samplerState);
             _dx11Context.PixelShader.SetShaderResource(0, _textureResourse);

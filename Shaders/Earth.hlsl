@@ -35,7 +35,7 @@ struct PS_IN
 {
     float4 Position : SV_Position;
     float4 Diffuse : COLOR;
-    float2 TextureUV : TEXCOORD;
+    float3 TextureUV : TEXCOORD;
     float3 WorldNormal : NORMAL;
     float3 WorldPosition : WORLDPOS;
 };
@@ -50,7 +50,7 @@ PS_IN VS(VS_IN input)
 {
     PS_IN output = (PS_IN) 0;
    
-    output.Diffuse = Kd_DiffuseColor;
+    output.Diffuse = Kd_DiffuseColor;    
     output.Position = mul(input.position, WorldViewProjection);
     output.TextureUV = input.textureUV;
     output.WorldNormal = mul(input.normal, (float3x3) WorldInverseTranspose);

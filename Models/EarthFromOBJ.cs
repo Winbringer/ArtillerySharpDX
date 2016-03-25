@@ -264,7 +264,9 @@ namespace SharpDX11GameByWinbringer.Models
                         string[] indeces = item.Split('/');
                         Face face = new Face();
                         face.V = verteces[int.Parse(indeces[0], infos) - 1];
-                        face.Vt = textureUVW[int.Parse(indeces[1], infos) - 1];
+                        Vector3 Vt = textureUVW[int.Parse(indeces[1], infos) - 1];
+                        Vt.Y = 1f - Vt.Y;
+                        face.Vt = Vt;
                         face.Vn = normals[int.Parse(indeces[2], infos) - 1];
                         faces.Add(face);
                     }

@@ -95,7 +95,7 @@ namespace SharpDX11GameByWinbringer.Models
         public EarthFromOBJ(DeviceContext dx11Context)
         {
             _dx11Context = dx11Context;
-            World =Matrix.Translation(100,100,100)* Matrix.Identity;
+            World = Matrix.Identity;
             _light.Color = Color4.White;
 
             const string obj = "3DModelsFiles\\Earth\\earth.obj";

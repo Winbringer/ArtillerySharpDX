@@ -34,15 +34,15 @@ struct VS_IN
 
 struct PS_IN
 {
-    float4 Position : SV_Position;    
+    float4 Position : SV_Position;
     float3 TextureUV : TEXCOORD;
     float3 WorldNormal : NORMAL;
     float3 WorldPosition : WORLDPOS;
 };
 
 float3 SpecularBlinnPhong(float3 normal, float3 toLight, float3 toEye)
-{ 
-    float3 halfway = normalize(toLight + toEye);     
+{
+    float3 halfway = normalize(toLight + toEye);
     float specularAmount = pow(saturate(dot(normal, halfway)), max(Ns_SpecularPower, 0.00001f));
     return Ks_SpecularColor.rgb * specularAmount;
 }
@@ -55,7 +55,7 @@ float3 Lambert(float4 pixelDiffuse, float3 normal, float3 toLight)
 
 PS_IN VS(VS_IN input)
 {
-    PS_IN output = (PS_IN) 0;  
+    PS_IN output = (PS_IN) 0;
     
     output.Position = mul(input.position, WorldViewProjection);
     output.TextureUV = input.textureUV;
@@ -82,11 +82,11 @@ float4 PS(PS_IN input) : SV_Target
     float D = saturate(dot(normal, H));
     float3 emissive = Ke_EmissiveColor.rgb;
     float3 ambient = sample * Ka_AmbientColor.r;
-    float3 diffuse = sample * Kd_DiffuseColor.r * saturate(dot(normal, toLight));  
-    float3 specular = specularColor * (Ks_SpecularColor.r * D / (Ns_SpecularPower - D * Ns_SpecularPower + D));
+    float3 diffuse = sample * Kd_DiffuseColor.r * saturate(dot(normal, toLight));
+    float3 specular = Ks_SpecularColor * specularColor.r * D / (Ns_SpecularPower - D * Ns_SpecularPower + D);
 
-    float3 color = ambient + diffuse + specular+emissive;
-    float alpha =sample.a;
+    float3 color = saturate(ambient + diffuse + specular + emissive);
+    float alpha = sample.a;
 
     return float4(color, alpha);
 }

@@ -28,6 +28,7 @@ namespace SharpDX11GameByWinbringer
         _3DWaveManager _waveManager;
         Triangle _triangle;
         ShadedCube _sCube;
+        EarthFromOBJ _earth;
         string _s;
         Stopwatch _sw;
 
@@ -66,14 +67,14 @@ namespace SharpDX11GameByWinbringer
             _sw = new Stopwatch();
             _sw.Start();
 
-            EarthFromOBJ e = new EarthFromOBJ(game.DeviceContext);
+           _earth= new EarthFromOBJ(game.DeviceContext);
         }
 
         void Update(double time)
         {
             UpdateKeyboardState((float)time);
             LPS();
-            _sCube.UpdateConsBufData(_World, _View, _Progection);
+           // _sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time, _World, _View, _Progection);
             //_waveManager.Update(time, _World, _View, _Progection);
             //_cubeManager.Update(time, _World, _View, _Progection);
@@ -99,8 +100,9 @@ namespace SharpDX11GameByWinbringer
             //        true,
             //        new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f)
             //        );   
-            _sCube.Draw(PrimitiveTopology.TriangleList,true,
-                   new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
+            //_sCube.Draw(PrimitiveTopology.TriangleList,true,
+            //       new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
+            _earth.Draw(_World, _View, _Progection);
             _text2DWriter.DrawText(_s);
         }
 
@@ -130,6 +132,7 @@ namespace SharpDX11GameByWinbringer
                 if (disposing)
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты). 
+                    Utilities.Dispose(ref _earth);
                     Utilities.Dispose(ref _keyboard);
                     Utilities.Dispose(ref _directInput);
                     Utilities.Dispose(ref _lineManager);

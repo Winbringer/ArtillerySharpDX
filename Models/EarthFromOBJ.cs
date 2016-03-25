@@ -1,5 +1,7 @@
 ﻿using SharpDX;
+using SharpDX.D3DCompiler;
 using SharpDX.Direct3D11;
+using SharpDX.DXGI;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -12,7 +14,30 @@ using Buffer = SharpDX.Direct3D11.Buffer;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Light
+    {
+        public Color4 Color;
+        public Vector3 Direction;
+        float padding0;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Matrices
+    {
+        public Matrix WorldViewProjection;
+        public Matrix World;
+        public Matrix WorldInverseTranspose;
+
+        internal void Transpose()
+        {
+            this.World.Transpose();
+            this.WorldInverseTranspose.Transpose();
+            this.WorldViewProjection.Transpose();
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     public struct MtlMaterial
     {
         public float Ns_SpecularPower;
@@ -37,33 +62,188 @@ namespace SharpDX11GameByWinbringer.Models
     public class EarthFromOBJ : IDisposable
     {
         #region Поля и свойства
+
         Buffer _vertexBuffer;
-        DeviceContext _dx11Context;
+        Buffer _constantBuffer;
+        Buffer _materialsBuffer;
+        Buffer _lightBuffer;
+        VertexBufferBinding _vertexBinding;
+        Light _light = new Light();
+        Matrices _matrices = new Matrices();
         public Matrix World { get; set; }
-        int facesCount;
+
+        DeviceContext _dx11Context;
+
+
+
+        int _facesCount;
+        private SamplerState _samplerState;
+        private ShaderResourceView _textureResourse;
+        private ShaderSignature _inputSignature;
+        private VertexShader _vertexShader;
+        private PixelShader _pixelShader;
+        private InputLayout _inputLayout;
+        private RasterizerState _rasterizerState;
+        private DepthStencilState _DState;
         #endregion
 
         public EarthFromOBJ(DeviceContext dx11Context)
         {
             _dx11Context = dx11Context;
+            World = Matrix.Identity;
+            _light.Color = Color4.White;
+
             const string obj = "3DModelsFiles\\Earth\\earth.obj";
-            const string mtl = "3DModelsFiles\\Earth\\earth.mtl";            
-            const string jpg = "3DModelsFiles\\Earth\\earthmap.jpg";           
+            const string mtl = "3DModelsFiles\\Earth\\earth.mtl";
+            const string jpg = "3DModelsFiles\\Earth\\earthmap.jpg";
+            const string shadersFile = "Shaders\\Earth.hlsl";
 
             List<Face> faces = GetFaces(obj);
-            facesCount = faces.Count;
+            _facesCount = faces.Count;
             _vertexBuffer = Buffer.Create(dx11Context.Device, BindFlags.VertexBuffer, faces.ToArray());
-                 
+            _vertexBinding = new VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<Face>(), 0);
 
+            MtlMaterial materil = GetMaterial(mtl);
+            _materialsBuffer = Buffer.Create(_dx11Context.Device, BindFlags.ConstantBuffer, ref materil);
+
+            _constantBuffer = new Buffer(_dx11Context.Device, Utilities.SizeOf<Matrices>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+            _lightBuffer = new Buffer(_dx11Context.Device, Utilities.SizeOf<Light>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+
+            _textureResourse = _dx11Context.LoadTextureFromFile(jpg);
+
+            SamplerStateDescription description = SamplerStateDescription.Default();
+            description.Filter = Filter.MinMagMipLinear;
+            description.AddressU = TextureAddressMode.Wrap;
+            description.AddressV = TextureAddressMode.Wrap;
+            description.AddressW = TextureAddressMode.Wrap;
+            _samplerState = new SamplerState(_dx11Context.Device, description);
+
+            //Загружаем шейдеры из файлов
+            InputElement[] inputElements = new InputElement[]
+        {
+             new InputElement("SV_Position",0,Format.R32G32B32_Float,0,0),
+             new InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
+             new InputElement("TEXCOORD", 0, Format.R32G32B32_Float, 24, 0)
+        };
+            ShaderFlags shaderFlags = ShaderFlags.None;
+#if DEBUG
+            shaderFlags = ShaderFlags.Debug;
+#endif
+
+            using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "VS", "vs_5_0", shaderFlags))
+            {
+                //Синатура храянящая сведения о том какие входные переменные есть у шейдера
+                _inputSignature = ShaderSignature.GetInputSignature(vertexShaderByteCode);
+                _vertexShader = new VertexShader(_dx11Context.Device, vertexShaderByteCode);
+            }
+            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "PS", "ps_5_0", shaderFlags))
+            {
+                _pixelShader = new PixelShader(_dx11Context.Device, pixelShaderByteCode);
+            }
+           
+            _inputLayout = new InputLayout(_dx11Context.Device, _inputSignature, inputElements);
+
+            RasterizerStateDescription rasterizerStateDescription = RasterizerStateDescription.Default();
+            rasterizerStateDescription.CullMode = CullMode.None;
+            rasterizerStateDescription.FillMode = FillMode.Solid;
+
+            DepthStencilStateDescription DStateDescripshion = DepthStencilStateDescription.Default();
+            DStateDescripshion.IsDepthEnabled = true;
+
+            _DState = new DepthStencilState(_dx11Context.Device, DStateDescripshion);
+            _rasterizerState = new RasterizerState(_dx11Context.Device, rasterizerStateDescription);
         }
 
 
         #region Методы
-        public void Draw()
+
+        public void Draw(Matrix world, Matrix view, Matrix proj)
         {
+            Matrix oWorld = World * world;
+
+            var lightDir = Vector3.Transform(new Vector3(1f, -1f, -1f), oWorld);
+            _light.Direction = new Vector3(lightDir.X, lightDir.Y, lightDir.Z);
+            _dx11Context.UpdateSubresource(ref _light, _lightBuffer);
+
+            _matrices.World = oWorld;
+            _matrices.WorldInverseTranspose = Matrix.Transpose(Matrix.Invert(_matrices.World));
+            _matrices.WorldViewProjection = _matrices.World * view * proj;
+            _matrices.Transpose();
+            _dx11Context.UpdateSubresource(ref _matrices, _constantBuffer);
+
+            _dx11Context.VertexShader.Set(_vertexShader);
+            _dx11Context.PixelShader.Set(_pixelShader);
+
+            _dx11Context.VertexShader.SetConstantBuffer(0, _constantBuffer);
+            _dx11Context.VertexShader.SetConstantBuffer(1, _materialsBuffer);
+            _dx11Context.VertexShader.SetConstantBuffer(2, _lightBuffer);
+            _dx11Context.PixelShader.SetConstantBuffer(1, _materialsBuffer);
+
+            _dx11Context.PixelShader.SetSampler(0, _samplerState);
+            _dx11Context.PixelShader.SetShaderResource(0, _textureResourse);
+
+            _dx11Context.InputAssembler.SetVertexBuffers(0, _vertexBinding);
+            _dx11Context.InputAssembler.InputLayout = _inputLayout;
             _dx11Context.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
-            _dx11Context.Draw(facesCount, 0);
+
+            _dx11Context.Rasterizer.State = _rasterizerState;
+            _dx11Context.OutputMerger.DepthStencilState = _DState;
+
+            _dx11Context.Draw(_facesCount, 0);
         }
+
+        private MtlMaterial GetMaterial(string mtlFile)
+        {
+            CultureInfo infos = CultureInfo.InvariantCulture;
+            MtlMaterial material = new MtlMaterial();
+            using (StreamReader reader = new StreamReader(mtlFile))
+            {
+                while (true)
+                {
+                    string l = reader.ReadLine();
+                    if (reader.EndOfStream) break;
+                    if (l.Contains("map_Ka ")) break;
+                    if (l.Contains("Ns "))
+                        material.Ns_SpecularPower = float.Parse(l.Replace("Ns ", "").Trim(), infos);
+                    if (l.Contains("Ni "))
+                        material.Ni_OpticalDensity = float.Parse(l.Replace("Ni ", "").Trim(), infos);
+
+                    if (l.Contains("\td "))
+                        material.d_Transparency = float.Parse(l.Replace("d ", "").Trim(), infos);
+
+                    if (l.Contains("Tr "))
+                        material.Tr_Transparency = float.Parse(l.Replace("Tr ", "").Trim(), infos);
+
+                    if (l.Contains("Tf "))
+                    {
+                        var val = l.Replace("Tf ", "").Trim().Split(' ').Select(s => float.Parse(s, infos)).ToArray();
+                        material.Tf_TransmissionFilter = new Vector3(val[0], val[1], val[2]);
+                    }
+                    if (l.Contains("Ka "))
+                    {
+                        var val = l.Replace("Ka ", "").Trim().Split(' ').Select(s => float.Parse(s, infos)).ToArray();
+                        material.Ka_AmbientColor = new Color4(val[0], val[1], val[2], 1);
+                    }
+                    if (l.Contains("Kd "))
+                    {
+                        var val = l.Replace("Kd ", "").Trim().Split(' ').Select(s => float.Parse(s, infos)).ToArray();
+                        material.Kd_DiffuseColor = new Color4(val[0], val[1], val[2], 1);
+                    }
+                    if (l.Contains("Ks "))
+                    {
+                        var val = l.Replace("Ks ", "").Trim().Split(' ').Select(s => float.Parse(s, infos)).ToArray();
+                        material.Ks_SpecularColor = new Color4(val[0], val[1], val[2], 1);
+                    }
+                    if (l.Contains("Ke "))
+                    {
+                        var val = l.Replace("Ke ", "").Trim().Split(' ').Select(s => float.Parse(s, infos)).ToArray();
+                        material.Ke_EmissiveColor = new Color4(val[0], val[1], val[2], 0);
+                    }
+                }
+            }
+            return material;
+        }
+
         private List<Face> GetFaces(string objFile)
         {
             CultureInfo infos = CultureInfo.InvariantCulture;
@@ -81,16 +261,17 @@ namespace SharpDX11GameByWinbringer.Models
                     {
                         string[] indeces = item.Split('/');
                         Face face = new Face();
-                        face.V = verteces[int.Parse(indeces[0],infos)-1];
-                        face.Vt = textureUVW[int.Parse(indeces[1],infos)-1];
-                        face.Vn = normals[int.Parse(indeces[2], infos)-1];
-                        faces.Add(face);                       
+                        face.V = verteces[int.Parse(indeces[0], infos) - 1];
+                        face.Vt = textureUVW[int.Parse(indeces[1], infos) - 1];
+                        face.Vn = normals[int.Parse(indeces[2], infos) - 1];
+                        faces.Add(face);
                     }
                 }
-                
+
             }
             return faces;
         }
+
         private List<string> ReadOBJFile(string obj)
         {
             List<string> lines = new List<string>();
@@ -110,6 +291,7 @@ namespace SharpDX11GameByWinbringer.Models
             }
             return lines;
         }
+
         private List<Vector3> GetVectors(string type, List<string> lines)
         {
             CultureInfo infos = CultureInfo.InvariantCulture;
@@ -128,7 +310,19 @@ namespace SharpDX11GameByWinbringer.Models
         public void Dispose()
         {
             Utilities.Dispose(ref _vertexBuffer);
+            Utilities.Dispose(ref _constantBuffer);
+            Utilities.Dispose(ref _materialsBuffer);
+            Utilities.Dispose(ref _lightBuffer);
+            Utilities.Dispose(ref _samplerState);
+            Utilities.Dispose(ref _textureResourse);
+            Utilities.Dispose(ref _inputSignature);
+            Utilities.Dispose(ref _vertexShader);
+            Utilities.Dispose(ref _pixelShader);
+            Utilities.Dispose(ref _inputLayout);
+            Utilities.Dispose(ref _rasterizerState);
+            Utilities.Dispose(ref _DState);
         }
+
         #endregion
     }
 }

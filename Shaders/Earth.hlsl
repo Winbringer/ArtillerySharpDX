@@ -2,7 +2,6 @@
 {
     float4x4 WorldViewProjection;
     float4x4 World;
-    float4x4 WorldInverseTranspose;
 };
 
 cbuffer data1 : register(b1)
@@ -36,7 +35,7 @@ struct PS_IN
 {
     float4 Position : SV_Position;
     float3 TextureUV : TEXCOORD;
-    float3 WorldNormal : NORMAL;
+    float3 WorldNormal : TEXCOORD1;
     float3 WorldPosition : WORLDPOS;
 };
 
@@ -59,7 +58,7 @@ PS_IN VS(VS_IN input)
     
     output.Position = mul(input.position, WorldViewProjection);
     output.TextureUV = input.textureUV;
-    output.WorldNormal = mul(input.normal, (float3x3) WorldInverseTranspose);
+    output.WorldNormal = mul(input.normal, (float3x3) World);
     output.WorldPosition = mul(input.position, World).xyz;
 
     return output;
@@ -77,15 +76,14 @@ float4 PS(PS_IN input) : SV_Target
     float3 normal = normalize(input.WorldNormal);
     float3 toLight = normalize(-Direction);
     float3 toEye = normalize(CameraPosition - input.WorldPosition);
+    float3 halfway = normalize(toLight + toEye);
 
-    float3 H = normalize(toLight + toEye);
-    float D = saturate(dot(normal, H));
     float3 emissive = Ke_EmissiveColor.rgb;
-    float3 ambient = sample * Ka_AmbientColor.r;
-    float3 diffuse = sample * Kd_DiffuseColor.r * saturate(dot(normal, toLight));
-    float3 specular = Ks_SpecularColor * specularColor.r * D / (Ns_SpecularPower - D * Ns_SpecularPower + D);
-
+    float3 ambient = sample.rgb * Ka_AmbientColor.r;
+    float3 diffuse = sample.rgb * Kd_DiffuseColor.r * max(0, dot(normal, toLight));
+    float3 specular = Ks_SpecularColor.rgb * specularColor.r * pow(max(0, dot(normal, halfway)), max(Ns_SpecularPower, 0.00001f));
     float3 color = saturate(ambient + diffuse + specular + emissive);
+   
     float alpha = sample.a;
 
     return float4(color, alpha);

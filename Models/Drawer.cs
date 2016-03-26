@@ -12,18 +12,26 @@ namespace SharpDX11GameByWinbringer.Models
     /// </summary>   
     public sealed class Drawer : System.IDisposable
     {
+        #region Поля и свойства
+
         private DeviceContext _dx11DeviceContext;
         private VertexShader _vertexShader;
         private PixelShader _pixelShader;
         private ShaderSignature _inputSignature;
         private InputLayout _inputLayout;
-        private ShaderResourceView _textureResourse;
         //Параметры отображения
         private RasterizerState _rasterizerState = null;
         private BlendState _blendState = null;
         private SamplerState _samplerState = null;
         private DepthStencilState _DState = null;
-        RawColor4? blendFactor = null;
+
+        public RawColor4? BlendFactor { get; set; } = null;
+        public SamplerStateDescription Samplerdescription { get; set; } = SamplerStateDescription.Default();
+        public DepthStencilStateDescription DepthStencilDescripshion { get; set; } = DepthStencilStateDescription.Default();
+        public RasterizerStateDescription RasterizerDescription { get; set; } = RasterizerStateDescription.Default();
+        public BlendStateDescription BlendDescription { get; set; } = BlendStateDescription.Default();
+
+        #endregion
 
         /// <summary>
         /// Конструктор
@@ -32,22 +40,13 @@ namespace SharpDX11GameByWinbringer.Models
         /// <param name="inputElements">Какие входные данные ожидает шейдер</param>
         /// <param name="dvContext">Контекст видеокарты</param>
         /// <param name="texture">Путь к текстуре</param>
-        /// <param name="description">Самплер текстуры</param>
-        public Drawer(
-            string shadersFile,
-            InputElement[] inputElements,
-            DeviceContext dvContext,
-            string texture,
-            SamplerStateDescription description,
-            DepthStencilStateDescription DStateDescripshion,
-            RasterizerStateDescription rasterizerStateDescription,
-            BlendStateDescription blendDescription,
-             RawColor4? blendFactor = null)
+        public Drawer(string shadersFile,
+                      InputElement[] inputElements,
+                      DeviceContext dvContext)
         {
 
             _dx11DeviceContext = dvContext;
-            this.blendFactor = blendFactor;
-            //Загружаем шейдеры из файлов
+
             ShaderFlags shaderFlags = ShaderFlags.None;
 #if DEBUG
             shaderFlags = ShaderFlags.Debug;
@@ -63,28 +62,19 @@ namespace SharpDX11GameByWinbringer.Models
             {
                 _pixelShader = new PixelShader(_dx11DeviceContext.Device, pixelShaderByteCode);
             }
+
+            _samplerState = new SamplerState(_dx11DeviceContext.Device, Samplerdescription);
+            _DState = new DepthStencilState(_dx11DeviceContext.Device, DepthStencilDescripshion);
+            _rasterizerState = new RasterizerState(_dx11DeviceContext.Device, RasterizerDescription);
+            _blendState = new BlendState(_dx11DeviceContext.Device, BlendDescription);
+
             //Создаем шаблон ввода данных для шейдера
             _inputLayout = new InputLayout(_dx11DeviceContext.Device, _inputSignature, inputElements);
-            //Загружаем текстуру           
-            _textureResourse =_dx11DeviceContext.LoadTextureFromFile(texture);
-            //Создание самплера для текстуры
-            _samplerState = new SamplerState(_dx11DeviceContext.Device, description);
-            _DState = new DepthStencilState(_dx11DeviceContext.Device, DStateDescripshion);
-            _rasterizerState = new RasterizerState(_dx11DeviceContext.Device, rasterizerStateDescription);
-            _blendState = new BlendState(_dx11DeviceContext.Device, blendDescription);
         }
 
-        /// <summary>
-        /// Рисует наши примитивы на экран.
-        /// </summary>
-        /// <typeparam name="T">Тип данных передаваемых в констант буффер</typeparam>
-        /// <param name="data">Данные для шейдера которые будут записаны в констант буффер</param>
-        /// <param name="indexBuffer">Буффер с индексами</param>
-        /// <param name="constantBuffer">Буффер с данными шейдера вроде мировой матрицы</param>
-        /// <param name="vertexBufferBinding">Описание буффера индексов и его данные</param>
-        /// <param name="indexCount">Количество индексов которые будем рисовать</param>
-        /// <param name="PTolology">Тип рисуемых примитивов: линии, треугольники, точки</param>
-        public void Draw<T>(ViewModel<T> VM, PrimitiveTopology PTolology, bool isBlending = false) where T :struct
+        #region Методы
+
+        public void Draw(ViewModel VM, PrimitiveTopology primitiveTopology = PrimitiveTopology.TriangleList, bool isBlending = false)
         {
             //Установка шейдеров
             _dx11DeviceContext.VertexShader.Set(_vertexShader);
@@ -92,19 +82,27 @@ namespace SharpDX11GameByWinbringer.Models
             //Устанавливаем самплер текстуры для шейдера
             _dx11DeviceContext.PixelShader.SetSampler(0, _samplerState);
             //Задаем тип рисуемых примитивов
-            _dx11DeviceContext.InputAssembler.PrimitiveTopology = PTolology;
+            _dx11DeviceContext.InputAssembler.PrimitiveTopology = primitiveTopology;
             //Устанавливаем макет для входных данных видеокарты. В нем указано какие данные ожидает шейдер
             _dx11DeviceContext.InputAssembler.InputLayout = _inputLayout;
             //Перенос данных буферов в видеокарту
             _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, VM.VertexBinging);
             _dx11DeviceContext.InputAssembler.SetIndexBuffer(VM.IndexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);
-            _dx11DeviceContext.VertexShader.SetConstantBuffer(0, VM.ConstantBuffer);           
-            //Отправляем текстуру в шейдер
-            _dx11DeviceContext.PixelShader.SetShaderResource(0, _textureResourse);
+            if (VM.ConstantBuffers != null)
+                for (int i = 0; i < VM.ConstantBuffers.Length; ++i)
+                {
+                    _dx11DeviceContext.VertexShader.SetConstantBuffer(i, VM.ConstantBuffers?[i]);
+                }
+            if (VM.Textures != null)
+                for (int i = 0; i < VM.Textures.Length; ++i)
+                {
+                    //Отправляем текстуру в шейдер
+                    _dx11DeviceContext.PixelShader.SetShaderResource(i, VM.Textures?[i]);
+                }
             _dx11DeviceContext.Rasterizer.State = _rasterizerState;
             _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
             _dx11DeviceContext.OutputMerger.SetBlendState(null, null);
-            if (isBlending) _dx11DeviceContext.OutputMerger.SetBlendState(_blendState, blendFactor);
+            if (isBlending) _dx11DeviceContext.OutputMerger.SetBlendState(_blendState, BlendFactor);
             //Рисуем в буффер нашего свайпчейна
             _dx11DeviceContext.DrawIndexed(VM.IndexCount, 0, 0);
         }
@@ -112,7 +110,7 @@ namespace SharpDX11GameByWinbringer.Models
 
         #region IDisposable Support
         private bool disposedValue = false;
-         void Dispose(bool disposing)
+        void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
@@ -123,7 +121,6 @@ namespace SharpDX11GameByWinbringer.Models
                     Utilities.Dispose(ref _blendState);
                     Utilities.Dispose(ref _DState);
                     Utilities.Dispose(ref _samplerState);
-                    Utilities.Dispose(ref _textureResourse);
                     Utilities.Dispose(ref _vertexShader);
                     Utilities.Dispose(ref _pixelShader);
                     Utilities.Dispose(ref _inputLayout);
@@ -140,6 +137,8 @@ namespace SharpDX11GameByWinbringer.Models
         {
             Dispose(true);
         }
+        #endregion
+
         #endregion
     }
 }

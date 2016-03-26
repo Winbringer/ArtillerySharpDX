@@ -2,10 +2,7 @@
 using SharpDX.Mathematics.Interop;
 
 using Format = SharpDX.DXGI.Format;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using SharpDX;
 using SharpDX.Direct3D;
 
@@ -210,12 +207,14 @@ namespace SharpDX11GameByWinbringer.Models
             };
         }
 
-        public override void Dispose()
+        public sealed override void Dispose()
         {
             base.Dispose();
             Utilities.Dispose(ref _perFrameBuffer);
             Utilities.Dispose(ref _perMaterialBuffer);
         }
 
-    }
+    }  
 }
+
+ 

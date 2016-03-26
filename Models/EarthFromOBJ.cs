@@ -8,8 +8,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Buffer = SharpDX.Direct3D11.Buffer;
 
 namespace SharpDX11GameByWinbringer.Models
@@ -29,13 +27,10 @@ namespace SharpDX11GameByWinbringer.Models
     {
         public Matrix WorldViewProjection;
         public Matrix World;
-        public Matrix WorldInverseTranspose;
-
         internal void Transpose()
         {
-            this.World.Transpose();
-            this.WorldInverseTranspose.Transpose();
-            this.WorldViewProjection.Transpose();
+            World.Transpose();
+            WorldViewProjection.Transpose();
         }
     }
 
@@ -74,7 +69,9 @@ namespace SharpDX11GameByWinbringer.Models
         VertexBufferBinding _vertexBinding;
         Light _light = new Light();
         Matrices _matrices = new Matrices();
+
         public Matrix World { get; set; }
+        public Vector3 Center { get; set; }
 
         DeviceContext _dx11Context;
 
@@ -95,21 +92,21 @@ namespace SharpDX11GameByWinbringer.Models
         public EarthFromOBJ(DeviceContext dx11Context)
         {
             _dx11Context = dx11Context;
-            World = Matrix.Identity;
+            World = Matrix.Translation(200, 200, -200) * Matrix.Identity;
             _light.Color = Color4.White;
 
             const string obj = "3DModelsFiles\\Earth\\earth.obj";
             const string mtl = "3DModelsFiles\\Earth\\earth.mtl";
             const string jpg = "3DModelsFiles\\Earth\\earthmap.jpg";
             const string shadersFile = "Shaders\\Earth.hlsl";
-            Tuple<List<Face>, List<uint>> tuple = GetFaces(obj);           
+            Tuple<List<Face>, List<uint>> tuple = GetFaces(obj);
             _facesCount = tuple.Item2.Count;
 
             _vertexBuffer = Buffer.Create(dx11Context.Device, BindFlags.VertexBuffer, tuple.Item1.ToArray());
             _indexBuffer = Buffer.Create(dx11Context.Device, BindFlags.IndexBuffer, tuple.Item2.ToArray());
             _vertexBinding = new VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<Face>(), 0);
 
-            MtlMaterial material = GetMaterial(mtl);           
+            MtlMaterial material = GetMaterial(mtl);
             _materialsBuffer = Buffer.Create(_dx11Context.Device, BindFlags.ConstantBuffer, ref material);
 
             _constantBuffer = new Buffer(_dx11Context.Device, Utilities.SizeOf<Matrices>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
@@ -170,13 +167,13 @@ namespace SharpDX11GameByWinbringer.Models
         public void Draw(Matrix world, Matrix view, Matrix proj)
         {
             r += 0.001f;
-            Matrix oWorld = Matrix.RotationY(r)*World* world ;
-            var camPosition = Matrix.Transpose(Matrix.Invert(view)).Column4;            
-           _light.CameraPosition = new Vector3(camPosition.X, camPosition.Y, camPosition.Z);           
+            Matrix oWorld = Matrix.RotationY(r) * Matrix.RotationX(r) * World * world;
+            Center = Vector3.TransformCoordinate(Vector3.Zero, oWorld);
+            var camPosition = Matrix.Transpose(Matrix.Invert(view)).Column4;
+            _light.CameraPosition = new Vector3(camPosition.X, camPosition.Y, camPosition.Z);
             _dx11Context.UpdateSubresource(ref _light, _lightBuffer);
 
             _matrices.World = oWorld;
-            _matrices.WorldInverseTranspose = Matrix.Transpose(Matrix.Invert(_matrices.World));
             _matrices.WorldViewProjection = _matrices.World * view * proj;
             _matrices.Transpose();
             _dx11Context.UpdateSubresource(ref _matrices, _constantBuffer);
@@ -290,18 +287,18 @@ namespace SharpDX11GameByWinbringer.Models
                         face.V = V;
                         face.Vt = Vt;
                         face.Vn = Vn;
-                        int i = faces.FindIndex(t =>  (t.V == face.V) && (t.Vn == face.Vn) && (t.Vt == face.Vt));
-                        if (i>=0)
+                        int i = faces.FindIndex(t => (t.V == face.V) && (t.Vn == face.Vn) && (t.Vt == face.Vt));
+                        if (i >= 0)
                         {
-                            index.Add((uint)i);                           
+                            index.Add((uint)i);
                         }
                         else
                         {
-                            faces.Add(face);                          
+                            faces.Add(face);
                             index.Add(Count);
                             ++Count;
                         }
-                        
+
                     }
                 }
 
@@ -363,6 +360,7 @@ namespace SharpDX11GameByWinbringer.Models
             Utilities.Dispose(ref _inputLayout);
             Utilities.Dispose(ref _rasterizerState);
             Utilities.Dispose(ref _DState);
+            _vertexBinding.Buffer.Dispose();
         }
 
         #endregion

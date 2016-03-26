@@ -27,10 +27,10 @@ namespace SharpDX11GameByWinbringer.Models
             _constantBuffer = new Buffer(Device, Utilities.SizeOf<B>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, Utilities.SizeOf<B>());
             _vertexBinging = new VertexBufferBinding(_triangleVertexBuffer, Utilities.SizeOf<V>(), 0);
         }
-        public void FillViewModel( ViewModel<B> VM)
+        public void FillViewModel( ViewModel VM)
         {
             _device.ImmediateContext.UpdateSubresource(ref _constantBufferData, _constantBuffer);    
-            VM.ConstantBuffer = _constantBuffer;
+            VM.ConstantBuffers = new[] { _constantBuffer };
             VM.IndexBuffer = _indexBuffer;
             VM.IndexCount = IndexCount;
             VM.VertexBinging = _vertexBinging;

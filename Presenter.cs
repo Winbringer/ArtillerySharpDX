@@ -30,7 +30,7 @@ namespace SharpDX11GameByWinbringer
         ShadedCube _sCube;
         EarthFromOBJ _earth;
         string _s;
-        Stopwatch _sw;        
+        Stopwatch _sw;
 
         public Presenter(Game game)
         {
@@ -58,18 +58,19 @@ namespace SharpDX11GameByWinbringer
             _sw = new Stopwatch();
             _sw.Start();
 
-           _earth= new EarthFromOBJ(game.DeviceContext);
+            _earth = new EarthFromOBJ(game.DeviceContext);
         }
 
         void Update(double time)
-        {            
+        {
             LPS();
-          //  _sCube.UpdateConsBufData(_World, _View, _Progection);
-            _lineManager.Update(time, _World, _View, _Progection);
+            //  _sCube.UpdateConsBufData(_World, _View, _Progection);
+            _lineManager.Update(time);
             //_waveManager.Update(time, _World, _View, _Progection);
             //_cubeManager.Update(time, _World, _View, _Progection);
             //_triangle.World = Matrix.RotationY(MathUtil.PiOverFour) * Matrix.Translation(0, -50, 0);
             //_triangle.UpdateConsBufData(_World, _View, _Progection);
+            _earth.Update((float)time);
         }
 
         private void LPS()
@@ -83,7 +84,7 @@ namespace SharpDX11GameByWinbringer
         void Draw(double time)
         {
             //    _waveManager.Draw();
-            _lineManager.Draw();
+            _lineManager.Draw(_World, _View, _Progection);
             //    _cubeManager.Draw();
             //    _triangle.DrawTriangle(
             //        PrimitiveTopology.TriangleList,
@@ -99,13 +100,13 @@ namespace SharpDX11GameByWinbringer
         #region Вспомогательные методы
         private void ReadKeyboardState(KeyboardState KeyState, float time)
         {
-            const float speed = 0.3f;             
+            const float speed = 0.3f;
             if (KeyState.IsPressed(Key.A)) _View *= Matrix.Translation(speed * time, 0, 0);
             if (KeyState.IsPressed(Key.D)) _View *= Matrix.Translation(-speed * time, 0, 0);
             if (KeyState.IsPressed(Key.W)) _View *= Matrix.Translation(0, 0, -speed * time);
             if (KeyState.IsPressed(Key.S)) _View *= Matrix.Translation(0, 0, speed * time);
-            if (KeyState.IsPressed(Key.Q)) _View *= Matrix.RotationY(speed/300 * time);
-            if (KeyState.IsPressed(Key.E)) _View *= Matrix.RotationY(-speed/300 * time);
+            if (KeyState.IsPressed(Key.Q)) _View *= Matrix.RotationY(speed / 300 * time);
+            if (KeyState.IsPressed(Key.E)) _View *= Matrix.RotationY(-speed / 300 * time);
             if (KeyState.IsPressed(Key.Z)) _View *= Matrix.Translation(0, -speed * time, 0);
             if (KeyState.IsPressed(Key.X)) _View *= Matrix.Translation(0, speed * time, 0);
         }
@@ -120,7 +121,7 @@ namespace SharpDX11GameByWinbringer
                 if (disposing)
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты). 
-                    Utilities.Dispose(ref _earth);                   
+                    Utilities.Dispose(ref _earth);
                     Utilities.Dispose(ref _lineManager);
                     Utilities.Dispose(ref _cubeManager);
                     Utilities.Dispose(ref _waveManager);

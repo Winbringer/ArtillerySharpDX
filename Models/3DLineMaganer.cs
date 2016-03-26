@@ -2,20 +2,14 @@
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX11GameByWinbringer.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    sealed class _3DLineMaganer: IDisposable
+    sealed class _3DLineMaganer : Meneger3D
     {
-        Drawer _CubeDrawer;
-        ViewModel _cubeVM = new ViewModel();
         XYZ _cube;
-        
+
         public _3DLineMaganer(DeviceContext DeviceContext)
         {
             InputElement[] inputElements1 = new InputElement[]
@@ -23,26 +17,29 @@ namespace SharpDX11GameByWinbringer.Models
                 new InputElement("POSITION", 0, SharpDX.DXGI.Format.R32G32B32_Float,0, 0),
                 new InputElement("COLOR",0,SharpDX.DXGI.Format.R32G32B32A32_Float,12,0)
            };
-            
-            _CubeDrawer = new Drawer("Shaders\\ColoredVertex.hlsl",
+
+            _drawer = new Drawer("Shaders\\ColoredVertex.hlsl",
                                       inputElements1,
                                       DeviceContext);
             _cube = new XYZ(DeviceContext.Device);
         }
-        public void Dispose()
+
+        public override void Dispose()
         {
-            Utilities.Dispose(ref _CubeDrawer);
+            base.Dispose();
             Utilities.Dispose(ref _cube);
         }
-        public void Update(double time, Matrix _World, Matrix _View, Matrix _Progection)
+
+        public override void Update(double time)
         {
-            _cube.Update(_World, _View, _Progection);
-            _cube.FillViewModel(_cubeVM);
+
         }
 
-        public void Draw()
+        public override void Draw(Matrix _World, Matrix _View, Matrix _Progection)
         {
-            _CubeDrawer.Draw(_cubeVM, PrimitiveTopology.LineList, false);
+            _cube.Update(_World, _View, _Progection);
+            _cube.FillViewModel(_viewModel);
+            _drawer.Draw(_viewModel, PrimitiveTopology.LineList, false);
         }
     }
 }

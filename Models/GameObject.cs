@@ -17,7 +17,7 @@ namespace SharpDX11GameByWinbringer.Models
         protected VertexBufferBinding _vertexBinging;
         Device _device;
         protected int IndexCount { get { return _indeces.Count(); } }
-        public Matrix ObjectWorld { get { return _world; } set { _world = value; } }
+        public Matrix WorldMatrix { get { return _world; } set { _world = value; } }
         protected void CreateBuffers(Device Device)
         {
             _device = Device;

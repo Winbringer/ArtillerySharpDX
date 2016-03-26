@@ -5,10 +5,10 @@ using SharpDX11GameByWinbringer.Models;
 
 namespace SharpDX11GameByWinbringer.ViewModels
 {
-   public abstract class Meneger3D : System.IDisposable
+    public abstract class Meneger3D : System.IDisposable
     {
-       protected Drawer _drawer;
-      protected  ViewModel _viewModel = new ViewModel();
+        protected Drawer _drawer;
+        protected ViewModel _viewModel = new ViewModel();
         /// <summary>
         /// Устанавливает параметры блендинга, растеризации, Буффера глубины и бледн фактор (влияет на то какой процент из цвета пикселя будет усачтвовать в блендинге)
         /// </summary>
@@ -100,7 +100,7 @@ namespace SharpDX11GameByWinbringer.ViewModels
 
         public abstract void Update(double time);
         public abstract void Draw(Matrix _World, Matrix _View, Matrix _Progection);
-        
+
 
         public virtual void Dispose()
         {

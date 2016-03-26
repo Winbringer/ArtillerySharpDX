@@ -163,19 +163,25 @@ namespace SharpDX11GameByWinbringer.Models
 
 
         #region Методы
-        float r = 0;
+
+        public void Update(float time)
+        {
+            World = Matrix.RotationX(0.0005f * time) * World * Matrix.RotationY(0.0005f * time);
+        }
+
         public void Draw(Matrix world, Matrix view, Matrix proj)
         {
-            r += 0.001f;
-            Matrix oWorld = Matrix.RotationY(r) * Matrix.RotationX(r) * World * world;
+            Matrix oWorld = World * world;
             Center = Vector3.TransformCoordinate(Vector3.Zero, oWorld);
+
             var camPosition = Matrix.Transpose(Matrix.Invert(view)).Column4;
             _light.CameraPosition = new Vector3(camPosition.X, camPosition.Y, camPosition.Z);
-            _dx11Context.UpdateSubresource(ref _light, _lightBuffer);
 
             _matrices.World = oWorld;
             _matrices.WorldViewProjection = _matrices.World * view * proj;
             _matrices.Transpose();
+
+            _dx11Context.UpdateSubresource(ref _light, _lightBuffer);
             _dx11Context.UpdateSubresource(ref _matrices, _constantBuffer);
 
             _dx11Context.VertexShader.Set(_vertexShader);
@@ -306,10 +312,6 @@ namespace SharpDX11GameByWinbringer.Models
             return new Tuple<List<Face>, List<uint>>(faces, index);
         }
 
-        private bool FindFace(Face face)
-        {
-            return true;
-        }
         private List<string> ReadOBJFile(string obj)
         {
             List<string> lines = new List<string>();

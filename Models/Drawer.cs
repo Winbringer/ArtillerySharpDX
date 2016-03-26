@@ -26,10 +26,11 @@ namespace SharpDX11GameByWinbringer.Models
         private DepthStencilState _DState = null;
 
         public RawColor4? BlendFactor { get; set; } = null;
-        public SamplerStateDescription Samplerdescription { get; set; } = SamplerStateDescription.Default();
-        public DepthStencilStateDescription DepthStencilDescripshion { get; set; } = DepthStencilStateDescription.Default();
-        public RasterizerStateDescription RasterizerDescription { get; set; } = RasterizerStateDescription.Default();
-        public BlendStateDescription BlendDescription { get; set; } = BlendStateDescription.Default();
+
+        public SamplerStateDescription Samplerdescription { set { _samplerState = new SamplerState(_dx11DeviceContext.Device, value); } }
+        public DepthStencilStateDescription DepthStencilDescripshion { set { _DState = new DepthStencilState(_dx11DeviceContext.Device, value); } }
+        public RasterizerStateDescription RasterizerDescription { set { _rasterizerState = new RasterizerState(_dx11DeviceContext.Device, value); } }
+        public BlendStateDescription BlendDescription { set { _blendState = new BlendState(_dx11DeviceContext.Device, value); } }
 
         #endregion
 
@@ -63,18 +64,18 @@ namespace SharpDX11GameByWinbringer.Models
                 _pixelShader = new PixelShader(_dx11DeviceContext.Device, pixelShaderByteCode);
             }
 
-            _samplerState = new SamplerState(_dx11DeviceContext.Device, Samplerdescription);
-            _DState = new DepthStencilState(_dx11DeviceContext.Device, DepthStencilDescripshion);
-            _rasterizerState = new RasterizerState(_dx11DeviceContext.Device, RasterizerDescription);
-            _blendState = new BlendState(_dx11DeviceContext.Device, BlendDescription);
-
             //Создаем шаблон ввода данных для шейдера
-            _inputLayout = new InputLayout(_dx11DeviceContext.Device, _inputSignature, inputElements);
+            _inputLayout = new InputLayout(_dx11DeviceContext.Device, _inputSignature, inputElements);           
+            Samplerdescription = SamplerStateDescription.Default();
+            DepthStencilDescripshion = DepthStencilStateDescription.Default();
+            RasterizerDescription = RasterizerStateDescription.Default();
+            BlendDescription = BlendStateDescription.Default();
+
         }
 
         #region Методы
 
-        public void Draw(ViewModel VM, PrimitiveTopology primitiveTopology = PrimitiveTopology.TriangleList, bool isBlending = false, int startIndex = 0, int baseVetex=0)
+        public void Draw(ViewModel VM, PrimitiveTopology primitiveTopology = PrimitiveTopology.TriangleList, bool isBlending = false, int startIndex = 0, int baseVetex = 0)
         {
             //Установка шейдеров
             _dx11DeviceContext.VertexShader.Set(_vertexShader);

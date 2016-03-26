@@ -163,9 +163,9 @@ namespace SharpDX11GameByWinbringer
         }
 
         private void Draw()
-        {
-            _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth | DX11.DepthStencilClearFlags.Stencil, 1.0f, 0);
+        {       
             _dx11DeviceContext.ClearRenderTargetView(_renderView, new SharpDX.Color(0, 0, 128));
+            _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth | DX11.DepthStencilClearFlags.Stencil, 1.0f, 0);
             OnDraw?.Invoke(1);
             _swapChain.Present(0, PresentFlags.None);
         }

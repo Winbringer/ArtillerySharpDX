@@ -152,7 +152,7 @@ namespace SharpDX11GameByWinbringer.Models
 
             InitDrawer("Shaders\\ShadedCube.hlsl",
                inputElements,
-                "Textures\\Cube\\crate.jpg",
+                "Textures\\lava.jpg",
                 description,
                 DStateDescripshion,
                 rasterizerStateDescription,

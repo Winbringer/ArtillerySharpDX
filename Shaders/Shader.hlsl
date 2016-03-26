@@ -20,7 +20,7 @@ PS_IN VS(VS_IN input)
 {
     PS_IN output = (PS_IN) 0;
     //Расчет высоты точки
-    float height = (sin(Time / 1000 + input.position.z / 2) + sin(Time / 2000 + input.position.x / 4)) / 2;
+    float height = (sin(input.position.z) + sin(Time / 1000 + input.position.x )) / 2;
     input.position.y = height * 2;
     height = (height + (float) 1) / (float) 2;
     height = lerp(0.5, 1.0F, height);
@@ -31,13 +31,8 @@ PS_IN VS(VS_IN input)
 }
 
 Texture2D textureMap : register(t0);
-SamplerState textureSampler : register(s1)
-{
-    Filter = MIN_MAG_MIP_LINEAR;
-    AddressU = Wrap;
-    AddressV = Wrap;
-    AddresW = Wrap;
-};
+SamplerState textureSampler : register(s0);
+
 float4 PS(PS_IN input) : SV_Target0
 {
     float4 color = textureMap.Sample(textureSampler, input.TextureUV);

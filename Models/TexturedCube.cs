@@ -16,7 +16,7 @@ namespace SharpDX11GameByWinbringer.Models
         {
             _world = Matrix.Identity;
             CreateVerteces();
-            CreateBuffers(device);
+            CreateBuffers(device,"Textures\\lava.jpg");
         }
         public override void Update(Matrix world, Matrix view, Matrix proj)
         {

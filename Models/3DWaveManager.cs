@@ -24,7 +24,21 @@ namespace SharpDX11GameByWinbringer.Models
                 "Shaders\\Shader.hlsl",
                 inputElements,
                 DeviceContext);
-            _cube = new Wave(DeviceContext.Device);
+            var res = RasterizerStateDescription.Default();
+            res.CullMode = CullMode.None;            
+            res.IsDepthClipEnabled = false;
+            _drawer.RasterizerDescription = res;
+            var sampler = SamplerStateDescription.Default();
+            sampler.AddressU = TextureAddressMode.Wrap;
+            sampler.AddressV = TextureAddressMode.Wrap;
+            sampler.AddressW = TextureAddressMode.Wrap;
+            sampler.Filter = Filter.MinMagMipLinear;
+            _drawer.Samplerdescription = sampler;
+            var des = DepthStencilStateDescription.Default();
+            des.DepthComparison = Comparison.Less;
+            _drawer.DepthStencilDescripshion = des;
+            _cube = new Wave(DeviceContext.Device, "Textures\\grass.jpg");
+            
         }
 
         public override void Dispose()
@@ -32,7 +46,7 @@ namespace SharpDX11GameByWinbringer.Models
             base.Dispose();
             Utilities.Dispose(ref _cube);
         }
-        
+
         public override void Update(double time)
         {
 

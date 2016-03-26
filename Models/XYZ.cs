@@ -8,7 +8,7 @@ namespace SharpDX11GameByWinbringer.Models
         public XYZ(Device device)
         {
             CreateVerteces();
-            CreateBuffers(device);
+            CreateBuffers(device, "Textures\\lava.jpg");
         }
 
         public override void Update(Matrix World, Matrix View, Matrix Proj)

@@ -54,7 +54,8 @@ namespace SharpDX11GameByWinbringer
             _cubeManager = new _3DCubeMeneger(game.DeviceContext);
             _triangle = new Triangle(game.DeviceContext);
             _sCube = new ShadedCube(game.DeviceContext);
-
+            _sCube.World = Matrix.Translation(0, -70, 0);
+            _triangle.World = Matrix.RotationY(MathUtil.PiOverFour) * Matrix.Translation(0, 70, 0);           
             _sw = new Stopwatch();
             _sw.Start();
 
@@ -64,12 +65,11 @@ namespace SharpDX11GameByWinbringer
         void Update(double time)
         {
             LPS();
-            //  _sCube.UpdateConsBufData(_World, _View, _Progection);
+            _sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time);
-            //_waveManager.Update(time, _World, _View, _Progection);
-            //_cubeManager.Update(time, _World, _View, _Progection);
-            //_triangle.World = Matrix.RotationY(MathUtil.PiOverFour) * Matrix.Translation(0, -50, 0);
-            //_triangle.UpdateConsBufData(_World, _View, _Progection);
+            _waveManager.Update(time);
+            _cubeManager.Update(time);
+            _triangle.UpdateConsBufData(_World, _View, _Progection);
             _earth.Update((float)time);
         }
 
@@ -83,16 +83,17 @@ namespace SharpDX11GameByWinbringer
 
         void Draw(double time)
         {
-            //    _waveManager.Draw();
+            _waveManager.Draw(_World, _View, _Progection);
             _lineManager.Draw(_World, _View, _Progection);
-            //    _cubeManager.Draw();
-            //    _triangle.DrawTriangle(
-            //        PrimitiveTopology.TriangleList,
-            //        true,
-            //        new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f)
-            //        );   
-            //_sCube.Draw(PrimitiveTopology.TriangleList,true,
-            //      new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
+            _cubeManager.Draw(_World, _View, _Progection);
+
+            _triangle.DrawTriangle(PrimitiveTopology.TriangleList,
+                                    true,
+                                    new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
+
+            _sCube.Draw(PrimitiveTopology.TriangleList, true,
+                        new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
+
             _earth.Draw(_World, _View, _Progection);
             _text2DWriter.DrawText(_s);
         }
@@ -100,13 +101,13 @@ namespace SharpDX11GameByWinbringer
         #region Вспомогательные методы
         private void ReadKeyboardState(KeyboardState KeyState, float time)
         {
-            const float speed = 0.3f;
+            const float speed = 0.2f;
             if (KeyState.IsPressed(Key.A)) _View *= Matrix.Translation(speed * time, 0, 0);
             if (KeyState.IsPressed(Key.D)) _View *= Matrix.Translation(-speed * time, 0, 0);
             if (KeyState.IsPressed(Key.W)) _View *= Matrix.Translation(0, 0, -speed * time);
             if (KeyState.IsPressed(Key.S)) _View *= Matrix.Translation(0, 0, speed * time);
-            if (KeyState.IsPressed(Key.Q)) _View *= Matrix.RotationY(speed / 300 * time);
-            if (KeyState.IsPressed(Key.E)) _View *= Matrix.RotationY(-speed / 300 * time);
+            if (KeyState.IsPressed(Key.Q)) _View *= Matrix.RotationY(speed / 200 * time);
+            if (KeyState.IsPressed(Key.E)) _View *= Matrix.RotationY(-speed / 200 * time);
             if (KeyState.IsPressed(Key.Z)) _View *= Matrix.Translation(0, -speed * time, 0);
             if (KeyState.IsPressed(Key.X)) _View *= Matrix.Translation(0, speed * time, 0);
         }

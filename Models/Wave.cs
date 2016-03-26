@@ -4,23 +4,23 @@ using SharpDX.Direct3D11;
 
 namespace SharpDX11GameByWinbringer.Models
 {
-    sealed class Wave:GameObject<Vertex,DataT>
-    {   
-        private readonly float _size = 500F;
-        readonly int _N = 1000;
-
-        public Wave(Device device)
+    sealed class Wave : GameObject<Vertex, DataT>
+    {
+        private readonly float _size = 100F;
+        readonly int _N = 500;
+        public string Texture { set { _texture = _device.ImmediateContext.LoadTextureFromFile(value); } }
+        public Wave(Device device, string textureFile)
         {
-            _world = Matrix.Translation(-_size / 2, 0, _size / 2) * Matrix.RotationY(MathUtil.PiOverFour);
+            _world = Matrix.Translation(new Vector3(-50,-4,-50));
             CreateVerteces();
             _constantBufferData = new DataT();
-            CreateBuffers(device);     
+            CreateBuffers(device, textureFile);
         }
 
 
-        public override  void Update(Matrix world, Matrix view, Matrix proj)
+        public override void Update(Matrix world, Matrix view, Matrix proj)
         {
-            _constantBufferData.WVP = _world * world * view * proj;
+            _constantBufferData.WVP =Matrix.Translation(Matrix.Invert(view).TranslationVector)* _world * world * view * proj;
             _constantBufferData.WVP.Transpose();
             _constantBufferData.Time = System.Environment.TickCount;
         }
@@ -30,31 +30,36 @@ namespace SharpDX11GameByWinbringer.Models
             _verteces = new Vertex[_N * _N];
             //Создание верщин           
             float delta = _size / (_N - 1);
-            float deltaT = 1f / (_N - 1);
-            float deltaTexture = 1f / (_N - 1);
-            for (int i = 0; i < _N; i++)
+
+            for (int i = 0; i < _N; ++i)
             {
-                for (int j = 0; j < _N; j++)
+                for (int j = 0; j < _N; ++j)
                 {
-                    int index = i * _N + j;
-                    _verteces[index].Position = new Vector3(delta * i, 0, -delta * j);
-                    _verteces[index].TextureUV = new Vector2(deltaT * i, deltaT * j);
+                    int index = (i * _N) + j;
+
+                    _verteces[index].Position = new Vector3(delta * j, 0, delta * i);
+                    _verteces[index].TextureUV = new Vector2(j, i) / 40;
+
                 }
             }
+
             //Создание индексов
             _indeces = new uint[(_N - 1) * (_N - 1) * 6];
             uint counter = 0;
-            for (int z = 0; z < (_N - 1); z++)
+
+            for (int z = 0; z < (_N - 1); ++z)
             {
-                for (int X = 0; X < (_N - 1); X++)
+                for (int x = 0; x < (_N - 1); ++x)
                 {
-                    uint lowerLeft = (uint)(z * _N + X);
+                    uint lowerLeft = (uint)(z * _N + x);
                     uint lowerRight = lowerLeft + 1;
                     uint upperLeft = lowerLeft + (uint)_N;
                     uint upperRight = upperLeft + 1;
+
                     _indeces[counter++] = lowerLeft;
                     _indeces[counter++] = upperLeft;
                     _indeces[counter++] = upperRight;
+
                     _indeces[counter++] = lowerLeft;
                     _indeces[counter++] = upperRight;
                     _indeces[counter++] = lowerRight;

@@ -63,6 +63,19 @@ namespace SharpDX11GameByWinbringer.Models
        };
             dr = new Drawer("Shaders\\Boy.hlsl", inputElements,dv.ImmediateContext);
             tex = dv.ImmediateContext.LoadTextureFromFile(texture);
+            var s = SamplerStateDescription.Default();
+            s.AddressU = TextureAddressMode.Wrap;
+            s.AddressV = TextureAddressMode.Wrap;
+            RasterizerStateDescription rasterizerStateDescription = RasterizerStateDescription.Default();
+            rasterizerStateDescription.CullMode = CullMode.None;
+            rasterizerStateDescription.FillMode = FillMode.Solid;
+
+            DepthStencilStateDescription DStateDescripshion = DepthStencilStateDescription.Default();
+            DStateDescripshion.IsDepthEnabled = true;
+
+            dr.Samplerdescription = s;
+            dr.RasterizerDescription = rasterizerStateDescription;
+            dr.DepthStencilDescripshion = DStateDescripshion;
         }
         public void Draw(Buffer[] cb)
         {
@@ -95,11 +108,12 @@ namespace SharpDX11GameByWinbringer.Models
         public MD5Model(DeviceContext dc)
         {
             _dx11Context = dc;
-            World = Matrix.Identity;
+            World = Matrix.RotationX(-MathUtil.PiOverTwo);
             List<string> lines = ReadMD5File(path + "boy.md5mesh");
             joints = GetJoints(lines);
             subsets = GetMeshes(lines);
             subsets = SetPositions(subsets, joints);
+           // subsets = SetNormals(subsets);
             _constantBuffer = new Buffer(_dx11Context.Device, Utilities.SizeOf<Matrix>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
             foreach (var item in subsets)
             {
@@ -110,12 +124,95 @@ namespace SharpDX11GameByWinbringer.Models
         public void Draw(Matrix world, Matrix view, Matrix proj)
         {
             Matrix MVP = World * world * view * proj;
+            MVP.Transpose();
             _dx11Context.UpdateSubresource(ref MVP, _constantBuffer);
             foreach (var item in subsets)
             {
                 item.Draw(new[] { _constantBuffer});
             }
         }
+
+        //MD5Mesh[] SetNormals(MD5Mesh[] subset)
+        //{
+        //    //*** Calculate vertex normals using normal averaging ***///
+        //    List<Vector3> tempNormal = new List<Vector3>();
+
+        //    //normalized and unnormalized normals
+        //    Vector3 unnormalized =new Vector3(0.0f, 0.0f, 0.0f);
+
+        //    //Used to get vectors (sides) from the position of the verts
+        //    float vecX, vecY, vecZ;
+
+        //    //Two edges of our triangle
+        //    Vector3 edge1;
+        //    Vector3 edge2;
+
+        //    for (int k = 0; k < subset.Length; k++)
+        //    {
+        //        for (int i = 0; i < subset[k].indices.Count / 3; ++i)
+        //        {
+        //            //Get the vector describing one edge of our triangle (edge 0,2)
+                    
+        //            vecX = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.X - subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.x;
+        //            vecY = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.Y- subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.y;
+        //            vecZ = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.Z - subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.z;
+        //            edge1 = new Vector3(vecX, vecY, vecZ);    //Create our first edge
+                    
+        //            //Get the vector describing another edge of our triangle (edge 2,1)
+        //            vecX = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.x - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].pos.x;
+        //            vecY = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.y - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].pos.y;
+        //            vecZ = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.z - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].pos.z;
+        //            edge2 = new Vector3(vecX, vecY, vecZ);    //Create our second edge
+
+        //            //Cross multiply the two edge vectors to get the un-normalized face normal
+        //            unnormalized= Vector3.Cross(edge1, edge2);
+
+        //            tempNormal.Add(unnormalized);
+        //        }
+
+        //        //Compute vertex normals (normal Averaging)
+        //        XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+        //        int facesUsing = 0;
+        //        float tX, tY, tZ;    //temp axis variables
+
+        //        //Go through each vertex
+        //        for (int i = 0; i < subset[k].vertices.size(); ++i)
+        //        {
+        //            //Check which triangles use this vertex
+        //            for (int j = 0; j < subset[k].numTriangles; ++j)
+        //            {
+        //                if (subset[k].indices[j * 3] == i ||
+        //                    subset[k].indices[(j * 3) + 1] == i ||
+        //                    subset[k].indices[(j * 3) + 2] == i)
+        //                {
+        //                    tX = XMVectorGetX(normalSum) + tempNormal[j].x;
+        //                    tY = XMVectorGetY(normalSum) + tempNormal[j].y;
+        //                    tZ = XMVectorGetZ(normalSum) + tempNormal[j].z;
+
+        //                    normalSum = XMVectorSet(tX, tY, tZ, 0.0f);    //If a face is using the vertex, add the unormalized face normal to the normalSum
+
+        //                    facesUsing++;
+        //                }
+        //            }
+
+        //            //Get the actual normal by dividing the normalSum by the number of faces sharing the vertex
+        //            normalSum = normalSum / facesUsing;
+
+        //            //Normalize the normalSum vector
+        //            normalSum = XMVector3Normalize(normalSum);
+
+        //            //Store the normal and tangent in our current vertex
+        //            subset[k].vertices[i].normal.x = -XMVectorGetX(normalSum);
+        //            subset[k].vertices[i].normal.y = -XMVectorGetY(normalSum);
+        //            subset[k].vertices[i].normal.z = -XMVectorGetZ(normalSum);
+
+        //            //Clear normalSum, facesUsing for next vertex
+        //            normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+        //            facesUsing = 0;
+        //        }
+        //    }
+        //    return subset;
+        //}
 
         MD5Mesh[] SetPositions(MD5Mesh[] subsets, Joint[] joints)
         {
@@ -129,15 +226,15 @@ namespace SharpDX11GameByWinbringer.Models
                         Weight tempWeight = subsets[k].weights[tempVert.startWeight + j];
                         Joint tempJoint = joints[tempWeight.JointID];
 
-                        var tempJointOrientation = tempJoint.orientation;
-                        var tempWeightPos = new Vector4(tempWeight.position, 0.0f);
-                        var tempJointOrientationConjugate = new Vector4(-tempJoint.orientation.X,
+                        var tempJointOrientation =new Quaternion( tempJoint.orientation);
+                        var tempWeightPos = new Quaternion(tempWeight.position, 0.0f);
+                        var tempJointOrientationConjugate = new Quaternion(-tempJoint.orientation.X,
                                                                          -tempJoint.orientation.Y,
                                                                          -tempJoint.orientation.Z,
                                                                          tempJoint.orientation.W);
                         Vector3 rotatedPoint;
-                      var  rot =(tempJointOrientation * tempWeightPos)* tempJointOrientationConjugate;
-                        rotatedPoint = new Vector3(rot.X, rot.Y, rot.Z);
+                      var  rot =(tempJointOrientation * tempWeightPos)* tempJointOrientationConjugate;                       
+                        rotatedPoint = new Vector3(rot.X, rot.Y, rot.Z);                        
                         tempVert.position += (tempJoint.position + rotatedPoint) * tempWeight.bias;
                     }
                     subsets[k].vertices[i] = tempVert;

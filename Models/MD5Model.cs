@@ -1,19 +1,22 @@
 ﻿using SharpDX;
-using SharpDX.Direct3D11;
+using Device = SharpDX.Direct3D11.Device;
+using Buffer = SharpDX.Direct3D11.Buffer;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using SharpDX.DXGI;
+using SharpDX.Direct3D11;
 
 namespace SharpDX11GameByWinbringer.Models
 {
     struct MD5Vertex
     {
         public Vector3 position;
-        public Vector2 textureUV;
         public Vector3 normal;
+        public Vector2 textureUV;       
         public int startWeight;
         public int numWeights;
         public int ID;
@@ -40,14 +43,43 @@ namespace SharpDX11GameByWinbringer.Models
         public List<MD5Vertex> vertices = new List<MD5Vertex>();
         public List<uint> indices = new List<uint>();
         public List<Weight> weights = new List<Weight>();
-        public List<Vector3> positions = new List<Vector3>();
 
         public Buffer vertBuff = null;
         public Buffer indexBuff = null;
+        public  VertexBufferBinding vb;
+        ViewModels.ViewModel VM = new ViewModels.ViewModel();
+        Drawer dr;       
+        ShaderResourceView tex;
+        public void InitBuffers(Device dv)
+        {
+            vertBuff = Buffer.Create(dv, BindFlags.VertexBuffer, vertices.ToArray());
+            indexBuff = Buffer.Create(dv, BindFlags.IndexBuffer, indices.ToArray());
+            vb = new VertexBufferBinding(vertBuff, Utilities.SizeOf<MD5Vertex>(), 0);
+            InputElement[] inputElements = new InputElement[]
+       {
+             new InputElement("SV_Position",0,Format.R32G32B32_Float,0,0),
+             new InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
+             new InputElement("TEXCOORD", 0, Format.R32G32B32_Float, 24, 0)
+       };
+            dr = new Drawer("Shaders\\Boy.hlsl", inputElements,dv.ImmediateContext);
+            tex = dv.ImmediateContext.LoadTextureFromFile(texture);
+        }
+        public void Draw(Buffer[] cb)
+        {
+            VM.ConstantBuffers = cb;
+            VM.DrawedVertexCount = indices.Count;
+            VM.IndexBuffer = indexBuff;
+            VM.Textures = new[] { tex };
+            VM.VertexBinging = vb;
+            dr.Draw(VM);
+        }
         public void Dispose()
         {
             Utilities.Dispose(ref vertBuff);
             Utilities.Dispose(ref indexBuff);
+            Utilities.Dispose(ref tex);
+            Utilities.Dispose(ref dr);
+            Utilities.Dispose(ref VM);
         }
     }
 
@@ -56,16 +88,62 @@ namespace SharpDX11GameByWinbringer.Models
         public Matrix World;
         Joint[] joints;
         MD5Mesh[] subsets;
-               
+
         const string path = "3DModelsFiles\\Human\\";
-        public MD5Model()
+        private Buffer _constantBuffer;
+        DeviceContext _dx11Context;
+        public MD5Model(DeviceContext dc)
         {
+            _dx11Context = dc;
             World = Matrix.Identity;
             List<string> lines = ReadMD5File(path + "boy.md5mesh");
             joints = GetJoints(lines);
-            subsets = GetMeshes(lines);      
+            subsets = GetMeshes(lines);
+            subsets = SetPositions(subsets, joints);
+            _constantBuffer = new Buffer(_dx11Context.Device, Utilities.SizeOf<Matrix>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+            foreach (var item in subsets)
+            {
+                item.InitBuffers(_dx11Context.Device);
+            }
+          }
+
+        public void Draw(Matrix world, Matrix view, Matrix proj)
+        {
+            Matrix MVP = World * world * view * proj;
+            _dx11Context.UpdateSubresource(ref MVP, _constantBuffer);
+            foreach (var item in subsets)
+            {
+                item.Draw(new[] { _constantBuffer});
+            }
         }
 
+        MD5Mesh[] SetPositions(MD5Mesh[] subsets, Joint[] joints)
+        {
+            for (int k = 0; k < subsets.Length; ++k)
+                for (int i = 0; i < subsets[k].vertices.Count; ++i)
+                {
+                    var tempVert = subsets[k].vertices[i];
+                    tempVert.position = new Vector3(0);                   
+                    for (int j = 0; j < tempVert.numWeights; ++j)
+                    {
+                        Weight tempWeight = subsets[k].weights[tempVert.startWeight + j];
+                        Joint tempJoint = joints[tempWeight.JointID];
+
+                        var tempJointOrientation = tempJoint.orientation;
+                        var tempWeightPos = new Vector4(tempWeight.position, 0.0f);
+                        var tempJointOrientationConjugate = new Vector4(-tempJoint.orientation.X,
+                                                                         -tempJoint.orientation.Y,
+                                                                         -tempJoint.orientation.Z,
+                                                                         tempJoint.orientation.W);
+                        Vector3 rotatedPoint;
+                      var  rot =(tempJointOrientation * tempWeightPos)* tempJointOrientationConjugate;
+                        rotatedPoint = new Vector3(rot.X, rot.Y, rot.Z);
+                        tempVert.position += (tempJoint.position + rotatedPoint) * tempWeight.bias;
+                    }
+                    subsets[k].vertices[i] = tempVert;
+                }
+            return subsets;
+        }
         MD5Mesh[] GetMeshes(List<string> lines)
         {
             List<MD5Mesh> m = new List<MD5Mesh>();
@@ -181,6 +259,7 @@ namespace SharpDX11GameByWinbringer.Models
 
         public void Dispose()
         {
+            Utilities.Dispose(ref _constantBuffer);
             foreach (var item in subsets)
             {
                 item.Dispose();

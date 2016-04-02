@@ -61,7 +61,7 @@ namespace SharpDX11GameByWinbringer
             _sw.Start();
 
             _earth = new EarthFromOBJ(game.DeviceContext);
-            _boy = new MD5Model();
+            _boy = new MD5Model(game.DeviceContext);
         }
 
         void Update(double time)
@@ -97,6 +97,7 @@ namespace SharpDX11GameByWinbringer
             //            new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
 
             //_earth.Draw(_World, _View, _Progection);
+            _boy.Draw(_World, _View, _Progection);
             _text2DWriter.DrawText(_s);
         }
 

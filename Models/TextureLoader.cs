@@ -49,7 +49,7 @@ namespace SharpDX11GameByWinbringer
         public static Texture2D CreateTex2DFromFile(Device device, string filename)
         {
             var bSource = LoadBitmap(filename);
-            return CreateTex2DFromBitmap(device, bSource);
+            return CreateTex2DFromBitmap(device, bSource);           
         }
 
         public static Texture2D CreateTex2DFromBitmap(Device device, BitmapSource bsource)

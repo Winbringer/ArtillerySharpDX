@@ -848,7 +848,7 @@ namespace SharpDX11GameByWinbringer.Models
         /// <param name="filename">Filename</param>
         /// <returns>Shader Resource View</returns>
         public static ShaderResourceView LoadTextureFromFile(this DeviceContext device, string filename)
-        {
+        {            
             string ext = System.IO.Path.GetExtension(filename);
 
             if (ext.ToLower() == ".dds")

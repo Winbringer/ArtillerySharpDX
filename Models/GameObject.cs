@@ -34,7 +34,7 @@ namespace SharpDX11GameByWinbringer.Models
             _device.ImmediateContext.UpdateSubresource(ref _constantBufferData, _constantBuffer);    
             VM.ConstantBuffers = new[] { _constantBuffer };
             VM.IndexBuffer = _indexBuffer;
-            VM.IndexCount = IndexCount;
+            VM.DrawedVertexCount = IndexCount;
             VM.VertexBinging = _vertexBinging;
             VM.Textures = new[] { _texture };
         }

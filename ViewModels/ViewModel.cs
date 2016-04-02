@@ -10,7 +10,7 @@ namespace SharpDX11GameByWinbringer.ViewModels
         public Buffer IndexBuffer { get; set; }
         public Buffer[] ConstantBuffers { get; set; }
         public ShaderResourceView[] Textures { get; set; }
-        public int IndexCount { get; set; }
+        public int DrawedVertexCount { get; set; }
 
         public void Dispose()
         {

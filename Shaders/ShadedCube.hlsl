@@ -49,9 +49,7 @@ struct PixelShaderInput
 };
 
 float3 Lambert(float4 pixelDiffuse, float3 normal, float3 toLight)
-{ // Calculate diffuse color (Lambert's Cosine Law - dot
-     // product of light and normal). Saturate to clamp the 
-    // value within 0 to 1.   
+{   
     float3 diffuseAmount = saturate(dot(normal, toLight));
     return pixelDiffuse.rgb * diffuseAmount;
 }

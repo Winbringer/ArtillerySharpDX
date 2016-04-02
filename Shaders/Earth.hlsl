@@ -58,19 +58,17 @@ PS_IN VS(VS_IN input)
 float4 PS(PS_IN input) : SV_Target
 {
     float4 sample = textureMap.Sample(textureSampler, input.TextureUV);
-    float4 specularColor = specularMap.Sample(textureSampler, input.TextureUV);
+    float4 specularColorMap = specularMap.Sample(textureSampler, input.TextureUV);
 
     float3 normal = normalize(input.WorldNormal);
     float3 toLight = normalize(-Direction);
     float3 toEye = normalize(CameraPosition - input.WorldPosition);
     float3 halfway = normalize(toLight + toEye);
-
     float3 emissive = Ke_EmissiveColor.rgb;
     float3 ambient = sample.rgb * Ka_AmbientColor.rgb;
     float3 diffuse = sample.rgb * Kd_DiffuseColor.rgb * max(0, dot(normal, toLight));
-    float3 specular = Ks_SpecularColor.rgb * specularColor.rgb * pow(max(0, dot(normal, halfway)), max(Ns_SpecularPower, 0.00001f));
-    float3 color = saturate(ambient) + saturate(diffuse) + saturate(specular) + saturate(emissive);
-   
+    float3 specular = Ks_SpecularColor.rgb * specularColorMap.rgb * pow(max(0, dot(normal, halfway)), max(Ns_SpecularPower, 0.00001f));
+    float3 color = saturate(ambient) + saturate(diffuse) + saturate(specular) + saturate(emissive);   
     float alpha = sample.a;
 
     return saturate(float4(color, alpha));

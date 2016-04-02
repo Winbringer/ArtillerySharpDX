@@ -67,7 +67,7 @@ namespace SharpDX11GameByWinbringer
             LPS();
             _sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time);
-            _waveManager.Update(time);
+          //  _waveManager.Update(time);
             _cubeManager.Update(time);
             _triangle.UpdateConsBufData(_World, _View, _Progection);
             _earth.Update((float)time);
@@ -83,7 +83,7 @@ namespace SharpDX11GameByWinbringer
 
         void Draw(double time)
         {
-            _waveManager.Draw(_World, _View, _Progection);
+          //  _waveManager.Draw(_World, _View, _Progection);
             _lineManager.Draw(_World, _View, _Progection);
             _cubeManager.Draw(_World, _View, _Progection);
 

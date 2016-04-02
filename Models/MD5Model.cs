@@ -11,12 +11,12 @@ namespace SharpDX11GameByWinbringer.Models
 {
     struct MD5Vertex
     {
-        public int ID;
         public Vector3 position;
         public Vector2 textureUV;
         public Vector3 normal;
         public int startWeight;
         public int numWeights;
+        public int ID;
     }
     struct Weight
     {
@@ -35,16 +35,15 @@ namespace SharpDX11GameByWinbringer.Models
 
     class MD5Mesh : System.IDisposable
     {
-        string texArrayIndex;
-        int numTriangles;
-        List<MD5Vertex> vertices;
-        List<uint> indices;
-        List<Weight> weights;
+        public string texture;
+        public int numTriangles;
+        public List<MD5Vertex> vertices = new List<MD5Vertex>();
+        public List<uint> indices = new List<uint>();
+        public List<Weight> weights = new List<Weight>();
+        public List<Vector3> positions = new List<Vector3>();
 
-        List<Vector3> positions;
-
-        Buffer vertBuff;
-        Buffer indexBuff;
+        public Buffer vertBuff = null;
+        public Buffer indexBuff = null;
         public void Dispose()
         {
             Utilities.Dispose(ref vertBuff);
@@ -57,19 +56,62 @@ namespace SharpDX11GameByWinbringer.Models
         public Matrix World;
         Joint[] joints;
         MD5Mesh[] subsets;
-        List<ShaderResourceView> textures;
-        List<string> textureFiles;
-
+               
+        const string path = "3DModelsFiles\\Human\\";
         public MD5Model()
         {
-            const string path = "3DModelsFiles\\Human\\";
+            World = Matrix.Identity;
             List<string> lines = ReadMD5File(path + "boy.md5mesh");
-            joints = new Joint[lines.Where(l => l.Contains("numJoints")).Select(l => int.Parse(l.Replace("numJoints", "").Trim())).First()];
-            subsets = new MD5Mesh[lines.Where(l => l.Contains("numMeshes")).Select(l => int.Parse(l.Replace("numMeshes", "").Trim())).First()];
             joints = GetJoints(lines);
-           
+            subsets = GetMeshes(lines);      
+        }
 
-            int jj = 0;
+        MD5Mesh[] GetMeshes(List<string> lines)
+        {
+            List<MD5Mesh> m = new List<MD5Mesh>();
+            int index = -1;
+            foreach (var item in lines)
+            {
+                if (item.Contains("mesh {"))
+                {
+                    ++index;
+                    m.Add(new MD5Mesh());
+                }
+                if (item.Contains("shader ")) m[index].texture = path + item.Split(' ')[1].Replace("\"", "");
+                if (item.Contains("vert "))
+                {
+                    var s = item.Replace("vert ", "").Split(' ');
+                    MD5Vertex v = new MD5Vertex();
+                    v.ID = (int)FParse(s[0]);
+                    v.textureUV = new Vector2(FParse(s[2]), FParse(s[3]));
+                    v.startWeight = (int)FParse(s[5]);
+                    v.numWeights = (int)FParse(s[6]);
+
+                    m[index].vertices.Add(v);
+                }
+                if (item.Contains("numtris ")) m[index].numTriangles = (int)FParse(item.Split(' ')[1]);
+                if (item.Contains("tri "))
+                {
+                    var tri = item.Split(' ');
+                    m[index].indices.Add((uint)FParse(tri[2]));
+                    m[index].indices.Add((uint)FParse(tri[3]));
+                    m[index].indices.Add((uint)FParse(tri[4]));
+                }
+
+                if (item.Contains("weight "))
+                {
+                    Weight w = new Weight();
+                    var sw = item.Split(' ');
+                    w.ID = (int)FParse(sw[1]);
+                    w.JointID = (int)FParse(sw[2]);
+                    w.bias = FParse(sw[3]);
+                    w.position = new Vector3(FParse(sw[5]), FParse(sw[6]), FParse(sw[7]));
+                    m[index].weights.Add(w);
+                }
+            }
+
+            return m.ToArray();
+
 
         }
 
@@ -116,6 +158,7 @@ namespace SharpDX11GameByWinbringer.Models
         {
             return float.Parse(s, CultureInfo.InvariantCulture);
         }
+
         private List<string> ReadMD5File(string obj)
         {
             List<string> lines = new List<string>();

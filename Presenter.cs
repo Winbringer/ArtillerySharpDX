@@ -29,6 +29,7 @@ namespace SharpDX11GameByWinbringer
         Triangle _triangle;
         ShadedCube _sCube;
         EarthFromOBJ _earth;
+        MD5Model _boy;
         string _s;
         Stopwatch _sw;
 
@@ -60,17 +61,18 @@ namespace SharpDX11GameByWinbringer
             _sw.Start();
 
             _earth = new EarthFromOBJ(game.DeviceContext);
+            _boy = new MD5Model();
         }
 
         void Update(double time)
         {
             LPS();
-            _sCube.UpdateConsBufData(_World, _View, _Progection);
+          //  _sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time);
-          //  _waveManager.Update(time);
-            _cubeManager.Update(time);
-            _triangle.UpdateConsBufData(_World, _View, _Progection);
-            _earth.Update((float)time);
+          ////  _waveManager.Update(time);
+          //  _cubeManager.Update(time);
+          //  _triangle.UpdateConsBufData(_World, _View, _Progection);
+          //  _earth.Update((float)time);
         }
 
         private void LPS()
@@ -85,16 +87,16 @@ namespace SharpDX11GameByWinbringer
         {
           //  _waveManager.Draw(_World, _View, _Progection);
             _lineManager.Draw(_World, _View, _Progection);
-            _cubeManager.Draw(_World, _View, _Progection);
+            //_cubeManager.Draw(_World, _View, _Progection);
 
-            _triangle.DrawTriangle(PrimitiveTopology.TriangleList,
-                                    true,
-                                    new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
+            //_triangle.DrawTriangle(PrimitiveTopology.TriangleList,
+            //                        true,
+            //                        new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
 
-            _sCube.Draw(PrimitiveTopology.TriangleList, true,
-                        new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
+            //_sCube.Draw(PrimitiveTopology.TriangleList, true,
+            //            new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
 
-            _earth.Draw(_World, _View, _Progection);
+            //_earth.Draw(_World, _View, _Progection);
             _text2DWriter.DrawText(_s);
         }
 

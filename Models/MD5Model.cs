@@ -108,17 +108,18 @@ namespace SharpDX11GameByWinbringer.Models
         public MD5Model(DeviceContext dc)
         {
             _dx11Context = dc;
-            World = Matrix.RotationX(-MathUtil.PiOverTwo);
+            World =  Matrix.RotationX(-MathUtil.PiOverTwo);
             List<string> lines = ReadMD5File(path + "boy.md5mesh");
             joints = GetJoints(lines);
             subsets = GetMeshes(lines);
             subsets = SetPositions(subsets, joints);
-           // subsets = SetNormals(subsets);
+           subsets = SetNormals(subsets);
             _constantBuffer = new Buffer(_dx11Context.Device, Utilities.SizeOf<Matrix>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
             foreach (var item in subsets)
             {
                 item.InitBuffers(_dx11Context.Device);
             }
+
           }
 
         public void Draw(Matrix world, Matrix view, Matrix proj)
@@ -132,87 +133,73 @@ namespace SharpDX11GameByWinbringer.Models
             }
         }
 
-        //MD5Mesh[] SetNormals(MD5Mesh[] subset)
-        //{
-        //    //*** Calculate vertex normals using normal averaging ***///
-        //    List<Vector3> tempNormal = new List<Vector3>();
+        MD5Mesh[] SetNormals(MD5Mesh[] subset)
+        {
+            List<Vector3> tempNormal = new List<Vector3>();
+            
+            Vector3 unnormalized = new Vector3(0.0f, 0.0f, 0.0f);
 
-        //    //normalized and unnormalized normals
-        //    Vector3 unnormalized =new Vector3(0.0f, 0.0f, 0.0f);
+            float vecX, vecY, vecZ;
 
-        //    //Used to get vectors (sides) from the position of the verts
-        //    float vecX, vecY, vecZ;
+            Vector3 edge1;
+            Vector3 edge2;
 
-        //    //Two edges of our triangle
-        //    Vector3 edge1;
-        //    Vector3 edge2;
+            for (int k = 0; k < subset.Length; k++)
+            {
+                for (int i = 0; i < subset[k].indices.Count / 3; ++i)
+                {
+                    vecX = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.X - subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.X;
+                    vecY = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.Y - subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.Y;
+                    vecZ = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.Z - subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.Z;
+                    edge1 = new Vector3(vecX, vecY, vecZ);  
+                    vecX = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.X - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].position.X;
+                    vecY = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.Y - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].position.Y;
+                    vecZ = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.Z - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].position.Z;
+                    edge2 = new Vector3(vecX, vecY, vecZ);   
+                    unnormalized = Vector3.Cross(edge1, edge2);
 
-        //    for (int k = 0; k < subset.Length; k++)
-        //    {
-        //        for (int i = 0; i < subset[k].indices.Count / 3; ++i)
-        //        {
-        //            //Get the vector describing one edge of our triangle (edge 0,2)
+                    tempNormal.Add(unnormalized);
+                }
+
+                //Compute vertex normals (normal Averaging)
+                Vector4 normalSum = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+                int facesUsing = 0;
+                float tX, tY, tZ;    //temp axis variables
+
+                //Go through each vertex
+                for (int i = 0; i < subset[k].vertices.Count; ++i)
+                {
+                    //Check which triangles use this vertex
+                    for (int j = 0; j < subset[k].numTriangles; ++j)
+                    {
+                        if (subset[k].indices[j * 3] == i ||
+                            subset[k].indices[(j * 3) + 1] == i ||
+                            subset[k].indices[(j * 3) + 2] == i)
+                        {
+                            tX = normalSum.X + tempNormal[j].X;
+                            tY = normalSum.Y + tempNormal[j].Y;
+                            tZ = normalSum.Z + tempNormal[j].Z;
+
+                            normalSum = new Vector4(tX, tY, tZ, 0.0f);   
+
+                            facesUsing++;
+                        }
+                    }
+
                     
-        //            vecX = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.X - subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.x;
-        //            vecY = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.Y- subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.y;
-        //            vecZ = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.Z - subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.z;
-        //            edge1 = new Vector3(vecX, vecY, vecZ);    //Create our first edge
+                    normalSum = normalSum / facesUsing;
                     
-        //            //Get the vector describing another edge of our triangle (edge 2,1)
-        //            vecX = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.x - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].pos.x;
-        //            vecY = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.y - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].pos.y;
-        //            vecZ = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].pos.z - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].pos.z;
-        //            edge2 = new Vector3(vecX, vecY, vecZ);    //Create our second edge
-
-        //            //Cross multiply the two edge vectors to get the un-normalized face normal
-        //            unnormalized= Vector3.Cross(edge1, edge2);
-
-        //            tempNormal.Add(unnormalized);
-        //        }
-
-        //        //Compute vertex normals (normal Averaging)
-        //        XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-        //        int facesUsing = 0;
-        //        float tX, tY, tZ;    //temp axis variables
-
-        //        //Go through each vertex
-        //        for (int i = 0; i < subset[k].vertices.size(); ++i)
-        //        {
-        //            //Check which triangles use this vertex
-        //            for (int j = 0; j < subset[k].numTriangles; ++j)
-        //            {
-        //                if (subset[k].indices[j * 3] == i ||
-        //                    subset[k].indices[(j * 3) + 1] == i ||
-        //                    subset[k].indices[(j * 3) + 2] == i)
-        //                {
-        //                    tX = XMVectorGetX(normalSum) + tempNormal[j].x;
-        //                    tY = XMVectorGetY(normalSum) + tempNormal[j].y;
-        //                    tZ = XMVectorGetZ(normalSum) + tempNormal[j].z;
-
-        //                    normalSum = XMVectorSet(tX, tY, tZ, 0.0f);    //If a face is using the vertex, add the unormalized face normal to the normalSum
-
-        //                    facesUsing++;
-        //                }
-        //            }
-
-        //            //Get the actual normal by dividing the normalSum by the number of faces sharing the vertex
-        //            normalSum = normalSum / facesUsing;
-
-        //            //Normalize the normalSum vector
-        //            normalSum = XMVector3Normalize(normalSum);
-
-        //            //Store the normal and tangent in our current vertex
-        //            subset[k].vertices[i].normal.x = -XMVectorGetX(normalSum);
-        //            subset[k].vertices[i].normal.y = -XMVectorGetY(normalSum);
-        //            subset[k].vertices[i].normal.z = -XMVectorGetZ(normalSum);
-
-        //            //Clear normalSum, facesUsing for next vertex
-        //            normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-        //            facesUsing = 0;
-        //        }
-        //    }
-        //    return subset;
-        //}
+                    normalSum =Vector4.Normalize(normalSum);
+                    var mt = subset[k].vertices[i];
+                    mt.normal= new Vector3( -normalSum.X, -normalSum.Y,-normalSum.Z);
+                    subset[k].vertices[i] = mt;
+                    //Clear normalSum, facesUsing for next vertex
+                    normalSum = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+                    facesUsing = 0;
+                }
+            }
+            return subset;
+        }
 
         MD5Mesh[] SetPositions(MD5Mesh[] subsets, Joint[] joints)
         {
@@ -233,10 +220,11 @@ namespace SharpDX11GameByWinbringer.Models
                                                                          -tempJoint.orientation.Z,
                                                                          tempJoint.orientation.W);
                         Vector3 rotatedPoint;
-                      var  rot =(tempJointOrientation * tempWeightPos)* tempJointOrientationConjugate;                       
+                      var  rot = Quaternion.Multiply(Quaternion.Multiply(tempJointOrientation,tempWeightPos), tempJointOrientationConjugate);                       
                         rotatedPoint = new Vector3(rot.X, rot.Y, rot.Z);                        
-                        tempVert.position += (tempJoint.position + rotatedPoint) * tempWeight.bias;
+                        tempVert.position += (tempJoint.position + rotatedPoint) * tempWeight.bias;                        
                     }
+                   
                     subsets[k].vertices[i] = tempVert;
                 }
             return subsets;

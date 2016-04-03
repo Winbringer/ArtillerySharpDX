@@ -132,6 +132,7 @@ namespace SharpDX11GameByWinbringer
                     Utilities.Dispose(ref _text2DWriter);
                     Utilities.Dispose(ref _triangle);
                     Utilities.Dispose(ref _sCube);
+                    Utilities.Dispose(ref _boy);
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.

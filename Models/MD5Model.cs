@@ -9,18 +9,32 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 using SharpDX.DXGI;
 using SharpDX.Direct3D11;
+using System.Runtime.InteropServices;
 
 namespace SharpDX11GameByWinbringer.Models
 {
+    [StructLayout(LayoutKind.Sequential)]
+    struct cbuffer
+    {
+        public Matrix MVP;
+        public Matrix World;
+        public void Transpose()
+        {
+            MVP.Transpose();
+            World.Transpose();
+        }
+    }
+
     struct MD5Vertex
     {
         public Vector3 position;
         public Vector3 normal;
-        public Vector2 textureUV;       
+        public Vector2 textureUV;
         public int startWeight;
         public int numWeights;
         public int ID;
     }
+
     struct Weight
     {
         public int ID;
@@ -28,12 +42,18 @@ namespace SharpDX11GameByWinbringer.Models
         public float bias;
         public Vector3 position;
     }
+
     struct Joint
     {
         public string Name;
         public int parentID;
         public Vector3 position;
-        public Vector4 orientation;
+        public Quaternion orientation;
+        public Vector3 transform(Vector3 v)
+        {
+            return Vector3.Transform(v, orientation) + position;
+        }
+
     }
 
     class MD5Mesh : System.IDisposable
@@ -46,10 +66,11 @@ namespace SharpDX11GameByWinbringer.Models
 
         public Buffer vertBuff = null;
         public Buffer indexBuff = null;
-        public  VertexBufferBinding vb;
+        public VertexBufferBinding vb;
         ViewModels.ViewModel VM = new ViewModels.ViewModel();
-        Drawer dr;       
+        Drawer dr;
         ShaderResourceView tex;
+
         public void InitBuffers(Device dv)
         {
             vertBuff = Buffer.Create(dv, BindFlags.VertexBuffer, vertices.ToArray());
@@ -61,21 +82,9 @@ namespace SharpDX11GameByWinbringer.Models
              new InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
              new InputElement("TEXCOORD", 0, Format.R32G32B32_Float, 24, 0)
        };
-            dr = new Drawer("Shaders\\Boy.hlsl", inputElements,dv.ImmediateContext);
+            dr = new Drawer("Shaders\\Boy.hlsl", inputElements, dv.ImmediateContext);
             tex = dv.ImmediateContext.LoadTextureFromFile(texture);
-            var s = SamplerStateDescription.Default();
-            s.AddressU = TextureAddressMode.Wrap;
-            s.AddressV = TextureAddressMode.Wrap;
-            RasterizerStateDescription rasterizerStateDescription = RasterizerStateDescription.Default();
-            rasterizerStateDescription.CullMode = CullMode.None;
-            rasterizerStateDescription.FillMode = FillMode.Solid;
 
-            DepthStencilStateDescription DStateDescripshion = DepthStencilStateDescription.Default();
-            DStateDescripshion.IsDepthEnabled = true;
-
-            dr.Samplerdescription = s;
-            dr.RasterizerDescription = rasterizerStateDescription;
-            dr.DepthStencilDescripshion = DStateDescripshion;
         }
         public void Draw(Buffer[] cb)
         {
@@ -98,49 +107,47 @@ namespace SharpDX11GameByWinbringer.Models
 
     class MD5Model : System.IDisposable
     {
+        const string path = "3DModelsFiles\\Human\\";
         public Matrix World;
         Joint[] joints;
         MD5Mesh[] subsets;
-
-        const string path = "3DModelsFiles\\Human\\";
         private Buffer _constantBuffer;
         DeviceContext _dx11Context;
+
         public MD5Model(DeviceContext dc)
         {
             _dx11Context = dc;
-            World =  Matrix.RotationX(-MathUtil.PiOverTwo);
+            World = Matrix.Identity;// Matrix.RotationX(-MathUtil.PiOverTwo);
             List<string> lines = ReadMD5File(path + "boy.md5mesh");
             joints = GetJoints(lines);
             subsets = GetMeshes(lines);
             subsets = SetPositions(subsets, joints);
-           subsets = SetNormals(subsets);
-            _constantBuffer = new Buffer(_dx11Context.Device, Utilities.SizeOf<Matrix>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+            subsets = SetNormals(subsets);
+            _constantBuffer = new Buffer(_dx11Context.Device, Utilities.SizeOf<cbuffer>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
             foreach (var item in subsets)
             {
                 item.InitBuffers(_dx11Context.Device);
             }
 
-          }
+        }
 
         public void Draw(Matrix world, Matrix view, Matrix proj)
         {
-            Matrix MVP = World * world * view * proj;
-            MVP.Transpose();
-            _dx11Context.UpdateSubresource(ref MVP, _constantBuffer);
+            cbuffer b = new cbuffer();
+            b.MVP = World * world * view * proj;
+            b.World =Matrix.Invert( World * world);
+            b.Transpose();
+            _dx11Context.UpdateSubresource(ref b, _constantBuffer);
             foreach (var item in subsets)
             {
-                item.Draw(new[] { _constantBuffer});
+                item.Draw(new[] { _constantBuffer });
             }
         }
 
         MD5Mesh[] SetNormals(MD5Mesh[] subset)
         {
             List<Vector3> tempNormal = new List<Vector3>();
-            
             Vector3 unnormalized = new Vector3(0.0f, 0.0f, 0.0f);
-
-            float vecX, vecY, vecZ;
-
             Vector3 edge1;
             Vector3 edge2;
 
@@ -148,53 +155,37 @@ namespace SharpDX11GameByWinbringer.Models
             {
                 for (int i = 0; i < subset[k].indices.Count / 3; ++i)
                 {
-                    vecX = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.X - subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.X;
-                    vecY = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.Y - subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.Y;
-                    vecZ = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position.Z - subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.Z;
-                    edge1 = new Vector3(vecX, vecY, vecZ);  
-                    vecX = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.X - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].position.X;
-                    vecY = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.Y - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].position.Y;
-                    vecZ = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position.Z - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].position.Z;
-                    edge2 = new Vector3(vecX, vecY, vecZ);   
+                    edge1 = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position - -subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position;
+                    edge2 = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].position;
                     unnormalized = Vector3.Cross(edge1, edge2);
-
                     tempNormal.Add(unnormalized);
                 }
 
-                //Compute vertex normals (normal Averaging)
-                Vector4 normalSum = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+                Vector3 normalSum = new Vector3(0.0f);
                 int facesUsing = 0;
-                float tX, tY, tZ;    //temp axis variables
 
-                //Go through each vertex
                 for (int i = 0; i < subset[k].vertices.Count; ++i)
                 {
-                    //Check which triangles use this vertex
                     for (int j = 0; j < subset[k].numTriangles; ++j)
                     {
                         if (subset[k].indices[j * 3] == i ||
                             subset[k].indices[(j * 3) + 1] == i ||
                             subset[k].indices[(j * 3) + 2] == i)
                         {
-                            tX = normalSum.X + tempNormal[j].X;
-                            tY = normalSum.Y + tempNormal[j].Y;
-                            tZ = normalSum.Z + tempNormal[j].Z;
-
-                            normalSum = new Vector4(tX, tY, tZ, 0.0f);   
-
-                            facesUsing++;
+                            normalSum += tempNormal[j];
+                            ++facesUsing;
                         }
                     }
 
-                    
                     normalSum = normalSum / facesUsing;
-                    
-                    normalSum =Vector4.Normalize(normalSum);
+
+                    normalSum = Vector3.Normalize(normalSum);
+
                     var mt = subset[k].vertices[i];
-                    mt.normal= new Vector3( -normalSum.X, -normalSum.Y,-normalSum.Z);
+                    mt.normal = -normalSum;
                     subset[k].vertices[i] = mt;
-                    //Clear normalSum, facesUsing for next vertex
-                    normalSum = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+
+                    normalSum = new Vector3(0.0f);
                     facesUsing = 0;
                 }
             }
@@ -207,28 +198,20 @@ namespace SharpDX11GameByWinbringer.Models
                 for (int i = 0; i < subsets[k].vertices.Count; ++i)
                 {
                     var tempVert = subsets[k].vertices[i];
-                    tempVert.position = new Vector3(0);                   
+                    tempVert.position = new Vector3(0);
                     for (int j = 0; j < tempVert.numWeights; ++j)
                     {
                         Weight tempWeight = subsets[k].weights[tempVert.startWeight + j];
                         Joint tempJoint = joints[tempWeight.JointID];
-
-                        var tempJointOrientation =new Quaternion( tempJoint.orientation);
-                        var tempWeightPos = new Quaternion(tempWeight.position, 0.0f);
-                        var tempJointOrientationConjugate = new Quaternion(-tempJoint.orientation.X,
-                                                                         -tempJoint.orientation.Y,
-                                                                         -tempJoint.orientation.Z,
-                                                                         tempJoint.orientation.W);
-                        Vector3 rotatedPoint;
-                      var  rot = Quaternion.Multiply(Quaternion.Multiply(tempJointOrientation,tempWeightPos), tempJointOrientationConjugate);                       
-                        rotatedPoint = new Vector3(rot.X, rot.Y, rot.Z);                        
-                        tempVert.position += (tempJoint.position + rotatedPoint) * tempWeight.bias;                        
+                        tempVert.position += (Vector3.Transform(tempWeight.position, tempJoint.orientation) + tempJoint.position) * tempWeight.bias;
                     }
-                   
+                    var tempPos = tempVert.position;
+                    tempVert.position = new Vector3(tempPos.X, tempPos.Z, tempPos.Y);
                     subsets[k].vertices[i] = tempVert;
                 }
             return subsets;
         }
+
         MD5Mesh[] GetMeshes(List<string> lines)
         {
             List<MD5Mesh> m = new List<MD5Mesh>();
@@ -310,7 +293,7 @@ namespace SharpDX11GameByWinbringer.Models
                         w = -(float)System.Math.Sqrt(t);
                     }
 
-                    j.orientation = new Vector4(x, y, z, w);
+                    j.orientation = new Quaternion(x, y, z, w);
                     return j;
                 })
                 .ToArray();

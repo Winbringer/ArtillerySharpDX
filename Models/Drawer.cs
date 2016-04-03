@@ -65,12 +65,27 @@ namespace SharpDX11GameByWinbringer.Models
             }
 
             //Создаем шаблон ввода данных для шейдера
-            _inputLayout = new InputLayout(_dx11DeviceContext.Device, _inputSignature, inputElements);           
-            Samplerdescription = SamplerStateDescription.Default();
-            DepthStencilDescripshion = DepthStencilStateDescription.Default();
-            RasterizerDescription = RasterizerStateDescription.Default();
-            BlendDescription = BlendStateDescription.Default();
-
+            _inputLayout = new InputLayout(_dx11DeviceContext.Device, _inputSignature, inputElements);   
+            var s = SamplerStateDescription.Default();
+            s.AddressU = TextureAddressMode.Wrap;
+            s.AddressV =  TextureAddressMode.Wrap;
+            s.AddressW = TextureAddressMode.Wrap;
+            s.MaximumAnisotropy = 16;
+            s.MaximumLod = float.MaxValue;
+            s.MinimumLod = 0;
+            s.Filter = Filter.MinMagMipLinear;
+            Samplerdescription = s;
+            var d = DepthStencilStateDescription.Default();
+            d.IsDepthEnabled = true;
+            d.IsStencilEnabled = false;
+            DepthStencilDescripshion = d;
+            var r = RasterizerStateDescription.Default();
+            r.CullMode = CullMode.None;
+            r.FillMode = FillMode.Solid;
+            RasterizerDescription = r;
+            var b = BlendStateDescription.Default();
+            b.AlphaToCoverageEnable = new RawBool(true);
+            BlendDescription = b; 
         }
 
         #region Методы
@@ -117,7 +132,7 @@ namespace SharpDX11GameByWinbringer.Models
             _dx11DeviceContext.DrawIndexed(VM.DrawedVertexCount, startIndex, baseVetex);           
         }
 
-        public void Draw(int baseVetex ,ViewModel VM, PrimitiveTopology primitiveTopology = PrimitiveTopology.TriangleList, bool isBlending = false)
+        public void DrawNoIndex(ViewModel VM, int baseVetex =0, PrimitiveTopology primitiveTopology = PrimitiveTopology.TriangleList, bool isBlending = false)
         {
             //Установка шейдеров
             _dx11DeviceContext.VertexShader.Set(_vertexShader);

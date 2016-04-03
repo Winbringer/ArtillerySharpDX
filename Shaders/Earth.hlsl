@@ -47,11 +47,10 @@ PS_IN VS(VS_IN input)
 {
     PS_IN output = (PS_IN) 0;
     
-    output.Position = mul(input.position, WorldViewProjection);
-    output.TextureUV = input.textureUV;
+    output.Position = mul(input.position, WorldViewProjection);    
     output.WorldNormal = mul(input.normal, (float3x3) World);
     output.WorldPosition = mul(input.position, World).xyz;
-
+    output.TextureUV = input.textureUV;
     return output;
 }
 

@@ -18,12 +18,28 @@ namespace SharpDX11GameByWinbringer.Models
     {
         public Matrix MVP;
         public Matrix World;
+        public Matrix WorldIT;
         public void Transpose()
         {
             MVP.Transpose();
             World.Transpose();
+            WorldIT.Transpose();
         }
     }
+
+    struct HierarchyItem
+    {
+        public string name;
+        public int parent;
+        public int flags;
+        public int startIndex;
+    };
+
+    struct BaseFrameJoint
+    {
+        public Vector3 pos;
+        public Quaternion orient;
+    };
 
     struct MD5Vertex
     {
@@ -54,6 +70,138 @@ namespace SharpDX11GameByWinbringer.Models
             return Vector3.Transform(v, orientation) + position;
         }
 
+    }
+
+    class MD5Anim
+    {
+        public int numFrames;
+        public List<HierarchyItem> hierarchy;
+        public List<BaseFrameJoint> baseFrame;
+        public List<float[]> frames;
+
+        public MD5Anim(string path)
+        {
+            //hierarchy = new List<HierarchyItem>();
+            //baseFrame = new List<BaseFrameJoint>();
+            //frames = new List<float[]>();
+            //numFrames = 0;
+            List<string> lines = ReadMD5File(path);
+            numFrames = (int)FParse(lines.First(l => l.Contains("numFrames ")).Split(' ')[1]);
+            hierarchy = GetHierarchy(lines);
+            baseFrame = GetBaseFrame(lines);
+            frames = GetFrames(lines);
+        }
+
+        List<float[]> GetFrames(List<string> lines)
+        {
+            List<float[]> f = new List<float[]>();
+            List<float> ff = new List<float>();
+            bool isF = false;
+            foreach (var item in lines)
+            {
+                if (!item.Contains("baseframe {") && item.Contains("frame "))
+                {
+                    isF = true;
+                    continue;
+                }
+                if (item.Contains("}"))
+                {
+                    isF = false; f.Add(ff.ToArray());
+                    ff = new List<float>();
+                    continue;
+                }
+                if (isF)
+                {
+                    var m = item.Split(' ').Select(l => FParse(l));
+                    ff.AddRange(m.ToArray());
+                }
+            }
+            return f.Skip(3).ToList();
+        }
+
+        List<BaseFrameJoint> GetBaseFrame(List<string> lines)
+        {
+            List<BaseFrameJoint> bf = new List<BaseFrameJoint>();
+            bool isBF = false;
+            foreach (var item in lines)
+            {
+                if (item.Contains("baseframe {")) { isBF = true; continue; }
+                if (item.Contains("}")) { isBF = false; continue; }
+                if (isBF)
+                {
+                    BaseFrameJoint h = new BaseFrameJoint();
+                    var m = item.Split(' ');
+                    h.pos = new Vector3(FParse(m[1]), FParse(m[2]), FParse(m[3]));
+                    float x = FParse(m[6]);
+                    float y = FParse(m[7]);
+                    float z = FParse(m[8]);
+                    float w = 0;
+                    float t = 1.0f - (x * x)
+                        - (y * y)
+                        - (z * z);
+                    if (t < 0.0f)
+                    {
+                        w = 0.0f;
+                    }
+                    else
+                    {
+                        w = -(float)System.Math.Sqrt(t);
+                    }
+
+                    h.orient = new Quaternion(x, y, z, w);
+                    bf.Add(h);
+                }
+            }
+            return bf;
+        }
+
+        List<HierarchyItem> GetHierarchy(List<string> lines)
+        {
+            string pattern = "\".+\"";
+            List<HierarchyItem> hi = new List<HierarchyItem>();
+            bool isH = false;
+            foreach (var item in lines)
+            {
+                if (item.Contains("hierarchy {")) { isH = true; continue; }
+                if (item.Contains("}")) { isH = false; continue; }
+                if (isH)
+                {
+                    HierarchyItem h = new HierarchyItem();
+                    h.name = Regex.Match(item, pattern).Groups[0].Value.Replace("\"", "");
+                    var m = item.Replace(Regex.Match(item, pattern).Groups[0].Value, "").Trim().Split(' ');
+                    h.parent = (int)FParse(m[0]);
+                    h.flags = (int)FParse(m[1]);
+                    h.startIndex = (int)FParse(Regex.Match(m[2], "[0-9]").Groups[0].Value);
+                    hi.Add(h);
+                }
+            }
+            return hi;
+        }
+
+        private float FParse(string s)
+        {
+            return float.Parse(s, CultureInfo.InvariantCulture);
+        }
+
+        private List<string> ReadMD5File(string obj)
+        {
+            List<string> lines = new List<string>();
+            using (StreamReader reader = new StreamReader(obj))
+            {
+                while (true)
+                {
+                    string l = reader.ReadLine();
+                    if (reader.EndOfStream)
+                        break;
+
+                    if (string.IsNullOrEmpty(l.Trim()))
+                        continue;
+
+                    lines.Add(l);
+                }
+            }
+            return lines;
+        }
     }
 
     class MD5Mesh : System.IDisposable
@@ -113,6 +261,7 @@ namespace SharpDX11GameByWinbringer.Models
         MD5Mesh[] subsets;
         private Buffer _constantBuffer;
         DeviceContext _dx11Context;
+        MD5Anim anim;
 
         public MD5Model(DeviceContext dc)
         {
@@ -129,13 +278,15 @@ namespace SharpDX11GameByWinbringer.Models
                 item.InitBuffers(_dx11Context.Device);
             }
 
+            this.anim = new MD5Anim(path + "boy.md5anim");
         }
 
         public void Draw(Matrix world, Matrix view, Matrix proj)
         {
             cbuffer b = new cbuffer();
             b.MVP = World * world * view * proj;
-            b.World =Matrix.Invert( World * world);
+            b.WorldIT = Matrix.Invert(World * world);
+            b.World = World * world;
             b.Transpose();
             _dx11Context.UpdateSubresource(ref b, _constantBuffer);
             foreach (var item in subsets)
@@ -193,6 +344,7 @@ namespace SharpDX11GameByWinbringer.Models
         }
 
         MD5Mesh[] SetPositions(MD5Mesh[] subsets, Joint[] joints)
+
         {
             for (int k = 0; k < subsets.Length; ++k)
                 for (int i = 0; i < subsets[k].vertices.Count; ++i)
@@ -211,6 +363,7 @@ namespace SharpDX11GameByWinbringer.Models
                 }
             return subsets;
         }
+
 
         MD5Mesh[] GetMeshes(List<string> lines)
         {

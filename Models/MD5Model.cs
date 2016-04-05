@@ -208,17 +208,22 @@ namespace SharpDX11GameByWinbringer.Models
     {
         public string texture;
         public int numTriangles;
-        public List<MD5Vertex> vertices = new List<MD5Vertex>();
-        public List<uint> indices = new List<uint>();
-        public List<Weight> weights = new List<Weight>();
+        public List<MD5Vertex> vertices;
+        public List<uint> indices;
+        public List<Weight> weights;
 
         public Buffer vertBuff = null;
         public Buffer indexBuff = null;
         public VertexBufferBinding vb;
-        ViewModels.ViewModel VM = new ViewModels.ViewModel();
+        ViewModels.ViewModel VM=null;
         Drawer dr;
         ShaderResourceView tex;
-
+        public MD5Mesh()
+        {
+            vertices = new List<MD5Vertex>();
+            indices = new List<uint>();
+            weights = new List<Weight>();
+        }
         public void InitBuffers(Device dv)
         {
             vertBuff = Buffer.Create(dv, BindFlags.VertexBuffer, vertices.ToArray());
@@ -232,8 +237,9 @@ namespace SharpDX11GameByWinbringer.Models
        };
             dr = new Drawer("Shaders\\Boy.hlsl", inputElements, dv.ImmediateContext);
             tex = dv.ImmediateContext.LoadTextureFromFile(texture);
-
+            VM = new ViewModels.ViewModel();
         }
+
         public void Draw(Buffer[] cb)
         {
             VM.ConstantBuffers = cb;
@@ -243,6 +249,7 @@ namespace SharpDX11GameByWinbringer.Models
             VM.VertexBinging = vb;
             dr.Draw(VM);
         }
+
         public void Dispose()
         {
             Utilities.Dispose(ref vertBuff);
@@ -266,7 +273,7 @@ namespace SharpDX11GameByWinbringer.Models
         public MD5Model(DeviceContext dc)
         {
             _dx11Context = dc;
-            World = Matrix.Identity;// Matrix.RotationX(-MathUtil.PiOverTwo);
+            World = Matrix.Identity;
             List<string> lines = ReadMD5File(path + "boy.md5mesh");
             joints = GetJoints(lines);
             subsets = GetMeshes(lines);
@@ -333,7 +340,7 @@ namespace SharpDX11GameByWinbringer.Models
                     normalSum = Vector3.Normalize(normalSum);
 
                     var mt = subset[k].vertices[i];
-                    mt.normal = -normalSum;
+                    mt.normal = normalSum;
                     subset[k].vertices[i] = mt;
 
                     normalSum = new Vector3(0.0f);
@@ -363,7 +370,6 @@ namespace SharpDX11GameByWinbringer.Models
                 }
             return subsets;
         }
-
 
         MD5Mesh[] GetMeshes(List<string> lines)
         {

@@ -1,16 +1,10 @@
 ﻿using SharpDX;
-using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.DirectInput;
 using SharpDX11GameByWinbringer.Models;
-using SharpDX11GameByWinbringer.ViewModels;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+
 
 namespace SharpDX11GameByWinbringer
 {

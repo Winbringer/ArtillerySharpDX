@@ -69,6 +69,7 @@ namespace SharpDX11GameByWinbringer
             LPS();
           //  _sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time);
+            _boy.Update((float)time);
           ////  _waveManager.Update(time);
           //  _cubeManager.Update(time);
           //  _triangle.UpdateConsBufData(_World, _View, _Progection);

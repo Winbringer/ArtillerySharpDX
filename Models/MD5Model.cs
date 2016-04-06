@@ -61,7 +61,7 @@ namespace SharpDX11GameByWinbringer.Models
 
     struct Joint
     {
-        public string Name;
+        public string name;
         public int parentID;
         public Vector3 position;
         public Quaternion orientation;
@@ -74,22 +74,89 @@ namespace SharpDX11GameByWinbringer.Models
 
     class MD5Anim
     {
-        public int numFrames;
+        int frame = 0;
+        public readonly int numFrames;
+        public readonly int numJoints;
+        public int FrameNo { get { return frame; } }
         public List<HierarchyItem> hierarchy;
         public List<BaseFrameJoint> baseFrame;
         public List<float[]> frames;
 
         public MD5Anim(string path)
         {
-            //hierarchy = new List<HierarchyItem>();
-            //baseFrame = new List<BaseFrameJoint>();
-            //frames = new List<float[]>();
-            //numFrames = 0;
             List<string> lines = ReadMD5File(path);
             numFrames = (int)FParse(lines.First(l => l.Contains("numFrames ")).Split(' ')[1]);
+            numJoints = (int)FParse(lines.First(l => l.Contains("numJoints ")).Split(' ')[1]);
             hierarchy = GetHierarchy(lines);
             baseFrame = GetBaseFrame(lines);
             frames = GetFrames(lines);
+        }
+
+        public Joint[] setFrame(Joint[] joints, int no)
+        {
+            if (no < 0)
+                no = numFrames - 1;
+
+            if (no >= numFrames)
+                no = 0;
+
+            frame = no;
+
+              joints = resetJoints(joints);
+
+            //for (int i = 0; i < numJoints; i++)
+            //{
+            //    int flags = hierarchy[i].flags;
+            //    int pos = hierarchy[i].startIndex;
+
+            //    if ((flags & 1) >= 1)
+            //        joints[i].position.X = frames[no][pos + i];
+
+            //    if ((flags & 2) >= 1)
+            //        joints[i].position.Y = frames[no][pos + i];
+
+            //    if ((flags & 4) >= 1)
+            //        joints[i].position.Z = frames[no][pos + i];
+
+            //    if ((flags & 8) >= 1)
+            //        joints[i].orientation.X = frames[no][pos + i];
+
+            //    if ((flags & 16) >= 1)
+            //        joints[i].orientation.Y = frames[no][pos + i];
+
+            //    if ((flags & 32) >= 1)
+            //        joints[i].orientation.Z = frames[no][pos + i];
+
+            //    joints[i].orientation = Quaternion.Normalize(joints[i].orientation);
+            //}
+
+            joints = buildJoints(joints);
+            return joints;
+        }
+
+        Joint[] buildJoints(Joint[] joints)
+        {
+            for (int i = 0; i < numJoints; i++)
+                if (joints[i].parentID >= 0)
+                {
+                    int id = joints[i].parentID;
+                    joints[i].position = joints[id].position +
+                                    Vector3.Transform(joints[i].position, joints[id].orientation);
+                    joints[i].orientation = Quaternion.Normalize(Quaternion.Multiply(joints[id].orientation, joints[i].orientation));
+                }
+            return joints;
+        }
+
+        Joint[] resetJoints(Joint[] joints)
+        {
+            for (int i = 0; i < numJoints; i++)
+            {
+                joints[i].name = hierarchy[i].name;
+                joints[i].parentID = hierarchy[i].parent;
+                joints[i].position = baseFrame[i].pos;
+                joints[i].orientation = baseFrame[i].orient;
+            }
+            return joints;
         }
 
         List<float[]> GetFrames(List<string> lines)
@@ -211,19 +278,26 @@ namespace SharpDX11GameByWinbringer.Models
         public List<MD5Vertex> vertices;
         public List<uint> indices;
         public List<Weight> weights;
-
         public Buffer vertBuff = null;
         public Buffer indexBuff = null;
         public VertexBufferBinding vb;
-        ViewModels.ViewModel VM=null;
+        ViewModels.ViewModel VM = null;
         Drawer dr;
         ShaderResourceView tex;
+
         public MD5Mesh()
         {
             vertices = new List<MD5Vertex>();
             indices = new List<uint>();
             weights = new List<Weight>();
         }
+
+        public void UpdateBuffers(DeviceContext dt)
+        {
+            dt.UpdateSubresource(vertices.ToArray(), vertBuff);
+            vb = new VertexBufferBinding(vertBuff, Utilities.SizeOf<MD5Vertex>(), 0);
+        }
+
         public void InitBuffers(Device dv)
         {
             vertBuff = Buffer.Create(dv, BindFlags.VertexBuffer, vertices.ToArray());
@@ -274,18 +348,43 @@ namespace SharpDX11GameByWinbringer.Models
         {
             _dx11Context = dc;
             World = Matrix.Identity;
+
+            anim = new MD5Anim(path + "boy.md5anim");
+
             List<string> lines = ReadMD5File(path + "boy.md5mesh");
             joints = GetJoints(lines);
             subsets = GetMeshes(lines);
-            subsets = SetPositions(subsets, joints);
-            subsets = SetNormals(subsets);
+            SetPositions(ref subsets, joints);
+            SetNormals(ref subsets);
             _constantBuffer = new Buffer(_dx11Context.Device, Utilities.SizeOf<cbuffer>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+
             foreach (var item in subsets)
             {
                 item.InitBuffers(_dx11Context.Device);
             }
 
-            this.anim = new MD5Anim(path + "boy.md5anim");
+        }
+
+        int i = -1;
+        float timeSum = 0;
+        public void Update(float time)
+        {
+            timeSum += time;
+            if (timeSum > 500)
+            {
+                timeSum = 0;
+
+                ++i;
+                if (i > anim.numFrames) i = 0;
+
+                SetPositions(ref subsets, anim.setFrame(joints, i));
+                SetNormals(ref subsets);
+
+                foreach (var item in subsets)
+                {
+                    item.UpdateBuffers(_dx11Context);
+                }
+            }
         }
 
         public void Draw(Matrix world, Matrix view, Matrix proj)
@@ -302,7 +401,7 @@ namespace SharpDX11GameByWinbringer.Models
             }
         }
 
-        MD5Mesh[] SetNormals(MD5Mesh[] subset)
+        void SetNormals(ref MD5Mesh[] subset)
         {
             List<Vector3> tempNormal = new List<Vector3>();
             Vector3 unnormalized = new Vector3(0.0f, 0.0f, 0.0f);
@@ -347,11 +446,9 @@ namespace SharpDX11GameByWinbringer.Models
                     facesUsing = 0;
                 }
             }
-            return subset;
         }
 
-        MD5Mesh[] SetPositions(MD5Mesh[] subsets, Joint[] joints)
-
+        void SetPositions(ref MD5Mesh[] subsets, Joint[] joints)
         {
             for (int k = 0; k < subsets.Length; ++k)
                 for (int i = 0; i < subsets[k].vertices.Count; ++i)
@@ -368,7 +465,6 @@ namespace SharpDX11GameByWinbringer.Models
                     tempVert.position = new Vector3(tempPos.X, tempPos.Z, tempPos.Y);
                     subsets[k].vertices[i] = tempVert;
                 }
-            return subsets;
         }
 
         MD5Mesh[] GetMeshes(List<string> lines)
@@ -429,7 +525,7 @@ namespace SharpDX11GameByWinbringer.Models
                 .Select(l =>
                 {
                     Joint j = new Joint();
-                    j.Name = Regex.Match(l, pattern).Groups[0].Value.Replace("\"", "");
+                    j.name = Regex.Match(l, pattern).Groups[0].Value.Replace("\"", "");
                     var r = l.Replace(Regex.Match(l, pattern).Groups[0].Value, "").Trim().Split(' ');
                     j.parentID = int.Parse(r[0], CultureInfo.InvariantCulture);
                     float x = FParse(r[2]);

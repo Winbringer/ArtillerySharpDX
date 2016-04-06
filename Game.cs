@@ -28,7 +28,7 @@ namespace SharpDX11GameByWinbringer
         private SwapChain _swapChain;
         //Представление куда мы выводим картинку.
         private DX11.RenderTargetView _renderView = null;
-        private DX11.DepthStencilView _depthView = null;       
+        private DX11.DepthStencilView _depthView = null;
         private Presenter _presenter = null;
         //Управление через клавиатуру
         DirectInput _directInput;
@@ -40,7 +40,7 @@ namespace SharpDX11GameByWinbringer
         public SwapChain SwapChain { get { return _swapChain; } }
         public int Width { get { return _renderForm.ClientSize.Width; } }
         public int Height { get { return _renderForm.ClientSize.Height; } }
-                
+
         public Game(SharpDX.Windows.RenderForm renderForm)
         {
             _renderForm = renderForm;
@@ -50,7 +50,7 @@ namespace SharpDX11GameByWinbringer
             InitializeDeviceResources();
 
             _directInput = new DirectInput();
-            _keyboard = new Keyboard(_directInput);            
+            _keyboard = new Keyboard(_directInput);
             _keyboard.Properties.BufferSize = 128;
             _keyboard.Acquire();
 
@@ -68,11 +68,11 @@ namespace SharpDX11GameByWinbringer
                     // TODO: освободить управляемое состояние (управляемые объекты).
                     Utilities.Dispose(ref _keyboard);
                     Utilities.Dispose(ref _directInput);
-                    Utilities.Dispose(ref _presenter);                                
+                    Utilities.Dispose(ref _presenter);
                     Utilities.Dispose(ref _renderView);
-                    Utilities.Dispose(ref _swapChain);                    
+                    Utilities.Dispose(ref _swapChain);
                     Utilities.Dispose(ref _factory);
-                    Utilities.Dispose(ref _depthView);                   
+                    Utilities.Dispose(ref _depthView);
                     Utilities.Dispose(ref _dx11Device);
                     Utilities.Dispose(ref _dx11DeviceContext);
                 }
@@ -146,24 +146,24 @@ namespace SharpDX11GameByWinbringer
             using (DX11.Texture2D backBuffer = _swapChain.GetBackBuffer<DX11.Texture2D>(0))
                 _renderView = new DX11.RenderTargetView(_dx11Device, backBuffer);
             //Создаем контекст нашего GPU
-            _dx11DeviceContext = _dx11Device.ImmediateContext;         
+            _dx11DeviceContext = _dx11Device.ImmediateContext;
             //Устанавливаем размер конечной картинки            
-            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);                    
+            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderView);
         }
-       
+
         private void Update(double time)
         {
             // Poll events from joystick
             // keyboard.Poll();
-              var m = _keyboard.GetCurrentState();
-            if(m.PressedKeys.Count>0)
-            OnKeyPressed?.Invoke(m,(float)time);
+            var m = _keyboard.GetCurrentState();
+            if (m.PressedKeys.Count > 0)
+                OnKeyPressed?.Invoke(m, (float)time);
             OnUpdate?.Invoke(time);
         }
 
         private void Draw()
-        {       
+        {
             _dx11DeviceContext.ClearRenderTargetView(_renderView, new SharpDX.Color(0, 0, 128));
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth | DX11.DepthStencilClearFlags.Stencil, 1.0f, 0);
             OnDraw?.Invoke(1);

@@ -56,7 +56,7 @@ namespace SharpDX11GameByWinbringer.Models
         public int ID;
         public int JointID;
         public float bias;
-        public Vector3 position;       
+        public Vector3 position;
     }
 
     struct Joint
@@ -76,8 +76,12 @@ namespace SharpDX11GameByWinbringer.Models
     class MD5Anim
     {
         int frame = 0;
+        public readonly int frameRate;
         public readonly int numFrames;
         public readonly int numJoints;
+        public readonly float frameTime;
+        public readonly float totalAnimTime;
+        public float currAnimTime;
         public int FrameNo { get { return frame; } }
         public List<HierarchyItem> hierarchy;
         public List<BaseFrameJoint> baseFrame;
@@ -88,8 +92,12 @@ namespace SharpDX11GameByWinbringer.Models
         {
             Animations = new List<Joint[]>();
             List<string> lines = ReadMD5File(path);
+            frameRate = (int)FParse(lines.First(l => l.Contains("frameRate ")).Split(' ')[1]);
             numFrames = (int)FParse(lines.First(l => l.Contains("numFrames ")).Split(' ')[1]);
             numJoints = (int)FParse(lines.First(l => l.Contains("numJoints ")).Split(' ')[1]);
+            frameTime = 1000f / frameRate;
+            totalAnimTime = frameTime * numFrames;
+            currAnimTime = 0;
             hierarchy = GetHierarchy(lines);
             baseFrame = GetBaseFrame(lines);
             frames = GetFrames(lines);
@@ -97,7 +105,6 @@ namespace SharpDX11GameByWinbringer.Models
             {
                 Animations.Add(setFrame(i));
             }
-
         }
 
         Joint GetLerpJoint(Joint jointA, Joint jointB, float interp)
@@ -398,18 +405,36 @@ namespace SharpDX11GameByWinbringer.Models
 
         }
 
-        int i = -1;
+       
         public void Update(float time)
         {
-            ++i;
-            if (i > anim.numFrames-1) i = 0;
-            SetPositions(ref subsets, anim.Animations[i]);// anim.GetLerpJoints(anim.Animations[i], anim.Animations[i + 1], 0.5f));
-          //  SetNormals(ref subsets);
+            Animate(time);
+
+        }
+
+        private void Animate(float time)
+        {
+            anim.currAnimTime += time;
+
+            while (anim.currAnimTime > anim.totalAnimTime)
+            {
+                anim.currAnimTime -= anim.totalAnimTime;
+            }
+
+            float currentFrame = anim.currAnimTime / anim.frameTime;
+            int frame0 = (int)System.Math.Floor(currentFrame);
+            int frame1 = frame0 + 1;
+
+            if (frame1 > anim.numFrames - 1)
+                frame1 = 0;
+
+            float interpolation = currentFrame - frame0;
+            SetPositions(ref subsets, anim.GetLerpJoints(anim.Animations[frame0], anim.Animations[frame1], interpolation));
+
             foreach (var item in subsets)
             {
                 item.UpdateVertBuffers(_dx11Context);
             }
-
         }
 
         public void Draw(Matrix world, Matrix view, Matrix proj)
@@ -489,7 +514,7 @@ namespace SharpDX11GameByWinbringer.Models
 
                     }
                     var tempPos = tempVert.position;
-                    tempVert.position = new Vector3(tempPos.X, tempPos.Z, tempPos.Y);                   
+                    tempVert.position = new Vector3(tempPos.X, tempPos.Z, tempPos.Y);
                     subsets[k].vertices[i] = tempVert;
                 }
         }

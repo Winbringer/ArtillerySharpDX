@@ -11,7 +11,8 @@ namespace SharpDX11GameByWinbringer
         static void Main(string[] args)
         {
             System.Console.WriteLine("Для начала игры нажмите Enter");
-            System.Console.ReadLine();            
+            System.Console.ReadLine();
+            double start = System.Environment.TickCount;      
             if (!SharpDX.Direct3D11.Device.IsSupportedFeatureLevel(SharpDX.Direct3D.FeatureLevel.Level_11_0))
             {
                 MessageBox.Show("Для запуска этой игры нужен DirectX 11 ОБЯЗАТЕЛЬНО!");
@@ -37,7 +38,11 @@ namespace SharpDX11GameByWinbringer
                     game.Run();
                 }
             }
-            System.Console.WriteLine("...");
+            double end = (System.Environment.TickCount - start)/1000;
+           
+            System.Console.WriteLine("Всего проведено в игре секунд : "+end.ToString());
+            System.Console.WriteLine("Для завершения нажмите ввод");
+            System.Console.ReadLine();            
         }
     }
 }

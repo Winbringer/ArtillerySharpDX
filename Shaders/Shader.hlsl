@@ -20,10 +20,11 @@ PS_IN VS(VS_IN input)
 {
     PS_IN output = (PS_IN) 0;
     //Расчет высоты точки
-    float height = (sin(input.position.z) + sin(Time / 1000 + input.position.x )) / 2;
-    input.position.y = height * 2;
+    float height = (sin( input.position.z / 10)
+    + sin(input.position.x / 10)) / 2;
+    input.position.y = height;
     height = (height + (float) 1) / (float) 2;
-    height = lerp(0.5, 1.0F, height);
+    height = lerp(0.5, 1.1F, height);
     output.position = mul(input.position, WVP);
     output.height = height;
     output.TextureUV = input.TextureUV;

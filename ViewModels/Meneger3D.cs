@@ -9,6 +9,7 @@ namespace SharpDX11GameByWinbringer.ViewModels
     {
         protected Drawer _drawer;
         protected ViewModel _viewModel = new ViewModel();
+        public Matrix World;
         /// <summary>
         /// Устанавливает параметры блендинга, растеризации, Буффера глубины и бледн фактор (влияет на то какой процент из цвета пикселя будет усачтвовать в блендинге)
         /// </summary>
@@ -99,13 +100,14 @@ namespace SharpDX11GameByWinbringer.ViewModels
         }
 
         public abstract void Update(double time);
+
         public abstract void Draw(Matrix _World, Matrix _View, Matrix _Progection);
-
-
+        
         public virtual void Dispose()
         {
             Utilities.Dispose(ref _drawer);
             Utilities.Dispose(ref _viewModel);
+            _drawer?.Dispose();
         }
     }
 }

@@ -54,6 +54,7 @@ namespace SharpDX11GameByWinbringer.Models
 
         public override void Draw(Matrix _World, Matrix _View, Matrix _Progection)
         {
+            _cube.WorldMatrix = this.World;          
             _cube.Update(_World, _View, _Progection);
             _cube.FillViewModel(_viewModel);
             _drawer.Draw(_viewModel, PrimitiveTopology.TriangleList, false);

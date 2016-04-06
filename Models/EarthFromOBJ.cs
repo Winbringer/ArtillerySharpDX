@@ -362,6 +362,7 @@ namespace SharpDX11GameByWinbringer.Models
             Utilities.Dispose(ref _inputLayout);
             Utilities.Dispose(ref _rasterizerState);
             Utilities.Dispose(ref _DState);
+            Utilities.Dispose(ref _indexBuffer);
             _vertexBinding.Buffer.Dispose();
         }
 

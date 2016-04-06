@@ -158,6 +158,7 @@
     <Compile Include="Models\TextureLoader.cs" />
     <Compile Include="Triangle.cs" />
     <Compile Include="ViewModels\Meneger3D.cs" />
+    <Compile Include="ViewModels\Object3D11.cs" />
     <Compile Include="ViewModels\ViewModel.cs" />
   </ItemGroup>
   <ItemGroup>

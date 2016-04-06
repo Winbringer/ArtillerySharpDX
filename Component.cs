@@ -48,7 +48,8 @@ namespace SharpDX11GameByWinbringer
             Utilities.Dispose(ref _samplerState);
             Utilities.Dispose(ref _DState);
             Utilities.Dispose(ref _indexBuffer);
-            Utilities.Dispose(ref _constantBuffer);            
+            Utilities.Dispose(ref _constantBuffer);
+            Utilities.Dispose(ref _triangleVertexBuffer);      
         }
 
         protected abstract void CreateVertexAndIndeces();

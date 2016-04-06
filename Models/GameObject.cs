@@ -47,6 +47,7 @@ namespace SharpDX11GameByWinbringer.Models
             Utilities.Dispose(ref _triangleVertexBuffer);
             Utilities.Dispose(ref _indexBuffer);
             Utilities.Dispose(ref _constantBuffer);
+            Utilities.Dispose(ref _texture);
         }
     }
 }

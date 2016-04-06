@@ -75,6 +75,8 @@ namespace SharpDX11GameByWinbringer
                     Utilities.Dispose(ref _depthView);
                     Utilities.Dispose(ref _dx11Device);
                     Utilities.Dispose(ref _dx11DeviceContext);
+                    _dx11Device?.Dispose();
+                    _swapChain?.Dispose();
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.

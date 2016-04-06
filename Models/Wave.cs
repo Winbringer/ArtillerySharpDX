@@ -20,7 +20,7 @@ namespace SharpDX11GameByWinbringer.Models
 
         public override void Update(Matrix world, Matrix view, Matrix proj)
         {
-            _constantBufferData.WVP =Matrix.Translation(Matrix.Invert(view).TranslationVector)* _world * world * view * proj;
+            _constantBufferData.WVP =_world * world * view * proj;//Matrix.Translation(Matrix.Invert(view).TranslationVector)* 
             _constantBufferData.WVP.Transpose();
             _constantBufferData.Time = System.Environment.TickCount;
         }

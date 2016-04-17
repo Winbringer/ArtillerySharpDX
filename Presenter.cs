@@ -56,7 +56,7 @@ namespace SharpDX11GameByWinbringer
 
             //_earth = new EarthFromOBJ(game.DeviceContext);
             //_boy = new MD5Model(game.DeviceContext);
-            _ts = new Tesselation(game.DeviceContext.Device);
+            _ts = new Tesselation(game.DeviceContext.Device,6);
 
         }
 

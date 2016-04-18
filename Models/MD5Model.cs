@@ -387,9 +387,9 @@ namespace SharpDX11GameByWinbringer.Models
         MD5Anim anim;
         Drawer dr;
         ViewModels.ViewModel VM = new ViewModels.ViewModel();
-        //private HullShader _HShader;
-        //private DomainShader _DShader;
-      //  private GeometryShader _GShader;
+        private HullShader _HShader;
+        private DomainShader _DShader;
+        //  private GeometryShader _GShader;
 
         public MD5Model(DeviceContext dc)
         {
@@ -418,34 +418,31 @@ namespace SharpDX11GameByWinbringer.Models
              new InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
              new InputElement("TEXCOORD", 0, Format.R32G32B32_Float, 24, 0)
     };
-            dr = new Drawer("Shaders\\Boy.hlsl", inputElements, dc);
+            dr = new Drawer("Shaders\\BoyT.hlsl", inputElements, dc);
 
-            //var r = RasterizerStateDescription.Default();
-            //r.CullMode = CullMode.None;
-            //r.FillMode = FillMode.Wireframe;
-            //dr.RasterizerDescription = r;
+            var r = RasterizerStateDescription.Default();
+            r.CullMode = CullMode.None;
+            r.FillMode = FillMode.Wireframe;
+            dr.RasterizerDescription = r;
 
-//            ShaderFlags shaderFlags = ShaderFlags.None;
-//#if DEBUG
-//            shaderFlags = ShaderFlags.Debug;
-//#endif
-//            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile("Shaders\\BoyT.hlsl", "HS_PNTrianglesInteger", "hs_5_0", shaderFlags))
-//            {
-//                _HShader = new HullShader(dc.Device, pixelShaderByteCode);
-//            }
-//            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile("Shaders\\BoyT.hlsl", "DS_PhongTessellation", "ds_5_0", shaderFlags))
-//            {
-//                _DShader = new DomainShader(dc.Device, pixelShaderByteCode);
-//            }
-            //using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile("Shaders\\BoyT.hlsl", "GS", "gs_5_0", shaderFlags))
-            //{
-            //    _GShader = new GeometryShader(dc.Device, pixelShaderByteCode);
-            //}
+            ShaderFlags shaderFlags = ShaderFlags.None;
+#if DEBUG
+            shaderFlags = ShaderFlags.Debug;
+#endif
+            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile("Shaders\\BoyT.hlsl", "HS_PNTrianglesInteger", "hs_5_0", shaderFlags))
+            {
+                _HShader = new HullShader(dc.Device, pixelShaderByteCode);
+            }
+            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile("Shaders\\BoyT.hlsl", "DS_PhongTessellation", "ds_5_0", shaderFlags))
+            {
+                _DShader = new DomainShader(dc.Device, pixelShaderByteCode);
+            }
+            
         }
 
         public void Update(float time)
         {
-            Animate(time);
+           // Animate(time);
         }
 
         private void Animate(float time)
@@ -466,7 +463,7 @@ namespace SharpDX11GameByWinbringer.Models
 
             float interpolation = currentFrame - frame0;
             SetPositions(ref subsets, anim.GetLerpJoints(anim.Animations[frame0], anim.Animations[frame1], interpolation));
-
+            SetNormals(ref subsets);
             foreach (var item in subsets)
             {
                 item.UpdateVertBuffers(_dx11Context);
@@ -477,14 +474,14 @@ namespace SharpDX11GameByWinbringer.Models
         {
             cbuffer mvp = new cbuffer(this.World*world, view, proj);
             mvp.Transpose();
-            mvp.TF = 10;
+            mvp.TF = 30;
             _dx11Context.UpdateSubresource(ref mvp, _constantBuffer);
 
-         //   _dx11Context.GeometryShader.Set(_GShader);
-           //_dx11Context.DomainShader.Set(_DShader);
-           //_dx11Context.HullShader.Set(_HShader);
+            //   _dx11Context.GeometryShader.Set(_GShader);
+            _dx11Context.DomainShader.Set(_DShader);
+            _dx11Context.HullShader.Set(_HShader);
 
-           _dx11Context.GeometryShader.SetConstantBuffer(0, _constantBuffer);
+            _dx11Context.GeometryShader.SetConstantBuffer(0, _constantBuffer);
            _dx11Context.DomainShader.SetConstantBuffer(0, _constantBuffer);
            _dx11Context.HullShader.SetConstantBuffer(0, _constantBuffer);
 
@@ -492,7 +489,7 @@ namespace SharpDX11GameByWinbringer.Models
             foreach (var item in subsets)
             {
                 item.FillVM(ref VM);
-                dr.Draw(VM);
+                dr.Draw(VM,SharpDX.Direct3D.PrimitiveTopology.PatchListWith3ControlPoints);
             }
             _dx11Context.GeometryShader.Set(null);
             _dx11Context.DomainShader.Set(null);
@@ -502,7 +499,7 @@ namespace SharpDX11GameByWinbringer.Models
         void SetNormals(ref MD5Mesh[] subset)
         {
             List<Vector3> tempNormal = new List<Vector3>();
-            Vector3 unnormalized = new Vector3(0.0f, 0.0f, 0.0f);
+            Vector3 unnormalized = Vector3.Zero;
             Vector3 edge1;
             Vector3 edge2;
 
@@ -510,9 +507,9 @@ namespace SharpDX11GameByWinbringer.Models
             {
                 for (int i = 0; i < subset[k].indices.Count / 3; ++i)
                 {
-                    edge1 = subset[k].vertices[(int)subset[k].indices[(i * 3)]].position - -subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position;
-                    edge2 = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position - subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].position;
-                    unnormalized = Vector3.Cross(edge1, edge2);
+                    edge1 = subset[k].vertices[(int)subset[k].indices[(i * 3)+1]].position -subset[k].vertices[(int)subset[k].indices[(i * 3)]].position;
+                    edge2 = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position - subset[k].vertices[(int)subset[k].indices[(i * 3)]].position;
+                    unnormalized = Vector3.Cross(edge1,edge2);
                     tempNormal.Add(unnormalized);
                 }
 
@@ -689,9 +686,9 @@ namespace SharpDX11GameByWinbringer.Models
             {
                 item.Dispose();
             }
-            //_HShader.Dispose();
-            //_DShader?.Dispose();
-          //  _GShader.Dispose();
+            _HShader.Dispose();
+            _DShader?.Dispose();
+            //  _GShader.Dispose();
         }
     }
 }

@@ -65,7 +65,7 @@ float4 BarycentricInterpolate(float4 v[3], float3 barycentric)
 
 float3 ProjectOntoPlane(float3 planeNormal, float3 planePoint, float3 pointToProject)
 {
-    return pointToProject - dot(pointToProject - planePoint, planeNormal) * planeNormal;
+    return pointToProject - dot(pointToProject - planePoint, normalize( planeNormal)) * normalize(planeNormal);
 }
 
 
@@ -75,7 +75,7 @@ struct HS_TrianglePatchConstant
     float InsideTessFactor : SV_InsideTessFactor;
     
     float2 TextureUV[3] : TEXCOORD0;
-    float3 WorldNormal[3] : TEXCOORD3;
+    float3 WorldNormal[3] : NORMAL3;
 };
 struct DS_ControlPointInput
 {
@@ -151,17 +151,11 @@ PS_INPUT DS_PhongTessellation(HS_TrianglePatchConstant constantData, const Outpu
     float3 normal = BarycentricInterpolate(constantData.WorldNormal, barycentricCoords);
 
     // BEGIN Phong Tessellation
-    // Orthogonal projection in the tangent planes
-    float3 n = normalize(cross(patch[1].Position - patch[0].Position, patch[2].Position - patch[0].Position));
-    float3 posProjectedU = ProjectOntoPlane(n, patch[0].Position, position); //constantData.WorldNormal[0]
-    float3 posProjectedV = ProjectOntoPlane(n, patch[1].Position, position);
-    float3 posProjectedW = ProjectOntoPlane(n, patch[2].Position, position);
-
-    // Interpolate the projected points
+    float3 posProjectedU = ProjectOntoPlane(constantData.WorldNormal[0], patch[0].Position, position); 
+    float3 posProjectedV = ProjectOntoPlane(constantData.WorldNormal[1], patch[1].Position, position);
+    float3 posProjectedW = ProjectOntoPlane(constantData.WorldNormal[2], patch[2].Position, position);
     position = BarycentricInterpolate(posProjectedU, posProjectedV, posProjectedW, barycentricCoords);
-    
-
-     // END Phong Tessellation
+    // END Phong Tessellation
 
     result.Pos = mul(float4(position, 1.0f),ViewProjection);
     result.TextureUV = UV;
@@ -172,7 +166,11 @@ PS_INPUT DS_PhongTessellation(HS_TrianglePatchConstant constantData, const Outpu
 
 float4 PS(PS_INPUT input) : SV_Target
 {
-    return textureMap.Sample(textureSampler, input.TextureUV) * saturate(dot(normalize(input.Nrm), normalize(float3(-1,1,-1)))); //* dot(input.Nrm, normalize(float3(1, 1, 0)));
+    float4 color = textureMap.Sample(textureSampler, input.TextureUV);
+    float4 amb = color * 0.2f;
+    float4 diff = color * saturate(dot(normalize(input.Nrm), normalize(float3(-1, 1, -1)))) * 0.8f;
+    return amb + diff;
+  //  return textureMap.Sample(textureSampler, input.TextureUV) * saturate(dot(normalize(input.Nrm), normalize(float3(-1,1,-1)))); //* dot(input.Nrm, normalize(float3(1, 1, 0)));
 }
 
 HS_PNTrianglePatchConstant HS_PNTrianglesConstant(InputPatch<HullShaderInput, 3> patch)
@@ -186,10 +184,13 @@ HS_PNTrianglePatchConstant HS_PNTrianglesConstant(InputPatch<HullShaderInput, 3>
     ProcessTriTessFactorsMax((float3) TessellationFactor, 1.0, roundedEdgeTessFactor, roundedInsideTessFactor, insideTessFactor);
 
     // Apply the edge and inside tessellation factors
-    result.EdgeTessFactor[0] = roundedEdgeTessFactor.x;
-    result.EdgeTessFactor[1] =roundedEdgeTessFactor.y;
-    result.EdgeTessFactor[2] = roundedEdgeTessFactor.z;
-    result.InsideTessFactor = roundedInsideTessFactor;
+    result.EdgeTessFactor[0] = TessellationFactor;// roundedEdgeTessFactor.x;
+                                                 ;
+    result.EdgeTessFactor[1] = TessellationFactor;//roundedEdgeTessFactor.y;
+                                                 ;
+    result.EdgeTessFactor[2] = TessellationFactor;// roundedEdgeTessFactor.z;
+                                                 ;
+    result.InsideTessFactor = TessellationFactor; // roundedInsideTessFactor;
     
 
     //************************************************************

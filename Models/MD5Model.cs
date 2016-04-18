@@ -10,6 +10,7 @@ using System.Globalization;
 using SharpDX.DXGI;
 using SharpDX.Direct3D11;
 using System.Runtime.InteropServices;
+using SharpDX.D3DCompiler;
 
 namespace SharpDX11GameByWinbringer.Models
 {
@@ -19,11 +20,24 @@ namespace SharpDX11GameByWinbringer.Models
         public Matrix MVP;
         public Matrix World;
         public Matrix WorldIT;
+        public Matrix VP;
+        public float TF;
+        Vector3 padding;
+        public cbuffer(Matrix w, Matrix v,Matrix p)
+        {
+            World = w;
+            WorldIT = Matrix.Transpose(Matrix.Invert(w));
+            MVP = w * v * p;
+            VP = v * p;
+            TF = 1;
+            padding = Vector3.Zero;
+        }     
         public void Transpose()
         {
             MVP.Transpose();
             World.Transpose();
             WorldIT.Transpose();
+            VP.Transpose();
         }
     }
 
@@ -320,8 +334,8 @@ namespace SharpDX11GameByWinbringer.Models
         public Buffer vertBuff = null;
         public Buffer indexBuff = null;
         public VertexBufferBinding vb;
-        ViewModels.ViewModel VM = null;
-        Drawer dr;
+        //  ViewModels.ViewModel VM = null;
+        //   Drawer dr;
         ShaderResourceView tex;
 
         public MD5Mesh()
@@ -341,25 +355,15 @@ namespace SharpDX11GameByWinbringer.Models
             vertBuff = Buffer.Create(dv, BindFlags.VertexBuffer, vertices.ToArray());
             indexBuff = Buffer.Create(dv, BindFlags.IndexBuffer, indices.ToArray());
             vb = new VertexBufferBinding(vertBuff, Utilities.SizeOf<MD5Vertex>(), 0);
-            InputElement[] inputElements = new InputElement[]
-       {
-             new InputElement("SV_Position",0,Format.R32G32B32_Float,0,0),
-             new InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
-             new InputElement("TEXCOORD", 0, Format.R32G32B32_Float, 24, 0)
-       };
-            dr = new Drawer("Shaders\\Boy.hlsl", inputElements, dv.ImmediateContext);
             tex = dv.ImmediateContext.LoadTextureFromFile(texture);
-            VM = new ViewModels.ViewModel();
         }
 
-        public void Draw(Buffer[] cb)
+        public void FillVM(ref ViewModels.ViewModel VM)
         {
-            VM.ConstantBuffers = cb;
             VM.DrawedVertexCount = indices.Count;
             VM.IndexBuffer = indexBuff;
             VM.Textures = new[] { tex };
             VM.VertexBinging = vb;
-            dr.Draw(VM);
         }
 
         public void Dispose()
@@ -367,8 +371,8 @@ namespace SharpDX11GameByWinbringer.Models
             Utilities.Dispose(ref vertBuff);
             Utilities.Dispose(ref indexBuff);
             Utilities.Dispose(ref tex);
-            Utilities.Dispose(ref dr);
-            Utilities.Dispose(ref VM);
+            //   Utilities.Dispose(ref dr);
+            //  Utilities.Dispose(ref VM);
         }
     }
 
@@ -381,6 +385,11 @@ namespace SharpDX11GameByWinbringer.Models
         private Buffer _constantBuffer;
         DeviceContext _dx11Context;
         MD5Anim anim;
+        Drawer dr;
+        ViewModels.ViewModel VM = new ViewModels.ViewModel();
+        //private HullShader _HShader;
+        //private DomainShader _DShader;
+      //  private GeometryShader _GShader;
 
         public MD5Model(DeviceContext dc)
         {
@@ -403,13 +412,40 @@ namespace SharpDX11GameByWinbringer.Models
                 item.InitBuffers(_dx11Context.Device);
             }
 
+            InputElement[] inputElements = new InputElement[]
+    {
+             new InputElement("POSITION",0,Format.R32G32B32_Float,0,0),
+             new InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
+             new InputElement("TEXCOORD", 0, Format.R32G32B32_Float, 24, 0)
+    };
+            dr = new Drawer("Shaders\\Boy.hlsl", inputElements, dc);
+
+            //var r = RasterizerStateDescription.Default();
+            //r.CullMode = CullMode.None;
+            //r.FillMode = FillMode.Wireframe;
+            //dr.RasterizerDescription = r;
+
+//            ShaderFlags shaderFlags = ShaderFlags.None;
+//#if DEBUG
+//            shaderFlags = ShaderFlags.Debug;
+//#endif
+//            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile("Shaders\\BoyT.hlsl", "HS_PNTrianglesInteger", "hs_5_0", shaderFlags))
+//            {
+//                _HShader = new HullShader(dc.Device, pixelShaderByteCode);
+//            }
+//            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile("Shaders\\BoyT.hlsl", "DS_PhongTessellation", "ds_5_0", shaderFlags))
+//            {
+//                _DShader = new DomainShader(dc.Device, pixelShaderByteCode);
+//            }
+            //using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile("Shaders\\BoyT.hlsl", "GS", "gs_5_0", shaderFlags))
+            //{
+            //    _GShader = new GeometryShader(dc.Device, pixelShaderByteCode);
+            //}
         }
 
-       
         public void Update(float time)
         {
             Animate(time);
-
         }
 
         private void Animate(float time)
@@ -439,16 +475,28 @@ namespace SharpDX11GameByWinbringer.Models
 
         public void Draw(Matrix world, Matrix view, Matrix proj)
         {
-            cbuffer b = new cbuffer();
-            b.MVP = World * world * view * proj;
-            b.WorldIT = Matrix.Invert(World * world);
-            b.World = World * world;
-            b.Transpose();
-            _dx11Context.UpdateSubresource(ref b, _constantBuffer);
+            cbuffer mvp = new cbuffer(this.World*world, view, proj);
+            mvp.Transpose();
+            mvp.TF = 10;
+            _dx11Context.UpdateSubresource(ref mvp, _constantBuffer);
+
+         //   _dx11Context.GeometryShader.Set(_GShader);
+           //_dx11Context.DomainShader.Set(_DShader);
+           //_dx11Context.HullShader.Set(_HShader);
+
+           _dx11Context.GeometryShader.SetConstantBuffer(0, _constantBuffer);
+           _dx11Context.DomainShader.SetConstantBuffer(0, _constantBuffer);
+           _dx11Context.HullShader.SetConstantBuffer(0, _constantBuffer);
+
+            VM.ConstantBuffers = new[] { _constantBuffer };
             foreach (var item in subsets)
             {
-                item.Draw(new[] { _constantBuffer });
+                item.FillVM(ref VM);
+                dr.Draw(VM);
             }
+            _dx11Context.GeometryShader.Set(null);
+            _dx11Context.DomainShader.Set(null);
+            _dx11Context.HullShader.Set(null);
         }
 
         void SetNormals(ref MD5Mesh[] subset)
@@ -635,10 +683,15 @@ namespace SharpDX11GameByWinbringer.Models
         public void Dispose()
         {
             Utilities.Dispose(ref _constantBuffer);
+            Utilities.Dispose(ref dr);
+            Utilities.Dispose(ref VM);
             foreach (var item in subsets)
             {
                 item.Dispose();
             }
+            //_HShader.Dispose();
+            //_DShader?.Dispose();
+          //  _GShader.Dispose();
         }
     }
 }

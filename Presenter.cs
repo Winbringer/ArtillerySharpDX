@@ -23,10 +23,10 @@ namespace SharpDX11GameByWinbringer
         //Triangle _triangle;
         //ShadedCube _sCube;
         //EarthFromOBJ _earth;
-        //MD5Model _boy;
+        MD5Model _boy;
         //string _s;
         //Stopwatch _sw;
-        Tesselation _ts;
+       // Tesselation _ts;
 
         public Presenter(Game game)
         {
@@ -55,8 +55,9 @@ namespace SharpDX11GameByWinbringer
             //_sw.Start();
 
             //_earth = new EarthFromOBJ(game.DeviceContext);
-            //_boy = new MD5Model(game.DeviceContext);
-            _ts = new Tesselation(game.DeviceContext.Device,6);
+            _boy = new MD5Model(game.DeviceContext);
+             _boy.World = Matrix.Scaling(10);
+            // _ts = new Tesselation(game.DeviceContext.Device,6);
 
         }
 
@@ -65,8 +66,8 @@ namespace SharpDX11GameByWinbringer
           //  LPS();
            //_sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time);
-           // _boy.World = Matrix.Scaling(10);
-           // _boy.Update((float)time);   
+           
+           _boy.Update((float)time);   
            // _waveManager.World =Matrix.Translation(-50,0,-50)* Matrix.Scaling(10);
            // _waveManager.Update(time);         
            //_triangle.UpdateConsBufData(_World, _View, _Progection);
@@ -94,8 +95,8 @@ namespace SharpDX11GameByWinbringer
             //          new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
 
             //_earth.Draw(_World, _View, _Progection);
-            //_boy.Draw(_World, _View, _Progection);
-            _ts.Draw(_World, _View, _Progection);
+            _boy.Draw(_World, _View, _Progection);
+          //  _ts.Draw(_World, _View, _Progection);
           //  _text2DWriter.DrawText(_s);
         }
 
@@ -129,8 +130,8 @@ namespace SharpDX11GameByWinbringer
                     //Utilities.Dispose(ref _text2DWriter);
                     //Utilities.Dispose(ref _triangle);
                     //Utilities.Dispose(ref _sCube);
-                    //Utilities.Dispose(ref _boy);
-                    Utilities.Dispose(ref _ts);
+                    Utilities.Dispose(ref _boy);
+                   // Utilities.Dispose(ref _ts);
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.

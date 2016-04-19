@@ -183,14 +183,14 @@ HS_PNTrianglePatchConstant HS_PNTrianglesConstant(InputPatch<HullShaderInput, 3>
     float roundedInsideTessFactor, insideTessFactor;
     ProcessTriTessFactorsMax((float3) TessellationFactor, 1.0, roundedEdgeTessFactor, roundedInsideTessFactor, insideTessFactor);
 
-    // Apply the edge and inside tessellation factors
-    result.EdgeTessFactor[0] = TessellationFactor;// roundedEdgeTessFactor.x;
-                                                 ;
-    result.EdgeTessFactor[1] = TessellationFactor;//roundedEdgeTessFactor.y;
-                                                 ;
-    result.EdgeTessFactor[2] = TessellationFactor;// roundedEdgeTessFactor.z;
-                                                 ;
-    result.InsideTessFactor = TessellationFactor; // roundedInsideTessFactor;
+   
+    result.EdgeTessFactor[0] =  roundedEdgeTessFactor.x;
+                                                 
+    result.EdgeTessFactor[1] = roundedEdgeTessFactor.y;
+                                                 
+    result.EdgeTessFactor[2] =  roundedEdgeTessFactor.z;
+                                                 
+    result.InsideTessFactor =  roundedInsideTessFactor;
     
 
     //************************************************************

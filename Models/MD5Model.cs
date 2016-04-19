@@ -376,7 +376,7 @@ namespace SharpDX11GameByWinbringer.Models
 
     class MD5Model : System.IDisposable
     {
-        const string path = "3DModelsFiles\\Human\\";
+        const string path = "3DModelsFiles\\Wm\\";
         public Matrix World;
         Joint[] joints;
         MD5Mesh[] subsets;
@@ -391,8 +391,8 @@ namespace SharpDX11GameByWinbringer.Models
             _dx11Context = dc;
             World = Matrix.Identity;
 
-            anim = new MD5Anim(path + "boy.md5anim");
-            List<string> lines = ReadMD5File(path + "boy.md5mesh");
+            anim = new MD5Anim(path + "Female.md5anim");
+            List<string> lines = ReadMD5File(path + "Female.md5mesh");
 
             joints = GetJoints(lines);
             subsets = GetMeshes(lines);
@@ -413,7 +413,7 @@ namespace SharpDX11GameByWinbringer.Models
              new InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
              new InputElement("TEXCOORD", 0, Format.R32G32B32_Float, 24, 0)
     };
-            dr = new Drawer("Shaders\\BoyT.hlsl", inputElements, dc,true);
+            dr = new Drawer("Shaders\\Boy.hlsl", inputElements, dc);
 
             //var r = RasterizerStateDescription.Default();
             //r.CullMode = CullMode.None;
@@ -461,7 +461,7 @@ namespace SharpDX11GameByWinbringer.Models
             foreach (var item in subsets)
             {
                 item.FillVM(ref VM);
-                dr.Draw(VM,SharpDX.Direct3D.PrimitiveTopology.PatchListWith3ControlPoints);
+                dr.Draw(VM);
             }
         }
 

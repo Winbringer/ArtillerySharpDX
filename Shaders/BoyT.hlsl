@@ -131,7 +131,7 @@ HullShaderInput VS(VS_IN vertex)
 [outputtopology("triangle_cw")] // The vertex winding order of the generated triangles
 [outputcontrolpoints(3)] // Number of times this part of the hull shader will be called for each patch
 [patchconstantfunc("HS_PNTrianglesConstant")] // The constant hull shader function
-DS_PNControlPointInput HS_PNTrianglesInteger(InputPatch<HullShaderInput, 3> patch,
+DS_PNControlPointInput HS(InputPatch<HullShaderInput, 3> patch,
                     uint id : SV_OutputControlPointID,
                     uint patchID : SV_PrimitiveID)
 {
@@ -143,7 +143,7 @@ DS_PNControlPointInput HS_PNTrianglesInteger(InputPatch<HullShaderInput, 3> patc
 }
 
 [domain("tri")]
-PS_INPUT DS_PhongTessellation(HS_TrianglePatchConstant constantData, const OutputPatch<DS_PNControlPointInput, 3> patch, float3 barycentricCoords : SV_DomainLocation)
+PS_INPUT DS(HS_TrianglePatchConstant constantData, const OutputPatch<DS_PNControlPointInput, 3> patch, float3 barycentricCoords : SV_DomainLocation)
 {
     PS_INPUT result = (PS_INPUT) 0;
     float3 position = BarycentricInterpolate(patch[0].Position, patch[1].Position, patch[2].Position, barycentricCoords);

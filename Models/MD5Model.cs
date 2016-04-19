@@ -334,8 +334,6 @@ namespace SharpDX11GameByWinbringer.Models
         public Buffer vertBuff = null;
         public Buffer indexBuff = null;
         public VertexBufferBinding vb;
-        //  ViewModels.ViewModel VM = null;
-        //   Drawer dr;
         ShaderResourceView tex;
 
         public MD5Mesh()
@@ -378,7 +376,7 @@ namespace SharpDX11GameByWinbringer.Models
 
     class MD5Model : System.IDisposable
     {
-        const string path = "3DModelsFiles\\Wm\\";
+        const string path = "3DModelsFiles\\Human\\";
         public Matrix World;
         Joint[] joints;
         MD5Mesh[] subsets;
@@ -387,17 +385,14 @@ namespace SharpDX11GameByWinbringer.Models
         MD5Anim anim;
         Drawer dr;
         ViewModels.ViewModel VM = new ViewModels.ViewModel();
-        private HullShader _HShader;
-        private DomainShader _DShader;
-        //  private GeometryShader _GShader;
 
         public MD5Model(DeviceContext dc)
         {
             _dx11Context = dc;
             World = Matrix.Identity;
 
-            anim = new MD5Anim(path + "Female.md5anim");
-            List<string> lines = ReadMD5File(path + "Female.md5mesh");
+            anim = new MD5Anim(path + "boy.md5anim");
+            List<string> lines = ReadMD5File(path + "boy.md5mesh");
 
             joints = GetJoints(lines);
             subsets = GetMeshes(lines);
@@ -418,26 +413,12 @@ namespace SharpDX11GameByWinbringer.Models
              new InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
              new InputElement("TEXCOORD", 0, Format.R32G32B32_Float, 24, 0)
     };
-            dr = new Drawer("Shaders\\BoyT.hlsl", inputElements, dc);
+            dr = new Drawer("Shaders\\BoyT.hlsl", inputElements, dc,true);
 
-            var r = RasterizerStateDescription.Default();
-            r.CullMode = CullMode.None;
-            r.FillMode = FillMode.Wireframe;
-            dr.RasterizerDescription = r;
-
-            ShaderFlags shaderFlags = ShaderFlags.None;
-#if DEBUG
-            shaderFlags = ShaderFlags.Debug;
-#endif
-            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile("Shaders\\BoyT.hlsl", "HS_PNTrianglesInteger", "hs_5_0", shaderFlags))
-            {
-                _HShader = new HullShader(dc.Device, pixelShaderByteCode);
-            }
-            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile("Shaders\\BoyT.hlsl", "DS_PhongTessellation", "ds_5_0", shaderFlags))
-            {
-                _DShader = new DomainShader(dc.Device, pixelShaderByteCode);
-            }
-            
+            //var r = RasterizerStateDescription.Default();
+            //r.CullMode = CullMode.None;
+            //r.FillMode = FillMode.Wireframe;
+            //dr.RasterizerDescription = r;
         }
 
         public void Update(float time)
@@ -474,26 +455,14 @@ namespace SharpDX11GameByWinbringer.Models
         {
             cbuffer mvp = new cbuffer(this.World*world, view, proj);
             mvp.Transpose();
-            mvp.TF = 30;
+            mvp.TF = 2;
             _dx11Context.UpdateSubresource(ref mvp, _constantBuffer);
-
-            //   _dx11Context.GeometryShader.Set(_GShader);
-            _dx11Context.DomainShader.Set(_DShader);
-            _dx11Context.HullShader.Set(_HShader);
-
-            _dx11Context.GeometryShader.SetConstantBuffer(0, _constantBuffer);
-           _dx11Context.DomainShader.SetConstantBuffer(0, _constantBuffer);
-           _dx11Context.HullShader.SetConstantBuffer(0, _constantBuffer);
-
             VM.ConstantBuffers = new[] { _constantBuffer };
             foreach (var item in subsets)
             {
                 item.FillVM(ref VM);
                 dr.Draw(VM,SharpDX.Direct3D.PrimitiveTopology.PatchListWith3ControlPoints);
             }
-            _dx11Context.GeometryShader.Set(null);
-            _dx11Context.DomainShader.Set(null);
-            _dx11Context.HullShader.Set(null);
         }
 
         void SetNormals(ref MD5Mesh[] subset)
@@ -686,9 +655,6 @@ namespace SharpDX11GameByWinbringer.Models
             {
                 item.Dispose();
             }
-            _HShader.Dispose();
-            _DShader?.Dispose();
-            //  _GShader.Dispose();
         }
     }
 }

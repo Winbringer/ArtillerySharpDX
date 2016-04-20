@@ -27,6 +27,8 @@ namespace SharpDX11GameByWinbringer.Models
     {
         public Matrix WorldViewProjection;
         public Matrix World;
+       public float DisplaceScale;
+        Vector3 padding;
         internal void Transpose()
         {
             World.Transpose();
@@ -80,13 +82,14 @@ namespace SharpDX11GameByWinbringer.Models
         int _facesCount;
         private SamplerState _samplerState;
         private ShaderResourceView _textureResourse;
-        private ShaderResourceView _textureResourse1;
+        private ShaderResourceView _textureResourse2;
         private ShaderSignature _inputSignature;
         private VertexShader _vertexShader;
         private PixelShader _pixelShader;
         private InputLayout _inputLayout;
         private RasterizerState _rasterizerState;
         private DepthStencilState _DState;
+        private ShaderResourceView _textureResourse1;
         #endregion
 
         public EarthFromOBJ(DeviceContext dx11Context)
@@ -114,6 +117,7 @@ namespace SharpDX11GameByWinbringer.Models
 
             _textureResourse = _dx11Context.LoadTextureFromFile(jpg);
             _textureResourse1 = _dx11Context.LoadTextureFromFile("3DModelsFiles\\Earth\\map.jpg");
+            _textureResourse2 = _dx11Context.LoadTextureFromFile("3DModelsFiles\\Earth\\map1.jpg");
 
 
             SamplerStateDescription description = SamplerStateDescription.Default();
@@ -169,7 +173,7 @@ namespace SharpDX11GameByWinbringer.Models
             World = Matrix.RotationX(0.0005f * time) * World * Matrix.RotationY(0.0005f * time);
         }
 
-        public void Draw(Matrix world, Matrix view, Matrix proj)
+        public void Draw(Matrix world, Matrix view, Matrix proj, float dispScale)
         {
             Matrix oWorld = World * world;
             Center = Vector3.TransformCoordinate(Vector3.Zero, oWorld);
@@ -179,6 +183,7 @@ namespace SharpDX11GameByWinbringer.Models
 
             _matrices.World = oWorld;
             _matrices.WorldViewProjection = _matrices.World * view * proj;
+            _matrices.DisplaceScale = dispScale;
             _matrices.Transpose();
 
             _dx11Context.UpdateSubresource(ref _light, _lightBuffer);
@@ -195,8 +200,10 @@ namespace SharpDX11GameByWinbringer.Models
             _dx11Context.PixelShader.SetConstantBuffer(2, _lightBuffer);
 
             _dx11Context.PixelShader.SetSampler(0, _samplerState);
+            _dx11Context.VertexShader.SetSampler(0, _samplerState);
             _dx11Context.PixelShader.SetShaderResource(0, _textureResourse);
             _dx11Context.PixelShader.SetShaderResource(1, _textureResourse1);
+            _dx11Context.VertexShader.SetShaderResource(2, _textureResourse2);
 
             _dx11Context.InputAssembler.SetVertexBuffers(0, _vertexBinding);
             _dx11Context.InputAssembler.SetIndexBuffer(_indexBuffer, Format.R32_UInt, 0);
@@ -349,6 +356,7 @@ namespace SharpDX11GameByWinbringer.Models
 
         public void Dispose()
         {
+            Utilities.Dispose(ref _textureResourse2);
             Utilities.Dispose(ref _textureResourse1);
             Utilities.Dispose(ref _vertexBuffer);
             Utilities.Dispose(ref _constantBuffer);

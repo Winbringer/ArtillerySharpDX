@@ -1,4 +1,5 @@
 ﻿Texture2D textureMap : register(t0);
+Texture2D NormalMap : register(t1);
 SamplerState textureSampler : register(s0);
 
 
@@ -11,33 +12,10 @@ cbuffer PerObject : register(b0)
     float TessellationFactor;
 };
 
-//struct HS_PNTrianglePatchConstant
-//{
-//    float EdgeTessFactor[3] : SV_TessFactor;
-//    float InsideTessFactor : SV_InsideTessFactor;
-
-//    float3 B210 : POSITION3;
-//    float3 B120 : POSITION4;
-//    float3 B021 : POSITION5;
-//    float3 B012 : POSITION6;
-//    float3 B102 : POSITION7;
-//    float3 B201 : POSITION8;
-//    float3 B111 : CENTER;
-    
-//    float3 N200 : NORMAL0;
-//    float3 N020 : NORMAL1;
-//    float3 N002 : NORMAL2;
-
-//    float3 N110 : NORMAL3;
-//    float3 N011 : NORMAL4;
-//    float3 N101 : NORMAL5;
-//};
-
 struct HS_TrianglePatchConstant
 {
     float EdgeTessFactor[3] : SV_TessFactor;
-    float InsideTessFactor : SV_InsideTessFactor;
-    
+    float InsideTessFactor : SV_InsideTessFactor;    
     float2 TextureUV[3] : TEXCOORD0;
     float3 WorldNormal[3] : NORMAL3;
 };
@@ -52,7 +30,7 @@ struct VS_IN
     float4 Position : POSITION;
     float3 Normal : NORMAL;
     float2 TextureUV : TEXCOORD;
-  //  float4 Tangent : TANGENT;
+    float4 Tangent : TANGENT;
   
 };
 
@@ -61,7 +39,7 @@ struct PixelShaderInput
     float4 Position : SV_POSITION;
     float3 WorldNormal : NORMAL;
     float2 TextureUV : TEXCOORD;
-  //  float4 WorldTangent : TANGENT;
+    float4 WorldTangent : TANGENT;
 };
 
 struct HullShaderInput
@@ -69,7 +47,7 @@ struct HullShaderInput
     float3 WorldPosition : POSITION;
     float2 TextureUV : TEXCOORD0;
     float3 WorldNormal : NORMAL;
-  //  float4 WorldTangent : TANGENT;
+    float4 WorldTangent : TANGENT;
 };
 
 struct DS_PNControlPointInput
@@ -77,9 +55,22 @@ struct DS_PNControlPointInput
     float3 Position : POSITION;
     float3 WorldNormal : NORMAL;
     float2 TextureUV : TEXCOORD;
-   // float4 WorldTangent : TANGENT;
+    float4 WorldTangent : TANGENT;
 };
 
+float3 ApplyNormalMap(float3 normal, float4 tangent, float3 normalSample)
+{ 
+    // Remap normalSample to the range (-1,1)  
+      normalSample = (2.0 * normalSample) - 1.0;
+    // Ensure tangent is orthogonal to normal vector   
+     // Gram-Schmidt orthogonalize   
+    float3 T = normalize(tangent - normal * dot(normal, tangent));
+     // Create the Bitangent   
+    float3 bitangent = cross(normal, T) * tangent.w;
+    // Create TBN matrix to transform from tangent space  
+    float3x3 TBN = float3x3(T, bitangent, normal);
+    return normalize(mul(normalSample, TBN));
+}
 
 float2 BarycentricInterpolate(float2 v0, float2 v1, float2 v2, float3 barycentric)
 {
@@ -130,9 +121,12 @@ HullShaderInput VS(VS_IN vertex)
 
 float4 PS(PixelShaderInput input) : SV_Target
 {
+    float3 normal = normalize(input.WorldNormal);
+    float3 tangent = normalize(input.WorldTangent.xyz);
+    normal = ApplyNormalMap(normal, float4(tangent, input.WorldTangent.w), NormalMap.Sample(Sampler, input.TextureUV).rgb);
     float4 color = textureMap.Sample(textureSampler, input.TextureUV);
     float4 amb = color * 0.2f;
-    float4 diff = color * saturate(dot(normalize(input.WorldNormal), normalize(float3(-1, 1, -1)))) * 0.8f;
+    float4 diff = color * saturate(dot(normalize(normal), normalize(float3(-1, 1, -1)))) * 0.8f;
     return amb + diff;
   //  return textureMap.Sample(textureSampler, input.TextureUV) * saturate(dot(normalize(input.Nrm), normalize(float3(-1,1,-1)))); //* dot(input.Nrm, normalize(float3(1, 1, 0)));
 }
@@ -150,6 +144,7 @@ DS_PNControlPointInput HS(InputPatch<HullShaderInput, 3> patch, uint id : SV_Out
     result.Position = patch[id].WorldPosition;
     result.WorldNormal = patch[id].WorldNormal;
     result.TextureUV = patch[id].TextureUV;
+    result.WorldTangent = patch[id].WorldTangent;
     return result;
 }
 // Triangle patch constant func (executes once for each patch)
@@ -192,7 +187,7 @@ PixelShaderInput DS(HS_TrianglePatchConstant constantData, const OutputPatch<DS_
    
     // Interpolate array of normals
     float3 normal = BarycentricInterpolate(constantData.WorldNormal, barycentricCoords);
-
+    float3 tangent = BarycentricInterpolate(patch[0].WorldTangent, patch[1].WorldTangent, patch[2].WorldTangent, barycentricCoords);
      // BEGIN Phong Tessellation
     // Orthogonal projection in the tangent planes
     float3 posProjectedU = ProjectOntoPlane(constantData.WorldNormal[0], patch[0].Position, position);
@@ -213,7 +208,7 @@ PixelShaderInput DS(HS_TrianglePatchConstant constantData, const OutputPatch<DS_
     
     result.TextureUV = UV;
     result.WorldNormal = normal;
-    
+    result.WorldTangent = tangent;
     return result;
 }
 

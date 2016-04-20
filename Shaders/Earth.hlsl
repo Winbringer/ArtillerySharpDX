@@ -1,11 +1,15 @@
 ﻿Texture2D textureMap : register(t0);
 Texture2D specularMap : register(t1);
+Texture2D disMap : register(t2);
 SamplerState textureSampler : register(s0);
+
+const float TessellationFactor = 3;
 
 cbuffer data : register(b0)
 {
     float4x4 WorldViewProjection;
     float4x4 World;
+    float DisplaceScale;
 };
 
 cbuffer data1 : register(b1)
@@ -43,11 +47,22 @@ struct PS_IN
     float3 WorldPosition : WORLDPOS;
 };
 
+float3 CalculateDisplacement(float2 UV, float3 normal)
+{
+    normal = normalize(normal);
+    if (DisplaceScale == 0)
+        return 0;
+    const float mipLevel = 1.0f;
+    float height = disMap.SampleLevel(textureSampler, UV, mipLevel).x;
+    height = (2 * height) - 1;
+    return height * DisplaceScale * normal;
+}
+
 PS_IN VS(VS_IN input)
 {
     PS_IN output = (PS_IN) 0;
-    
-    output.Position = mul(input.position, WorldViewProjection);    
+    float4 position = input.position+ float4(CalculateDisplacement(input.textureUV, input.normal), 0);
+    output.Position = mul(position, WorldViewProjection);
     output.WorldNormal = mul(input.normal, (float3x3) World);
     output.WorldPosition = mul(input.position, World).xyz;
     output.TextureUV = input.textureUV;
@@ -67,7 +82,7 @@ float4 PS(PS_IN input) : SV_Target
     float3 ambient = sample.rgb * Ka_AmbientColor.rgb;
     float3 diffuse = sample.rgb * Kd_DiffuseColor.rgb * max(0, dot(normal, toLight));
     float3 specular = Ks_SpecularColor.rgb * specularColorMap.rgb * pow(max(0, dot(normal, halfway)), max(Ns_SpecularPower, 0.00001f));
-    float3 color = saturate(ambient) + saturate(diffuse) + saturate(specular) + saturate(emissive);   
+    float3 color = saturate(ambient) + saturate(diffuse) + saturate(specular) + saturate(emissive);
     float alpha = sample.a;
 
     return saturate(float4(color, alpha));

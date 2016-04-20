@@ -23,6 +23,7 @@ namespace SharpDX11GameByWinbringer.Models
         public Matrix VP;
         public float TF;
         Vector3 padding;
+
         public cbuffer(Matrix w, Matrix v, Matrix p)
         {
             World = w;
@@ -32,6 +33,7 @@ namespace SharpDX11GameByWinbringer.Models
             TF = 1;
             padding = Vector3.Zero;
         }
+
         public void Transpose()
         {
             MVP.Transpose();
@@ -60,6 +62,7 @@ namespace SharpDX11GameByWinbringer.Models
         public Vector3 position;
         public Vector3 normal;
         public Vector2 textureUV;
+        public Vector4 Tangent;
         public int startWeight;
         public int numWeights;
         public int ID;
@@ -335,6 +338,7 @@ namespace SharpDX11GameByWinbringer.Models
         public Buffer indexBuff = null;
         public VertexBufferBinding vb;
         ShaderResourceView tex;
+        ShaderResourceView nM;
 
         public MD5Mesh()
         {
@@ -354,13 +358,14 @@ namespace SharpDX11GameByWinbringer.Models
             indexBuff = Buffer.Create(dv, BindFlags.IndexBuffer, indices.ToArray());
             vb = new VertexBufferBinding(vertBuff, Utilities.SizeOf<MD5Vertex>(), 0);
             tex = dv.ImmediateContext.LoadTextureFromFile(texture);
+            nM = dv.ImmediateContext.LoadTextureFromFile(texture.Replace("Tex","NM"));
         }
 
         public void FillVM(ref ViewModels.ViewModel VM)
         {
             VM.DrawedVertexCount = indices.Count;
             VM.IndexBuffer = indexBuff;
-            VM.Textures = new[] { tex };
+            VM.Textures = new[] { tex,nM };
             VM.VertexBinging = vb;
         }
 
@@ -369,6 +374,7 @@ namespace SharpDX11GameByWinbringer.Models
             Utilities.Dispose(ref vertBuff);
             Utilities.Dispose(ref indexBuff);
             Utilities.Dispose(ref tex);
+            Utilities.Dispose(ref nM);
             //   Utilities.Dispose(ref dr);
             //  Utilities.Dispose(ref VM);
         }
@@ -387,7 +393,7 @@ namespace SharpDX11GameByWinbringer.Models
         ViewModels.ViewModel VM = new ViewModels.ViewModel();
         private float tFactor;
 
-        public MD5Model(DeviceContext dc, string path, string name, string ShaderFile, bool isTes=false, int TF=2)
+        public MD5Model(DeviceContext dc, string path, string name, string ShaderFile, bool isTes=false, int TF=2, bool isG=false)
         {
             this.tFactor = TF;
             this.path = path;
@@ -415,8 +421,9 @@ namespace SharpDX11GameByWinbringer.Models
              new InputElement("POSITION",0,Format.R32G32B32_Float,0,0),
              new InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
              new InputElement("TEXCOORD", 0, Format.R32G32B32_Float, 24, 0)
+           //  new InputElement("TANGENT", 0,    Format.R32G32B32A32_Float,36,0)
     };
-            dr = new Drawer(ShaderFile, inputElements, dc,isTes);
+            dr = new Drawer(ShaderFile, inputElements, dc,isTes,isG);
 
             //var r = RasterizerStateDescription.Default();
             //r.CullMode = CullMode.None;
@@ -426,7 +433,7 @@ namespace SharpDX11GameByWinbringer.Models
 
         public void Update(float time)
         {
-            // Animate(time);
+           Animate(time);
         }
 
         private void Animate(float time)
@@ -447,7 +454,7 @@ namespace SharpDX11GameByWinbringer.Models
 
             float interpolation = currentFrame - frame0;
             SetPositions(ref subsets, anim.GetLerpJoints(anim.Animations[frame0], anim.Animations[frame1], interpolation));
-            SetNormals(ref subsets);
+          //  SetNormals(ref subsets);
             foreach (var item in subsets)
             {
                 item.UpdateVertBuffers(_dx11Context);

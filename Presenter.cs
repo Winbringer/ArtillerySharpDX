@@ -22,7 +22,7 @@ namespace SharpDX11GameByWinbringer
         //_3DWaveManager _waveManager;
         //Triangle _triangle;
         //ShadedCube _sCube;
-        //EarthFromOBJ _earth;
+        EarthFromOBJ _earth;
         MD5Model _boy;
         //string _s;
         //Stopwatch _sw;
@@ -54,11 +54,10 @@ namespace SharpDX11GameByWinbringer
             //_sw = new Stopwatch();
             //_sw.Start();
 
-            //_earth = new EarthFromOBJ(game.DeviceContext);
-            _boy = new MD5Model(game.DeviceContext, "3DModelsFiles\\Wm\\","Female", "Shaders\\BoyT.hlsl", true, 3);
+            _earth = new EarthFromOBJ(game.DeviceContext);
+            _boy = new MD5Model(game.DeviceContext, "3DModelsFiles\\Wm\\","Female", "Shaders\\Boy.hlsl", false, 3,true);
              _boy.World = Matrix.Scaling(10);
             // _ts = new Tesselation(game.DeviceContext.Device,6);
-
         }
 
         void Update(double time)
@@ -71,7 +70,7 @@ namespace SharpDX11GameByWinbringer
            // _waveManager.World =Matrix.Translation(-50,0,-50)* Matrix.Scaling(10);
            // _waveManager.Update(time);         
            //_triangle.UpdateConsBufData(_World, _View, _Progection);
-           //_earth.Update((float)time);
+           _earth.Update((float)time);
         }
 
         private void LPS()
@@ -94,8 +93,8 @@ namespace SharpDX11GameByWinbringer
             //_sCube.Draw(SharpDX.Direct3D.PrimitiveTopology.TriangleList, true,
             //          new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
 
-            //_earth.Draw(_World, _View, _Progection);
-            _boy.Draw(_World, _View, _Progection,SharpDX.Direct3D.PrimitiveTopology.PatchListWith3ControlPoints);
+            _earth.Draw(_World, _View, _Progection,1);
+            _boy.Draw(_World, _View, _Progection,SharpDX.Direct3D.PrimitiveTopology.TriangleList);
           //  _ts.Draw(_World, _View, _Progection);
           //  _text2DWriter.DrawText(_s);
         }
@@ -124,7 +123,7 @@ namespace SharpDX11GameByWinbringer
                 if (disposing)
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты). 
-                    //Utilities.Dispose(ref _earth);
+                    Utilities.Dispose(ref _earth);
                     Utilities.Dispose(ref _lineManager);
                     //Utilities.Dispose(ref _waveManager);
                     //Utilities.Dispose(ref _text2DWriter);

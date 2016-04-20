@@ -10,6 +10,7 @@ struct VS_IN
     float4 position : POSITION;
     float3 normal : NORMAL;
     float2 TextureUV : TEXCOORD;
+ //   float4 Tangent : TANGENT;
   
 };
 
@@ -19,6 +20,7 @@ struct PS_IN
     float2 TextureUV : TEXCOORD;
     float3 WorldNormal : NORMAL;
     float3 WorldPosition : WORLDPOS;
+   // float4 WorldTangent : TANGENT;
 };
 
 PS_IN VS(VS_IN input)
@@ -28,6 +30,7 @@ PS_IN VS(VS_IN input)
     output.WorldNormal = normalize(mul(input.normal, (float3x3) WorldIT));
     //output.WorldPosition = mul(input.position, World).xyz;
     output.TextureUV = input.TextureUV;
+   // output.WorldTangent = float4(mul(input.Tangent.xyz, (float3x3) WorldIT), input.Tangent.w);
     return output;
 }
 

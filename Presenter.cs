@@ -55,7 +55,7 @@ namespace SharpDX11GameByWinbringer
             //_sw.Start();
 
             //_earth = new EarthFromOBJ(game.DeviceContext);
-            _boy = new MD5Model(game.DeviceContext);
+            _boy = new MD5Model(game.DeviceContext, "3DModelsFiles\\Wm\\","Female", "Shaders\\BoyT.hlsl", true, 3);
              _boy.World = Matrix.Scaling(10);
             // _ts = new Tesselation(game.DeviceContext.Device,6);
 
@@ -95,7 +95,7 @@ namespace SharpDX11GameByWinbringer
             //          new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
 
             //_earth.Draw(_World, _View, _Progection);
-            _boy.Draw(_World, _View, _Progection);
+            _boy.Draw(_World, _View, _Progection,SharpDX.Direct3D.PrimitiveTopology.PatchListWith3ControlPoints);
           //  _ts.Draw(_World, _View, _Progection);
           //  _text2DWriter.DrawText(_s);
         }

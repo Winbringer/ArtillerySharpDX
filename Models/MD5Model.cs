@@ -23,7 +23,7 @@ namespace SharpDX11GameByWinbringer.Models
         public Matrix VP;
         public float TF;
         Vector3 padding;
-        public cbuffer(Matrix w, Matrix v,Matrix p)
+        public cbuffer(Matrix w, Matrix v, Matrix p)
         {
             World = w;
             WorldIT = Matrix.Transpose(Matrix.Invert(w));
@@ -31,7 +31,7 @@ namespace SharpDX11GameByWinbringer.Models
             VP = v * p;
             TF = 1;
             padding = Vector3.Zero;
-        }     
+        }
         public void Transpose()
         {
             MVP.Transpose();
@@ -376,7 +376,7 @@ namespace SharpDX11GameByWinbringer.Models
 
     class MD5Model : System.IDisposable
     {
-        const string path = "3DModelsFiles\\Wm\\";
+        readonly string path;// = "3DModelsFiles\\Wm\\";
         public Matrix World;
         Joint[] joints;
         MD5Mesh[] subsets;
@@ -385,14 +385,17 @@ namespace SharpDX11GameByWinbringer.Models
         MD5Anim anim;
         Drawer dr;
         ViewModels.ViewModel VM = new ViewModels.ViewModel();
+        private float tFactor;
 
-        public MD5Model(DeviceContext dc)
+        public MD5Model(DeviceContext dc, string path, string name, string ShaderFile, bool isTes=false, int TF=2)
         {
+            this.tFactor = TF;
+            this.path = path;
             _dx11Context = dc;
             World = Matrix.Identity;
 
-            anim = new MD5Anim(path + "Female.md5anim");
-            List<string> lines = ReadMD5File(path + "Female.md5mesh");
+            anim = new MD5Anim(path + name + ".md5anim");
+            List<string> lines = ReadMD5File(path + name + ".md5mesh");
 
             joints = GetJoints(lines);
             subsets = GetMeshes(lines);
@@ -413,7 +416,7 @@ namespace SharpDX11GameByWinbringer.Models
              new InputElement("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
              new InputElement("TEXCOORD", 0, Format.R32G32B32_Float, 24, 0)
     };
-            dr = new Drawer("Shaders\\Boy.hlsl", inputElements, dc);
+            dr = new Drawer(ShaderFile, inputElements, dc,isTes);
 
             //var r = RasterizerStateDescription.Default();
             //r.CullMode = CullMode.None;
@@ -423,7 +426,7 @@ namespace SharpDX11GameByWinbringer.Models
 
         public void Update(float time)
         {
-           // Animate(time);
+            // Animate(time);
         }
 
         private void Animate(float time)
@@ -451,17 +454,17 @@ namespace SharpDX11GameByWinbringer.Models
             }
         }
 
-        public void Draw(Matrix world, Matrix view, Matrix proj)
+        public void Draw(Matrix world, Matrix view, Matrix proj, SharpDX.Direct3D.PrimitiveTopology pt = SharpDX.Direct3D.PrimitiveTopology.TriangleList)
         {
-            cbuffer mvp = new cbuffer(this.World*world, view, proj);
+            cbuffer mvp = new cbuffer(this.World * world, view, proj);
             mvp.Transpose();
-            mvp.TF = 2;
+            mvp.TF = tFactor;
             _dx11Context.UpdateSubresource(ref mvp, _constantBuffer);
             VM.ConstantBuffers = new[] { _constantBuffer };
             foreach (var item in subsets)
             {
                 item.FillVM(ref VM);
-                dr.Draw(VM);
+                dr.Draw(VM,pt);
             }
         }
 
@@ -476,9 +479,9 @@ namespace SharpDX11GameByWinbringer.Models
             {
                 for (int i = 0; i < subset[k].indices.Count / 3; ++i)
                 {
-                    edge1 = subset[k].vertices[(int)subset[k].indices[(i * 3)+1]].position -subset[k].vertices[(int)subset[k].indices[(i * 3)]].position;
+                    edge1 = subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].position - subset[k].vertices[(int)subset[k].indices[(i * 3)]].position;
                     edge2 = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position - subset[k].vertices[(int)subset[k].indices[(i * 3)]].position;
-                    unnormalized = Vector3.Cross(edge1,edge2);
+                    unnormalized = Vector3.Cross(edge1, edge2);
                     tempNormal.Add(unnormalized);
                 }
 

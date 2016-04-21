@@ -27,12 +27,27 @@ namespace SharpDX11GameByWinbringer.Models
     {
         public Matrix WorldViewProjection;
         public Matrix World;
-       public float DisplaceScale;
-        Vector3 padding;
+        public Matrix WorldIT;
+        public Matrix ViewProjection;
+        public float DisplaceScale;
+        public float TessellationFactor;
+        Vector2 padding;
+        public Matrices(Matrix w, Matrix v, Matrix p)
+        {
+            WorldViewProjection = w * v * p;
+            World = w;
+            WorldIT = Matrix.Transpose(Matrix.Invert(w));
+            ViewProjection = v * p;
+            DisplaceScale = 0;
+            TessellationFactor = 1;
+            padding = new Vector2();
+        }
         internal void Transpose()
         {
             World.Transpose();
             WorldViewProjection.Transpose();
+            WorldIT.Transpose();
+            ViewProjection.Transpose();
         }
     }
 
@@ -90,6 +105,8 @@ namespace SharpDX11GameByWinbringer.Models
         private RasterizerState _rasterizerState;
         private DepthStencilState _DState;
         private ShaderResourceView _textureResourse1;
+        private HullShader _hShader;
+        private DomainShader _dShader;
         #endregion
 
         public EarthFromOBJ(DeviceContext dx11Context)
@@ -101,7 +118,7 @@ namespace SharpDX11GameByWinbringer.Models
             const string obj = "3DModelsFiles\\Earth\\earth.obj";
             const string mtl = "3DModelsFiles\\Earth\\earth.mtl";
             const string jpg = "3DModelsFiles\\Earth\\earthmap.jpg";
-            const string shadersFile = "Shaders\\Earth.hlsl";
+            const string shadersFile = "Shaders\\EarthT.hlsl";
             Tuple<List<Face>, List<uint>> tuple = GetFaces(obj);
             _facesCount = tuple.Item2.Count;
 
@@ -149,6 +166,15 @@ namespace SharpDX11GameByWinbringer.Models
             {
                 _pixelShader = new PixelShader(_dx11Context.Device, pixelShaderByteCode);
             }
+            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "HS", "hs_5_0", shaderFlags))
+            {
+                _hShader = new HullShader(_dx11Context.Device, pixelShaderByteCode);
+            }
+
+            using (var pixelShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "DS", "ds_5_0", shaderFlags))
+            {
+                _dShader = new DomainShader(_dx11Context.Device, pixelShaderByteCode);
+            }
 
             _inputLayout = new InputLayout(_dx11Context.Device, _inputSignature, inputElements);
 
@@ -173,7 +199,7 @@ namespace SharpDX11GameByWinbringer.Models
             World = Matrix.RotationX(0.0005f * time) * World * Matrix.RotationY(0.0005f * time);
         }
 
-        public void Draw(Matrix world, Matrix view, Matrix proj, float dispScale)
+        public void Draw(Matrix world, Matrix view, Matrix proj, float dispScale,int tFactor)
         {
             Matrix oWorld = World * world;
             Center = Vector3.TransformCoordinate(Vector3.Zero, oWorld);
@@ -181,9 +207,9 @@ namespace SharpDX11GameByWinbringer.Models
             var camPosition = Matrix.Transpose(Matrix.Invert(view)).Column4;
             _light.CameraPosition = new Vector3(camPosition.X, camPosition.Y, camPosition.Z);
 
-            _matrices.World = oWorld;
-            _matrices.WorldViewProjection = _matrices.World * view * proj;
+            _matrices= new Matrices(oWorld, view, proj);
             _matrices.DisplaceScale = dispScale;
+            _matrices.TessellationFactor = tFactor;
             _matrices.Transpose();
 
             _dx11Context.UpdateSubresource(ref _light, _lightBuffer);
@@ -191,29 +217,54 @@ namespace SharpDX11GameByWinbringer.Models
 
             _dx11Context.VertexShader.Set(_vertexShader);
             _dx11Context.PixelShader.Set(_pixelShader);
+            _dx11Context.HullShader.Set(_hShader);
+            _dx11Context.DomainShader.Set(_dShader);
 
             _dx11Context.VertexShader.SetConstantBuffer(0, _constantBuffer);
             _dx11Context.VertexShader.SetConstantBuffer(1, _materialsBuffer);
             _dx11Context.VertexShader.SetConstantBuffer(2, _lightBuffer);
-
-            _dx11Context.PixelShader.SetConstantBuffer(1, _materialsBuffer);
-            _dx11Context.PixelShader.SetConstantBuffer(2, _lightBuffer);
-
-            _dx11Context.PixelShader.SetSampler(0, _samplerState);
             _dx11Context.VertexShader.SetSampler(0, _samplerState);
+            _dx11Context.VertexShader.SetShaderResource(0, _textureResourse);
+            _dx11Context.VertexShader.SetShaderResource(1, _textureResourse1);
+            _dx11Context.VertexShader.SetShaderResource(2, _textureResourse2);
+
+            _dx11Context.PixelShader.SetConstantBuffer(0, _constantBuffer);
+            _dx11Context.PixelShader.SetConstantBuffer(1, _materialsBuffer);
+            _dx11Context.PixelShader.SetConstantBuffer(2, _lightBuffer);            
+            _dx11Context.PixelShader.SetSampler(0, _samplerState);          
             _dx11Context.PixelShader.SetShaderResource(0, _textureResourse);
             _dx11Context.PixelShader.SetShaderResource(1, _textureResourse1);
-            _dx11Context.VertexShader.SetShaderResource(2, _textureResourse2);
+            _dx11Context.PixelShader.SetShaderResource(2, _textureResourse2);
+
+            _dx11Context.HullShader.SetConstantBuffer(0, _constantBuffer);
+            _dx11Context.HullShader.SetConstantBuffer(1, _materialsBuffer);
+            _dx11Context.HullShader.SetConstantBuffer(2, _lightBuffer);
+            _dx11Context.HullShader.SetSampler(0, _samplerState);
+            _dx11Context.HullShader.SetShaderResource(0, _textureResourse);
+            _dx11Context.HullShader.SetShaderResource(1, _textureResourse1);
+            _dx11Context.HullShader.SetShaderResource(2, _textureResourse2);
+
+            _dx11Context.DomainShader.SetConstantBuffer(0, _constantBuffer);
+            _dx11Context.DomainShader.SetConstantBuffer(1, _materialsBuffer);
+            _dx11Context.DomainShader.SetConstantBuffer(2, _lightBuffer);
+            _dx11Context.DomainShader.SetSampler(0, _samplerState);
+            _dx11Context.DomainShader.SetShaderResource(0, _textureResourse);
+            _dx11Context.DomainShader.SetShaderResource(1, _textureResourse1);
+            _dx11Context.DomainShader.SetShaderResource(2, _textureResourse2);
 
             _dx11Context.InputAssembler.SetVertexBuffers(0, _vertexBinding);
             _dx11Context.InputAssembler.SetIndexBuffer(_indexBuffer, Format.R32_UInt, 0);
             _dx11Context.InputAssembler.InputLayout = _inputLayout;
-            _dx11Context.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
+            _dx11Context.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.PatchListWith3ControlPoints;
 
             _dx11Context.Rasterizer.State = _rasterizerState;
             _dx11Context.OutputMerger.DepthStencilState = _DState;
 
             _dx11Context.DrawIndexed(_facesCount, 0, 0);// Draw(_facesCount, 0);
+            _dx11Context.VertexShader.Set(null);
+            _dx11Context.PixelShader.Set(null);
+            _dx11Context.HullShader.Set(null);
+            _dx11Context.DomainShader.Set(null);
         }
 
         private MtlMaterial GetMaterial(string mtlFile)
@@ -367,6 +418,8 @@ namespace SharpDX11GameByWinbringer.Models
             Utilities.Dispose(ref _inputSignature);
             Utilities.Dispose(ref _vertexShader);
             Utilities.Dispose(ref _pixelShader);
+            Utilities.Dispose(ref _hShader);
+            Utilities.Dispose(ref _dShader);
             Utilities.Dispose(ref _inputLayout);
             Utilities.Dispose(ref _rasterizerState);
             Utilities.Dispose(ref _DState);

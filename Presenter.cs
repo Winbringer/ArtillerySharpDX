@@ -93,7 +93,7 @@ namespace SharpDX11GameByWinbringer
             //_sCube.Draw(SharpDX.Direct3D.PrimitiveTopology.TriangleList, true,
             //          new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
 
-            _earth.Draw(_World, _View, _Progection,1);
+            _earth.Draw(_World, _View, _Progection,0.5f,10);
             _boy.Draw(_World, _View, _Progection,SharpDX.Direct3D.PrimitiveTopology.TriangleList);
           //  _ts.Draw(_World, _View, _Progection);
           //  _text2DWriter.DrawText(_s);

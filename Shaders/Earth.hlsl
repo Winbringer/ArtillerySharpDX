@@ -9,7 +9,6 @@ cbuffer data : register(b0)
 {
     float4x4 WorldViewProjection;
     float4x4 World;
-    float DisplaceScale;
 };
 
 cbuffer data1 : register(b1)
@@ -47,22 +46,12 @@ struct PS_IN
     float3 WorldPosition : WORLDPOS;
 };
 
-float3 CalculateDisplacement(float2 UV, float3 normal)
-{
-    normal = normalize(normal);
-    if (DisplaceScale == 0)
-        return 0;
-    const float mipLevel = 1.0f;
-    float height = disMap.SampleLevel(textureSampler, UV, mipLevel).x;
-    height = (2 * height) - 1;
-    return height * DisplaceScale * normal;
-}
+
 
 PS_IN VS(VS_IN input)
 {
     PS_IN output = (PS_IN) 0;
-    float4 position = input.position+ float4(CalculateDisplacement(input.textureUV, input.normal), 0);
-    output.Position = mul(position, WorldViewProjection);
+    output.Position = mul(input.position, WorldViewProjection);
     output.WorldNormal = mul(input.normal, (float3x3) World);
     output.WorldPosition = mul(input.position, World).xyz;
     output.TextureUV = input.textureUV;

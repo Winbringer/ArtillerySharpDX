@@ -38,8 +38,8 @@ namespace SharpDX11GameByWinbringer
                     game.Run();
                 }
             }
-            double end = (System.Environment.TickCount - start)/1000;
-           
+
+            double end = (System.Environment.TickCount - start)/1000;           
             System.Console.WriteLine("Всего проведено в игре секунд : "+end.ToString());
             System.Console.WriteLine("Для завершения нажмите ввод");
             System.Console.ReadLine();            

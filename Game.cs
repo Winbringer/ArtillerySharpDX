@@ -33,6 +33,7 @@ namespace SharpDX11GameByWinbringer
         //Управление через клавиатуру
         DirectInput _directInput;
         Keyboard _keyboard;
+        Mouse _mouse;
         //Свойства
         public float ViewRatio { get; set; }
         public DX11.DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
@@ -53,7 +54,6 @@ namespace SharpDX11GameByWinbringer
             _keyboard = new Keyboard(_directInput);
             _keyboard.Properties.BufferSize = 128;
             _keyboard.Acquire();
-
             _presenter = new Presenter(this);
         }
 
@@ -67,6 +67,7 @@ namespace SharpDX11GameByWinbringer
                 {
                     // TODO: освободить управляемое состояние (управляемые объекты).
                     Utilities.Dispose(ref _keyboard);
+                    Utilities.Dispose(ref _mouse);
                     Utilities.Dispose(ref _directInput);
                     Utilities.Dispose(ref _presenter);
                     Utilities.Dispose(ref _renderView);
@@ -75,6 +76,7 @@ namespace SharpDX11GameByWinbringer
                     Utilities.Dispose(ref _depthView);
                     Utilities.Dispose(ref _dx11Device);
                     Utilities.Dispose(ref _dx11DeviceContext);
+                    _mouse?.Dispose();
                     _dx11Device?.Dispose();
                     _swapChain?.Dispose();
                 }
@@ -161,6 +163,8 @@ namespace SharpDX11GameByWinbringer
             var m = _keyboard.GetCurrentState();
             if (m.PressedKeys.Count > 0)
                 OnKeyPressed?.Invoke(m, (float)time);
+            //var v = _mouse.GetCurrentState();
+            //if (v.Buttons[0]) System.Windows.Forms.MessageBox.Show("Мыш нажата!");
             OnUpdate?.Invoke(time);
         }
 

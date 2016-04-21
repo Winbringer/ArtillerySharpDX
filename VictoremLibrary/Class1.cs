@@ -52,7 +52,7 @@ namespace VictoremLibrary
         private Device _dx11Device = null;
         private DeviceContext _dx11DeviceContext = null;
         //Цепочка замены заднего и отображаемого буфера
-        private SwapChain _swapChain=null;
+        private SwapChain _swapChain = null;
         //Представление куда мы выводим картинку.
         private RenderTargetView _renderView = null;
         private DepthStencilView _depthView = null;
@@ -160,7 +160,7 @@ namespace VictoremLibrary
         {
             var m = _keyboard.GetCurrentState();
             if (m.PressedKeys.Count > 0)
-                OnKeyPressed?.Invoke(this, new UpdateArgs() { Time = (float)time, KeyboardState =m });
+                OnKeyPressed?.Invoke(this, new UpdateArgs() { Time = (float)time, KeyboardState = m });
             OnUpdate?.Invoke(this, new UpdateArgs() { Time = (float)time });
         }
 
@@ -168,7 +168,7 @@ namespace VictoremLibrary
         {
             _dx11DeviceContext.ClearRenderTargetView(_renderView, Color);
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil, 1.0f, 0);
-            OnDraw?.Invoke(this,new EventArgs());
+            OnDraw?.Invoke(this, new EventArgs());
             _swapChain.Present(0, PresentFlags.None);
         }
 
@@ -222,7 +222,7 @@ namespace VictoremLibrary
             _renderForm.KeyDown += (sender, e) => { if (e.KeyCode == Keys.Escape) _renderForm.Close(); };
             return _renderForm;
         }
-        
+
         public void Dispose()
         {
             OnKeyPressed = null;
@@ -378,7 +378,7 @@ namespace VictoremLibrary
             Utilities.Dispose(ref _pixelShader);
             Utilities.Dispose(ref _vertexShader);
             Utilities.Dispose(ref _inputLayout);
-            
+
         }
 
     }
@@ -386,18 +386,18 @@ namespace VictoremLibrary
     /// <summary>
     /// Класс для рисования объектов в буфеер свапчейна.
     /// </summary>
-  public  class DX11Drawer : IDisposable
+    public class DX11Drawer : IDisposable
     {
         #region Поля       
-        private DeviceContext _dx11DeviceContext;         
+        private DeviceContext _dx11DeviceContext;
         //Параметры отображения
         private RasterizerState _rasterizerState = null;
-        private BlendState _blendState = null;       
+        private BlendState _blendState = null;
         private DepthStencilState _DState = null;
         #endregion
 
         #region Свойства
-        public RawColor4? BlendFactor { get; set; } = null;       
+        public RawColor4? BlendFactor { get; set; } = null;
         public DepthStencilStateDescription DepthStencilDescripshion { set { Utilities.Dispose(ref _DState); _DState = new DepthStencilState(_dx11DeviceContext.Device, value); } }
         public RasterizerStateDescription RasterizerDescription { set { Utilities.Dispose(ref _rasterizerState); _rasterizerState = new RasterizerState(_dx11DeviceContext.Device, value); } }
         public BlendStateDescription BlendDescription { set { Utilities.Dispose(ref _blendState); _blendState = new BlendState(_dx11DeviceContext.Device, value); } }
@@ -407,9 +407,9 @@ namespace VictoremLibrary
         /// Конструктор
         /// </summary>
         /// <param name="dvContext">Контекст видеокарты</param>
-        public DX11Drawer( DeviceContext dvContext)
+        public DX11Drawer(DeviceContext dvContext)
         {
-            _dx11DeviceContext = dvContext;         
+            _dx11DeviceContext = dvContext;
             var d = DepthStencilStateDescription.Default();
             d.IsDepthEnabled = true;
             d.IsStencilEnabled = false;
@@ -436,14 +436,14 @@ namespace VictoremLibrary
         /// <param name="startIndex">Индеск с которого начинаеться отрисовка</param>
         /// <param name="startVetex">Вертекс с которого начинаеться отриссовка</param>
         public void DrawIndexed(VertexBufferBinding vertexBinging, Buffer indexBuffer, int indexCount, PrimitiveTopology primitiveTopology = PrimitiveTopology.TriangleList, bool isBlending = false, int startIndex = 0, int startVetex = 0)
-        {           
+        {
             //Задаем тип рисуемых примитивов
             _dx11DeviceContext.InputAssembler.PrimitiveTopology = primitiveTopology;
 
             //Перенос данных буферов в видеокарту
             _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, vertexBinging);
             _dx11DeviceContext.InputAssembler.SetIndexBuffer(indexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);
-           
+
             _dx11DeviceContext.Rasterizer.State = _rasterizerState;
             _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
 
@@ -462,7 +462,7 @@ namespace VictoremLibrary
         /// <param name="primitiveTopology">Топология примитивов т.е. что нужно нарисовать</param>
         /// <param name="isBlending">Используеться ли блендинг</param>
         /// <param name="startVetex">Вертекс с которого начинаеться отриссовка</param>
-        public void Draw(VertexBufferBinding vertexBinging, int vertexCount,  PrimitiveTopology primitiveTopology = PrimitiveTopology.TriangleList, bool isBlending = false, int startVetex = 0)
+        public void Draw(VertexBufferBinding vertexBinging, int vertexCount, PrimitiveTopology primitiveTopology = PrimitiveTopology.TriangleList, bool isBlending = false, int startVetex = 0)
         {
             //Задаем тип рисуемых примитивов
             _dx11DeviceContext.InputAssembler.PrimitiveTopology = primitiveTopology;
@@ -489,6 +489,40 @@ namespace VictoremLibrary
         }
 
         #endregion
+    }
+
+    /// <summary>
+    /// Базовый класс для 3D объектов. Перед рисованием обязательно вызвать метод InitBuffers.
+    /// </summary>
+    /// <typeparam name="V"> Тип Вертексов для буффера вершин</typeparam>
+    abstract public class Component<V> : System.IDisposable where V : struct
+    {
+        public Matrix ObjWorld = Matrix.Identity;
+        protected Buffer _indexBuffer;
+        protected Buffer _vertexBuffer;
+        protected VertexBufferBinding _vertexBinding;
+        protected V[] _veteces;
+        protected uint[] _indeces;
+
+        public Buffer IndexBuffer { get { return _indexBuffer; } }
+        public VertexBufferBinding VertexBinding { get { return _vertexBinding; } }
+
+        /// <summary>
+        /// Создает буфферы Вершин и индексов.
+        /// </summary>
+        /// <param name="dv">Устройстов в контексте которого происходит рендеринг</param>
+        protected virtual void InitBuffers(Device dv)
+        {
+            _indexBuffer = Buffer.Create(dv, BindFlags.IndexBuffer, _indeces);
+            _vertexBuffer = Buffer.Create(dv, BindFlags.VertexBuffer, _veteces);
+            _vertexBinding = new VertexBufferBinding(_vertexBuffer, Utilities.SizeOf<V>(), 0);
+        }
+
+        public virtual void Dispose()
+        {
+            Utilities.Dispose(ref _indexBuffer);
+            Utilities.Dispose(ref _vertexBuffer);
+        }
     }
 
 }

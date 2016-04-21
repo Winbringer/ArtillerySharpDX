@@ -504,8 +504,25 @@ namespace VictoremLibrary
         protected V[] _veteces;
         protected uint[] _indeces;
 
+        /// <summary>
+        /// Буффер индексов. Для заполнения его данными вызовите метод InitBuffers.
+        /// </summary>
         public Buffer IndexBuffer { get { return _indexBuffer; } }
+
+        /// <summary>
+        /// Привязка буффера вершин. Для заполнения его данными вызовите метод InitBuffers.
+        /// </summary>
         public VertexBufferBinding VertexBinding { get { return _vertexBinding; } }
+
+        /// <summary>
+        /// Количество индексов
+        /// </summary>
+        public int IndexCount { get { return _indeces.Count(); } }
+
+        /// <summary>
+        /// Количество вершин.
+        /// </summary>
+        public int VertexCount { get { return _veteces.Count(); } }
 
         /// <summary>
         /// Создает буфферы Вершин и индексов.

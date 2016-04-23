@@ -54,6 +54,7 @@ namespace VictoremLibrary
         public int JointID;
         public float bias;
         public Vector3 position;
+        public Vector3 normal;
     }
 
     struct Joint
@@ -75,8 +76,8 @@ namespace VictoremLibrary
     {
         public string shader;
         public List<MD5Vertex> verts = new List<MD5Vertex>();
-        public List<Tri> tris = new List<Tri>();
-        public List<Weight> weights = new List<Weight>();       
+        public List<uint> tris = new List<uint>();
+        public List<Weight> weights = new List<Weight>();
     }
 
     class MD5Anim
@@ -337,9 +338,7 @@ namespace VictoremLibrary
         }
     }
 
-
-
-    class MD5Model:System.IDisposable
+    class MD5Model : System.IDisposable
     {
         readonly public string path;
         public Matrix World;
@@ -347,19 +346,22 @@ namespace VictoremLibrary
         Joint[] joints;
         MD5Mesh[] meshes;
         List<MD5Anim> animations = new List<MD5Anim>();
-
-        public MD5Model(DeviceContext dContext, string path,string name, string ShaderFile, bool isTes = false, int TF = 2, bool isG = false)
+        Device _dv;
+        public MD5Model(string path, string name, Device dv)
         {
+            _dv = dv;
             this.path = path;
             World = Matrix.Identity;
-            List<string> lines = ReadMD5File(path+name);
-
+            List<string> lines = ReadMD5File(path + name);
             joints = GetJoints(lines);
             meshes = GetMeshes(lines);
-
-            SetPositions(ref meshes, joints);
-            SetNormals(ref meshes);      
-
+            string mtlFile = lines.First(x => x.Contains("mtllib ")).Replace("mtllib ", "").Trim();
+            for (int i = 0; i < meshes.Length; ++i)
+            {
+                List<Vertex> vertexec = GetVerteces(meshes[i], joints);
+                SetNormals(ref vertexec, ref meshes[i], joints);
+                MD5Meshes.Add(new Mesh(dv,vertexec.ToArray(), meshes[i].tris.ToArray(), meshes[i].shader,path+mtlFile));            
+            }
         }
 
         public void AddAnimation(string pathToFile, string name)
@@ -367,72 +369,131 @@ namespace VictoremLibrary
             animations.Add(new MD5Anim(pathToFile) { name = name });
         }
 
-        void SetNormals(ref MD5Mesh[] subset)
+        public void Animate(float time, int animNamber)
+        {
+            Joint[] j = animations[animNamber].Animate(time);
+            for (int i = 0; i < MD5Meshes.Count; i++)
+            {
+                MD5Meshes[i].UpdateVertBuffers(_dv.ImmediateContext, MoveJoints(meshes[i], j).ToArray());
+
+            }
+        }
+
+        public void Animate(float time, string name)
+        {
+            Joint[] j = animations.First(x => x.name.Trim() == name.Trim()).Animate(time);
+            for (int i = 0; i < MD5Meshes.Count; i++)
+            {
+                MD5Meshes[i].UpdateVertBuffers(_dv.ImmediateContext, MoveJoints(meshes[i], j).ToArray());
+            }
+        }
+
+        List<Vertex> MoveJoints(MD5Mesh subsets, Joint[] joints)
+        {
+            List<Vertex> verteces = new List<Vertex>();
+            for (int i = 0; i < subsets.verts.Count; ++i)
+            {
+                var tempVert = subsets.verts[i];
+                Vector3 position = new Vector3(0);
+                Vector3 normal = new Vector3(0);
+                for (int j = 0; j < tempVert.numWeights; ++j)
+                {
+                    Weight tempWeight = subsets.weights[tempVert.startWeight + j];
+                    Joint tempJoint = joints[tempWeight.JointID];
+                    position += (Vector3.Transform(tempWeight.position, tempJoint.orientation) + tempJoint.position) * tempWeight.bias;
+                    normal += Vector3.Transform(tempWeight.normal, tempJoint.orientation) * tempWeight.bias;
+                }
+                Vertex v = new Vertex();
+                v.position = position;
+                v.normal = normal;
+                verteces.Add(v);
+            }
+
+            return verteces;
+        }
+
+        void SetNormals(ref List<Vertex> verteces, ref MD5Mesh subset, Joint[] joint)
         {
             List<Vector3> tempNormal = new List<Vector3>();
             Vector3 unnormalized = Vector3.Zero;
             Vector3 edge1;
             Vector3 edge2;
 
-            for (int k = 0; k < subset.Length; k++)
+            for (int i = 0; i < subset.tris.Count / 3; ++i)
             {
-                for (int i = 0; i < subset[k].indices.Count / 3; ++i)
-                {
-                    edge1 = subset[k].vertices[(int)subset[k].indices[(i * 3) + 1]].position - subset[k].vertices[(int)subset[k].indices[(i * 3)]].position;
-                    edge2 = subset[k].vertices[(int)subset[k].indices[(i * 3) + 2]].position - subset[k].vertices[(int)subset[k].indices[(i * 3)]].position;
-                    unnormalized = Vector3.Cross(edge1, edge2);
-                    tempNormal.Add(unnormalized);
-                }
-
-                Vector3 normalSum = new Vector3(0.0f);
-                int facesUsing = 0;
-
-                for (int i = 0; i < subset[k].vertices.Count; ++i)
-                {
-                    for (int j = 0; j < subset[k].numTriangles; ++j)
-                    {
-                        if (subset[k].indices[j * 3] == i ||
-                            subset[k].indices[(j * 3) + 1] == i ||
-                            subset[k].indices[(j * 3) + 2] == i)
-                        {
-                            normalSum += tempNormal[j];
-                            ++facesUsing;
-                        }
-                    }
-
-                    normalSum = normalSum / facesUsing;
-
-                    normalSum = Vector3.Normalize(normalSum);
-
-                    var mt = subset[k].vertices[i];
-                    mt.normal = normalSum;
-                    subset[k].vertices[i] = mt;
-
-                    normalSum = new Vector3(0.0f);
-                    facesUsing = 0;
-                }
+                int in1 = (int)subset.tris[i * 3];
+                int in2 = (int)subset.tris[(i * 3) + 1];
+                int in3 = (int)subset.tris[(i * 3) + 2];
+                Vector3 v0 = verteces[in1].position;
+                Vector3 v1 = verteces[in2].position;
+                Vector3 v2 = verteces[in3].position;
+                edge1 = v0 - v2;
+                edge2 = v2 - v1;
+                unnormalized = Vector3.Cross(edge1, edge2);
+                tempNormal.Add(unnormalized);
             }
+
+            Vector3 normalSum = new Vector3(0.0f);
+            int facesUsing = 0;
+
+            for (int i = 0; i < subset.verts.Count; ++i)
+            {
+                for (int j = 0; j < subset.tris.Count / 3; ++j)
+                {
+                    if (subset.tris[(j * 3)] == i || subset.tris[(j * 3) + 1] == i || subset.tris[(j * 3) + 2] == i)
+                    {
+                        normalSum += tempNormal[j];
+                        ++facesUsing;
+                    }
+                }
+
+                normalSum = normalSum / facesUsing;
+
+                normalSum = Vector3.Normalize(normalSum);
+                Vertex v = verteces[i];
+                v.normal = normalSum;
+                verteces[i] = v;
+
+                MD5Vertex tempVert = subset.verts[i];
+
+                for (int k = 0; k < tempVert.numWeights; k++)
+                {
+                    Joint tempJoint = joint[subset.weights[tempVert.startWeight + k].JointID];
+                    Quaternion jointOrientation = tempJoint.orientation;
+
+
+                    Vector3 normal = Vector3.Transform(normalSum, jointOrientation);
+                    Weight w = subset.weights[tempVert.startWeight + k];
+                    w.normal = normal;
+                    subset.weights[tempVert.startWeight + k] = w;
+                }
+
+                normalSum = new Vector3(0.0f);
+                facesUsing = 0;
+
+            }
+
         }
 
-        void SetPositions(ref MD5Mesh[] subsets, Joint[] joints)
+        List<Vertex> GetVerteces(MD5Mesh subsets, Joint[] joints)
         {
-            for (int k = 0; k < subsets.Length; ++k)
-                for (int i = 0; i < subsets[k].vertices.Count; ++i)
+            List<Vertex> verteces = new List<Vertex>();
+            for (int i = 0; i < subsets.verts.Count; ++i)
+            {
+                var tempVert = subsets.verts[i];
+                Vector3 position = new Vector3(0);
+                for (int j = 0; j < tempVert.numWeights; ++j)
                 {
-                    var tempVert = subsets[k].vertices[i];
-                    tempVert.position = new Vector3(0);
-                    for (int j = 0; j < tempVert.numWeights; ++j)
-                    {
-                        Weight tempWeight = subsets[k].weights[tempVert.startWeight + j];
-                        Joint tempJoint = joints[tempWeight.JointID];
-
-                        tempVert.position += (Vector3.Transform(tempWeight.position, tempJoint.orientation) + tempJoint.position) * tempWeight.bias;
-
-                    }
-                    var tempPos = tempVert.position;
-                    tempVert.position = new Vector3(tempPos.X, tempPos.Z, tempPos.Y);
-                    subsets[k].vertices[i] = tempVert;
+                    Weight tempWeight = subsets.weights[tempVert.startWeight + j];
+                    Joint tempJoint = joints[tempWeight.JointID];
+                    position += (Vector3.Transform(tempWeight.position, tempJoint.orientation) + tempJoint.position) * tempWeight.bias;
                 }
+                Vertex v = new Vertex();
+                v.textureUV = tempVert.textureUV;
+                v.position = position;
+                verteces.Add(v);
+            }
+            return verteces;
         }
 
         MD5Mesh[] GetMeshes(List<string> lines)
@@ -460,16 +521,13 @@ namespace VictoremLibrary
 
                     m[index].verts.Add(v);
                 }
-               
+
                 if (item.Contains("tri "))
                 {
-                    Tri tri = new Tri();
                     var tris = item.Split(' ');
-                   tri.ID=(uint)FParse(tris[1]);
-                   tri.v0=(uint)FParse(tris[2]);
-                   tri.v1=(uint)FParse(tris[3]);
-                   tri.v2=(uint)FParse(tris[4]);
-                    m[index].tris.Add(tri);
+                    m[index].tris.Add((uint)FParse(tris[2]));
+                    m[index].tris.Add((uint)FParse(tris[3]));
+                    m[index].tris.Add((uint)FParse(tris[4]));
                 }
 
                 if (item.Contains("weight "))

@@ -24,37 +24,52 @@ namespace VictoremLibrary
         public float d_Transparency;
         public float Tr_Transparency;
         public Vector3 Tf_TransmissionFilter;
+        public float Illum;
         public Color4 Ka_AmbientColor;
         public Color4 Kd_DiffuseColor;
         public Color4 Ks_SpecularColor;
         public Color4 Ke_EmissiveColor;
+
         public string Amb_Map;
         public string Dif_Map;
         public string Spec_Map;
-        public string Norm_Map;
+        public string Map_Bump;
         public string Disp_Map;
     }
 
     public class Mesh : Component<Vertex>
     {
         public Mtl Material;
-       
-        public Mesh(Vertex[] ver, uint[] ind, Device dv)
+
+        public Mesh(Device dv, Vertex[] ver, uint[] ind, string mtlName = null, string mtlPath = null)
         {
             this._indeces = ind;
             this._veteces = ver;
             Material = new Mtl();
-           InitBuffers(dv);
+            SetMaterial(mtlPath, mtlName);
+            InitBuffers(dv);
         }
 
-        public void UpdateVertBuffers(DeviceContext dt,Vertex[] vert)
+        public void UpdateVertBuffers(DeviceContext dt, Vertex[] vert)
         {
             dt.UpdateSubresource(vert, _vertexBuffer);
         }
 
-        public void SetMaterial(string mtlFile)
+        void SetMaterial(string mtlFile, string mtlName)
         {
-            CultureInfo infos = CultureInfo.InvariantCulture;           
+            mtlName= mtlName.Trim().Replace("\"", "");
+            mtlFile = mtlFile.Trim().Replace("\"", "");
+
+            if (string.IsNullOrEmpty(mtlFile.Trim()) && string.IsNullOrEmpty(mtlName.Trim())) return;
+
+            if (mtlName.Contains('.'))
+            {
+                Material.Dif_Map = mtlName;
+                return;
+            }           
+
+            CultureInfo infos = CultureInfo.InvariantCulture;
+
             using (StreamReader reader = new StreamReader(mtlFile))
             {
                 while (true)
@@ -62,11 +77,20 @@ namespace VictoremLibrary
                     string l = reader.ReadLine();
                     if (reader.EndOfStream) break;
                     if (l.Contains("map_Ka "))
-                        Material.Amb_Map= l.Replace("map_Ka ", "").Trim();
+                        Material.Amb_Map = l.Replace("map_Ka ", "").Trim();
+
                     if (l.Contains("map_Kd "))
-                        Material.Dif_Map = l.Replace("map_Ka ", "").Trim();
+                        Material.Dif_Map = l.Replace("map_Kd ", "").Trim();
+
+                    if (l.Contains("map_bump "))
+                        Material.Map_Bump = l.Replace("map_bump ", "").Trim();
+
+                    if (l.Contains("map_disp "))
+                        Material.Disp_Map = l.Replace("map_disp ", "").Trim();
+
                     if (l.Contains("Ns "))
                         Material.Ns_SpecularPower = float.Parse(l.Replace("Ns ", "").Trim(), infos);
+
                     if (l.Contains("Ni "))
                         Material.Ni_OpticalDensity = float.Parse(l.Replace("Ni ", "").Trim(), infos);
 
@@ -81,6 +105,10 @@ namespace VictoremLibrary
                         var val = l.Replace("Tf ", "").Trim().Split(' ').Select(s => float.Parse(s, infos)).ToArray();
                         Material.Tf_TransmissionFilter = new Vector3(val[0], val[1], val[2]);
                     }
+
+                    if (l.Contains("illum "))
+                        Material.Illum = float.Parse(l.Replace("illum ", "").Trim(), infos);
+
                     if (l.Contains("Ka "))
                     {
                         var val = l.Replace("Ka ", "").Trim().Split(' ').Select(s => float.Parse(s, infos)).ToArray();

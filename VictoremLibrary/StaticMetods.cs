@@ -20,7 +20,7 @@ namespace VictoremLibrary
         /// <param name="Text">Текст в заголовке формы</param>
         /// <param name="IconFile">Файл в формает .ico для инконки в заголовке формы</param>
         /// <returns></returns>
-        public static SharpDX.Windows.RenderForm GetRenderForm(this Game game, string Text, string IconFile)
+        public static SharpDX.Windows.RenderForm GetRenderForm( string Text, string IconFile)
         {
             if (!SharpDX.Direct3D11.Device.IsSupportedFeatureLevel(SharpDX.Direct3D.FeatureLevel.Level_11_0))
             {
@@ -47,7 +47,7 @@ namespace VictoremLibrary
 
         private static readonly ImagingFactory Imgfactory = new ImagingFactory();
 
-        public static Bitmap1 LoadBitmap(this SharpDX.Direct3D11.DeviceContext device, string filename )
+        public static Bitmap1 LoadBitmap( SharpDX.Direct3D11.DeviceContext device, string filename )
         {
             var props = new BitmapProperties1
             {
@@ -55,10 +55,10 @@ namespace VictoremLibrary
                     new SharpDX.Direct2D1.PixelFormat(Format.R8G8B8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied)
             };
 
-            return Bitmap1.FromWicBitmap(device.QueryInterface< SharpDX.Direct2D1.DeviceContext>(), device.LoadBitmapSource(filename), props);
+            return Bitmap1.FromWicBitmap(device.QueryInterface< SharpDX.Direct2D1.DeviceContext>(), LoadBitmapSource(device,filename), props);
         }
 
-        public static BitmapSource LoadBitmapSource(this SharpDX.Direct3D11.DeviceContext device, string filename)
+        public static BitmapSource LoadBitmapSource( SharpDX.Direct3D11.DeviceContext device, string filename)
         {
             var d = new BitmapDecoder(
                 Imgfactory,
@@ -78,13 +78,13 @@ namespace VictoremLibrary
             return fconv;
         }
 
-        public static SharpDX.Direct3D11.Texture2D CreateTex2DFromFile(this SharpDX.Direct3D11.DeviceContext device, string filename)
+        public static SharpDX.Direct3D11.Texture2D CreateTex2DFromFile( SharpDX.Direct3D11.DeviceContext device, string filename)
         {
-            var bSource = device.LoadBitmapSource(filename);
+            var bSource = LoadBitmapSource(device,filename);
             return CreateTex2DFromBitmap(device, bSource);
         }
 
-        public static SharpDX.Direct3D11.Texture2D CreateTex2DFromBitmap(this SharpDX.Direct3D11.DeviceContext device, BitmapSource bsource)
+        public static SharpDX.Direct3D11.Texture2D CreateTex2DFromBitmap( SharpDX.Direct3D11.DeviceContext device, BitmapSource bsource)
         {
 
             SharpDX.Direct3D11.Texture2DDescription desc;
@@ -118,7 +118,7 @@ namespace VictoremLibrary
         /// <returns> Текстуру готовую для использования в шейдере</returns>
         public static SharpDX.Direct3D11.ShaderResourceView LoadTextureFromFile(this SharpDX.Direct3D11.DeviceContext device, string filename)
         {
-            return new SharpDX.Direct3D11.ShaderResourceView(device.Device, device.CreateTex2DFromFile(filename));
+            return new SharpDX.Direct3D11.ShaderResourceView(device.Device, CreateTex2DFromFile(device,filename));
         }
 
         #endregion 

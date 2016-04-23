@@ -330,7 +330,7 @@ namespace VictoremLibrary
         }
     }
 
-    class MD5Model : System.IDisposable
+  public  class MD5Model : System.IDisposable
     {
         readonly public string path;
         public Matrix World;

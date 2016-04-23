@@ -64,7 +64,7 @@ namespace VictoremLibrary
         /// </summary>
         /// <param name="renderForm">Форма в котору будем рисовать наши объекты</param>
         public Game(RenderForm renderForm)
-        {
+        {       
             Color = new Color(0, 0, 128);
 
             _renderForm = renderForm;

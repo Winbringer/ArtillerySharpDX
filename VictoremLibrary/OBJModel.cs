@@ -75,7 +75,7 @@ namespace VictoremLibrary
                 face.position = V;
                 face.textureUV = new Vector2(Vt.X, Vt.Y);
                 face.position = Vn;
-                int i = faces.FindIndex(t => (t.position == face.position) && (t.position == face.position) && (t.textureUV == face.textureUV));
+                int i = faces.FindIndex(t => (t.position == face.position) && (t.normal == face.normal) && (t.textureUV == face.textureUV));
                 if (i >= 0)
                 {
                     index.Add((uint)i);

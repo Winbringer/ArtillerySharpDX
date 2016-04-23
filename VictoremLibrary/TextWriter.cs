@@ -7,12 +7,10 @@ using Factory = SharpDX.Direct2D1.Factory;
 using SharpDX.DirectWrite;
 using System.Diagnostics;
 
-namespace SharpDX11GameByWinbringer.Models
-{
-
-    /// <summary>
-    /// Рисует текст и 2Д объекты на экран.
-    /// </summary>
+namespace VictoremLibrary
+{/// <summary>
+ /// Рисует текст и 2Д объекты на экран.
+ /// </summary>
     public sealed class TextWirter : System.IDisposable
     {
         private Factory _Factory2D;
@@ -21,10 +19,12 @@ namespace SharpDX11GameByWinbringer.Models
         private SolidColorBrush _SceneColorBrush;
         private TextFormat _TextFormat;
         private TextLayout _TextLayout;
-        private Stopwatch _sw;
         int _width;
-        int _heght;    
-          
+        int _heght;
+        /// <summary>
+        /// Обязательно вызвать Бегинд драв перед и Енд драв после рисования 2д примитивов.
+        /// </summary>
+        public RenderTarget RenderTarget { get { return _RenderTarget2D; } }
         /// <summary>
         /// Конструктор
         /// </summary>
@@ -35,8 +35,6 @@ namespace SharpDX11GameByWinbringer.Models
         {
             _width = Width;
             _heght = Height;
-            _sw = new Stopwatch();
-            _sw.Start();
             _Factory2D = new SharpDX.Direct2D1.Factory();
             using (var surface = BackBuffer.QueryInterface<Surface>())
             {
@@ -50,33 +48,30 @@ namespace SharpDX11GameByWinbringer.Models
             _FactoryDWrite = new SharpDX.DirectWrite.Factory();
             _SceneColorBrush = new SolidColorBrush(_RenderTarget2D, Color.White);
             // Initialize a TextFormat
-            _TextFormat = new TextFormat(_FactoryDWrite, "Calibri", 14) {
+            _TextFormat = new TextFormat(_FactoryDWrite, "Calibri", 14)
+            {
                 TextAlignment = TextAlignment.Leading,
-                ParagraphAlignment = ParagraphAlignment.Near };
-            _RenderTarget2D.TextAntialiasMode = TextAntialiasMode.Cleartype;    
+                ParagraphAlignment = ParagraphAlignment.Near
+            };
+            _RenderTarget2D.TextAntialiasMode = TextAntialiasMode.Cleartype;
             // Initialize a TextLayout
-            _TextLayout = new TextLayout(_FactoryDWrite, "SharpDX D2D1 - DWrite", _TextFormat,Width, Height);
+            _TextLayout = new TextLayout(_FactoryDWrite, "SharpDX D2D1 - DWrite", _TextFormat, Width, Height);
         }
 
-        public void DrawText(string text)
+        public void DrawText(string text, float x, float y, float width, float height)
         {
-            _sw.Stop();
-            string s = string.Format("FPS : {0:#####}", 1000.0f / _sw.Elapsed.TotalMilliseconds);
-            _sw.Reset();
-            _sw.Start();
-            s = s + "  " + text;
             _RenderTarget2D.BeginDraw();
             _RenderTarget2D.DrawText(
-                s, s.Length,
+                text, text.Length,
                 _TextFormat,
-                new RectangleF(50,50, 200, 200), 
+                new RectangleF(x, y, width, height),
                 _SceneColorBrush,
                 DrawTextOptions.None,
                 MeasuringMode.GdiClassic);
-          //  _RenderTarget2D.DrawTextLayout(new Vector2(300, 300), _TextLayout, _SceneColorBrush, DrawTextOptions.None);
-            _RenderTarget2D.EndDraw();
+            //  RenderTarget2D.DrawTextLayout(new Vector2(0, 0), TextLayout, SceneColorBrush, DrawTextOptions.None);
+            _RenderTarget2D.EndDraw();           
         }
-               
+
         public void Dispose()
         {
             Utilities.Dispose(ref _Factory2D);
@@ -86,6 +81,5 @@ namespace SharpDX11GameByWinbringer.Models
             Utilities.Dispose(ref _TextFormat);
             Utilities.Dispose(ref _TextLayout);
         }
-
     }
 }

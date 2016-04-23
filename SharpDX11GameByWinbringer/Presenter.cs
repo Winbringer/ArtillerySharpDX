@@ -4,7 +4,7 @@ using SharpDX.DirectInput;
 using SharpDX11GameByWinbringer.Models;
 using System;
 using System.Diagnostics;
-
+using SharpDX.Direct2D1;
 
 namespace SharpDX11GameByWinbringer
 {
@@ -18,23 +18,23 @@ namespace SharpDX11GameByWinbringer
         Matrix _Progection;
         _3DLineMaganer _lineManager;
 
-        //TextWirter _text2DWriter;        
+        TextWirter _text2DWriter;        
         //_3DWaveManager _waveManager;
         //Triangle _triangle;
         //ShadedCube _sCube;
         EarthFromOBJ _earth;
         MD5Model _boy;
-        //string _s;
-        //Stopwatch _sw;
+        string _s;
+       Stopwatch _sw;
        // Tesselation _ts;
 
         public Presenter(Game game)
         {
-            //_text2DWriter =
-            //    new TextWirter(
-            //    game.SwapChain.GetBackBuffer<Texture2D>(0),
-            //    game.Width,
-            //    game.Height);
+            _text2DWriter =
+                new TextWirter(
+                game.SwapChain.GetBackBuffer<Texture2D>(0),
+                game.Width,
+                game.Height);
 
             game.OnDraw += Draw;
             game.OnUpdate += Update;
@@ -45,27 +45,27 @@ namespace SharpDX11GameByWinbringer
             _Progection = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
 
             //Создаем объеты нашей сцены
-           _lineManager = new _3DLineMaganer(game.DeviceContext);     
+           _lineManager = new _3DLineMaganer(game.DeviceContext);
             //_waveManager = new _3DWaveManager(game.DeviceContext);                  
             //_triangle = new Triangle(game.DeviceContext);
             //_sCube = new ShadedCube(game.DeviceContext);
             //_sCube.World = Matrix.Translation(0, -70, 0);
             //_triangle.World = Matrix.RotationY(MathUtil.PiOverFour) * Matrix.Translation(0, 70, 0);           
-            //_sw = new Stopwatch();
-            //_sw.Start();
+            _sw = new Stopwatch();
+            _sw.Start();
 
             _earth = new EarthFromOBJ(game.DeviceContext);
             _boy = new MD5Model(game.DeviceContext, "3DModelsFiles\\Wm\\","Female", "Shaders\\Boy.hlsl", false, 3,true);
              _boy.World = Matrix.Scaling(10);
             // _ts = new Tesselation(game.DeviceContext.Device,6);
+            
         }
 
         void Update(double time)
         {
-          //  LPS();
+           LPS();
            //_sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time);
-           
            _boy.Update((float)time);   
            // _waveManager.World =Matrix.Translation(-50,0,-50)* Matrix.Scaling(10);
            // _waveManager.Update(time);         
@@ -75,17 +75,18 @@ namespace SharpDX11GameByWinbringer
 
         private void LPS()
         {
-            //_sw.Stop();
-            //_s = string.Format("LPS : {0:#####}", 1000.0f / _sw.Elapsed.TotalMilliseconds);
-            //_sw.Reset();
-            //_sw.Start();
+            _sw.Stop();
+            _s = string.Format("LPS : {0:#####}", 1000.0f / _sw.Elapsed.TotalMilliseconds);
+            _sw.Reset();
+            _sw.Start();
         }
 
         void Draw(double time)
         {
           
+
             //_waveManager.Draw(_World, _View, _Progection);
-           _lineManager.Draw(_World, _View, _Progection);
+            _lineManager.Draw(_World, _View, _Progection);
             //_triangle.DrawTriangle(SharpDX.Direct3D.PrimitiveTopology.TriangleList,
             //                        true,
             //                        new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
@@ -96,7 +97,7 @@ namespace SharpDX11GameByWinbringer
             _earth.Draw(_World, _View, _Progection,1f,32);
             _boy.Draw(_World, _View, _Progection,SharpDX.Direct3D.PrimitiveTopology.TriangleList);
           //  _ts.Draw(_World, _View, _Progection);
-          //  _text2DWriter.DrawText(_s);
+          _text2DWriter.DrawText(_s);
         }
 
         #region Вспомогательные методы
@@ -116,6 +117,7 @@ namespace SharpDX11GameByWinbringer
 
         #region IDisposable Support
         private bool disposedValue = false;
+
         void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -126,7 +128,7 @@ namespace SharpDX11GameByWinbringer
                     Utilities.Dispose(ref _earth);
                     Utilities.Dispose(ref _lineManager);
                     //Utilities.Dispose(ref _waveManager);
-                    //Utilities.Dispose(ref _text2DWriter);
+                    Utilities.Dispose(ref _text2DWriter);
                     //Utilities.Dispose(ref _triangle);
                     //Utilities.Dispose(ref _sCube);
                     Utilities.Dispose(ref _boy);

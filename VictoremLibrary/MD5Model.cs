@@ -16,15 +16,7 @@ namespace VictoremLibrary
 {
 
     #region Структуры
-
-    struct Tri
-    {
-        public uint ID;
-        public uint v0;
-        public uint v1;
-        public uint v2;
-    };
-
+    
     struct HierarchyItem
     {
         public string name;

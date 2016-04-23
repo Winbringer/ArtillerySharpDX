@@ -5,7 +5,6 @@ using Device = SharpDX.Direct3D11.Device;
 using SharpDX;
 using System.Linq;
 
-
 namespace VictoremLibrary
 {
     /// <summary>
@@ -58,6 +57,5 @@ namespace VictoremLibrary
             Utilities.Dispose(ref _vertexBuffer);
         }
     }
-
 
 }

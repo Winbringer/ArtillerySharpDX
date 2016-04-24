@@ -16,8 +16,8 @@ namespace VictoremLibrary
 {
 
     #region Структуры
-    
-    struct HierarchyItem
+
+    internal struct HierarchyItem
     {
         public string name;
         public int parent;
@@ -25,13 +25,13 @@ namespace VictoremLibrary
         public int startIndex;
     };
 
-    struct BaseFrameJoint
+    internal struct BaseFrameJoint
     {
         public Vector3 pos;
         public Quaternion orient;
     };
 
-    struct MD5Vertex
+    internal struct MD5Vertex
     {
         public int ID;
         public Vector2 textureUV;
@@ -40,7 +40,7 @@ namespace VictoremLibrary
 
     }
 
-    struct Weight
+    internal struct Weight
     {
         public int ID;
         public int JointID;
@@ -49,7 +49,7 @@ namespace VictoremLibrary
         public Vector3 normal;
     }
 
-    struct Joint
+   internal struct Joint
     {
         public string name;
         public int parentID;

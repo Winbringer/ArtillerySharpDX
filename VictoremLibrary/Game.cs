@@ -85,10 +85,15 @@ namespace VictoremLibrary
         /// </summary>
         private void InitializeDeviceResources()
         {
+            var shaderFlags = DeviceCreationFlags.None;
+#if DEBUG
+            shaderFlags = DeviceCreationFlags.Debug;
+#endif
+            
             //Создаем объектное преставление нашего GPU, его контекст и класс который будет менят местами буфферы в которые рисует наша GPU
             SharpDX.Direct3D11.Device.CreateWithSwapChain(
                  SharpDX.Direct3D.DriverType.Hardware,
-                 DeviceCreationFlags.None | DeviceCreationFlags.BgraSupport,
+                 shaderFlags | DeviceCreationFlags.BgraSupport,
                  new[] { SharpDX.Direct3D.FeatureLevel.Level_11_0 },
                   new SwapChainDescription()
                   {

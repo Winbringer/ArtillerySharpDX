@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace VictoremLibrary
 {
-    struct Face
+  internal  struct Face
     {
         public int VID;
         public int VnID;

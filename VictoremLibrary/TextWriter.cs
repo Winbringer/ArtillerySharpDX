@@ -57,8 +57,21 @@ namespace VictoremLibrary
             // Initialize a TextLayout
             _TextLayout = new TextLayout(_FactoryDWrite, "SharpDX D2D1 - DWrite", _TextFormat, Width, Height);
         }
-
-        public void DrawText(string text, float x, float y, float width, float height)
+        public void SetTextColor(Color color)
+        {
+            _SceneColorBrush.Dispose();
+            _SceneColorBrush = new SolidColorBrush(_RenderTarget2D, color);
+        }
+        public void SetTextSize(int size)
+        {
+            _TextFormat.Dispose();
+            _TextFormat = new TextFormat(_FactoryDWrite, "Calibri", size)
+            {
+                TextAlignment = TextAlignment.Leading,
+                ParagraphAlignment = ParagraphAlignment.Near
+            };
+        }
+        public void DrawText(string text, float x =0, float y=0, float width=400, float height=300)
         {
             _RenderTarget2D.BeginDraw();
             _RenderTarget2D.DrawText(
@@ -69,7 +82,13 @@ namespace VictoremLibrary
                 DrawTextOptions.None,
                 MeasuringMode.GdiClassic);
             //  RenderTarget2D.DrawTextLayout(new Vector2(0, 0), TextLayout, SceneColorBrush, DrawTextOptions.None);
-            _RenderTarget2D.EndDraw();           
+            _RenderTarget2D.EndDraw();      
+        }
+        public void DrawBitmap(Bitmap bitmap, float x=0, float y=0,float scale =1, float opacity=1, BitmapInterpolationMode interMode = BitmapInterpolationMode.Linear)
+        {
+            _RenderTarget2D.BeginDraw();
+            _RenderTarget2D.DrawBitmap(bitmap, new SharpDX.Mathematics.Interop.RawRectangleF(x, y, x+ bitmap.Size.Width*scale, y+ bitmap.Size.Height*scale), opacity, interMode);
+            _RenderTarget2D.EndDraw();
         }
 
         public void Dispose()

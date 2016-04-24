@@ -1,5 +1,6 @@
 ﻿using SharpDX;
 using SharpDX.Direct2D1;
+using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using SharpDX.WIC;
 using System;
@@ -12,8 +13,6 @@ namespace VictoremLibrary
 {
   public static  class StaticMetods
     {
-        #region Статические методы
-
         /// <summary>
         /// Создает форму в которую будет происходить рендеринг. На ней нужно обязательно вызвать метод Dispose. Форма закрываеть при нажатии Esc. Форма создаеться по размеру экрана и в его центре.
         /// </summary>
@@ -116,11 +115,34 @@ namespace VictoremLibrary
         /// <param name="device">Контекст Директ Икс 11</param>
         /// <param name="filename">Путь к файлу картинки</param>
         /// <returns> Текстуру готовую для использования в шейдере</returns>
-        public static SharpDX.Direct3D11.ShaderResourceView LoadTextureFromFile(this SharpDX.Direct3D11.DeviceContext device, string filename)
+        public static SharpDX.Direct3D11.ShaderResourceView LoadTextureFromFile( SharpDX.Direct3D11.DeviceContext device, string filename)
         {
             return new SharpDX.Direct3D11.ShaderResourceView(device.Device, CreateTex2DFromFile(device,filename));
         }
 
-        #endregion 
+       public static SharpDX.Direct2D1.Bitmap GetBitmapFromSRV(SharpDX.Direct3D11.ShaderResourceView srv, RenderTarget renderTarger)
+        {
+            using (var texture = srv.ResourceAs<Texture2D>())
+            using (var surface = texture.QueryInterface<Surface>())
+            {
+                var bitmap = new SharpDX.Direct2D1.Bitmap(renderTarger, surface, new SharpDX.Direct2D1.BitmapProperties(new SharpDX.Direct2D1.PixelFormat(
+                                                          Format.R8G8B8A8_UNorm,
+                                                          SharpDX.Direct2D1.AlphaMode.Premultiplied)));
+                return bitmap;
+            }
+        }
+        public static void CopyUAVToSRV(SharpDX.Direct3D11.Device device,ref SharpDX.Direct3D11.ShaderResourceView srv, SharpDX.Direct3D11.UnorderedAccessView uav)
+        {
+            
+
+            using (var t = srv.ResourceAs<Texture2D>())
+            {
+                using (var t2 = uav.ResourceAs<SharpDX.Direct3D11.Texture2D>())
+                {
+                    // Copy the texture for the resource to the typeless texture
+                    device.ImmediateContext.CopyResource(t2, t);
+                }
+            }
+        }
     }
 }

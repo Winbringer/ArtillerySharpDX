@@ -10,12 +10,18 @@ using System.Threading.Tasks;
 
 namespace VictoremLibrary
 {
+    /// <summary>
+    /// Помогает использовать директиву #include в HLSL файлах
+    /// </summary>
     public class HLSLFileIncludeHandler : CallbackBase, Include
     {
         public readonly Stack<string> CurrentDirectory;
         public readonly List<string> IncludeDirectories;
 
-
+        /// <summary>
+        /// Конструктор класса. Класс помогает использовать директиву #include в HLSL файлах
+        /// </summary>
+        /// <param name="initialDirectory">Папка с шейдерами</param>
         public HLSLFileIncludeHandler(string initialDirectory)
         {
             IncludeDirectories = new List<string>();

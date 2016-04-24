@@ -120,7 +120,13 @@ namespace VictoremLibrary
             return new SharpDX.Direct3D11.ShaderResourceView(device.Device, CreateTex2DFromFile(device,filename));
         }
 
-       public static SharpDX.Direct2D1.Bitmap GetBitmapFromSRV(SharpDX.Direct3D11.ShaderResourceView srv, RenderTarget renderTarger)
+        /// <summary>
+        /// Получает Bimap из ShaderResourceView (Ресурса с текстурой для шейдера).
+        /// </summary>
+        /// <param name="srv">Ресурс текстуры шейдера</param>
+        /// <param name="renderTarger"> 2d рендертаргет который будет рисовать этот битмап</param>
+        /// <returns>Битмапу с данными</returns>
+        public static SharpDX.Direct2D1.Bitmap GetBitmapFromSRV(SharpDX.Direct3D11.ShaderResourceView srv, RenderTarget renderTarger)
         {
             using (var texture = srv.ResourceAs<Texture2D>())
             using (var surface = texture.QueryInterface<Surface>())
@@ -131,6 +137,13 @@ namespace VictoremLibrary
                 return bitmap;
             }
         }
+
+        /// <summary>
+        /// Копирует данные из неуправляемого ресурса ( Используемого в Компюте шейдере) в управляемый ресурс обычного шейдера.
+        /// </summary>
+        /// <param name="device">Устройстов используемое для отрисовки 3д</param>
+        /// <param name="srv">ShaderResourceView с данными тестуры в который будем копировать данные UnorderedAccessView.</param>
+        /// <param name="uav">UnorderedAccessView из которого будем брать данные</param>
         public static void CopyUAVToSRV(SharpDX.Direct3D11.Device device,ref SharpDX.Direct3D11.ShaderResourceView srv, SharpDX.Direct3D11.UnorderedAccessView uav)
         {
             

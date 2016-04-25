@@ -1,4 +1,5 @@
 ﻿using SharpDX;
+using SharpDX.D3DCompiler;
 using SharpDX.Direct2D1;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
@@ -196,7 +197,7 @@ namespace VictoremLibrary
                     {
                         if (x < actualWidth)
                         {
-                           data[dataCounter++] = dataStream.Read<byte>();
+                            data[dataCounter++] = dataStream.Read<byte>();
                         }
                         else
                         {
@@ -204,7 +205,7 @@ namespace VictoremLibrary
                         }
                     }
                 }
-               dataStream.Dispose();
+                dataStream.Dispose();
                 surface.Unmap();
             }
 
@@ -241,5 +242,6 @@ namespace VictoremLibrary
             //  game.DeviceContext.UpdateSubresource(data, readTex);
             return readTex;
         }
+       
     }
 }

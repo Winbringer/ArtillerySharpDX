@@ -48,6 +48,7 @@ namespace VictoremLibrary
         DirectInput _directInput;
         Keyboard _keyboard;
         DX11Drawer _drawer = null;
+        TextWirter _texWriter = null;
 
         //Свойства
         public float ViewRatio { get; set; }
@@ -57,14 +58,21 @@ namespace VictoremLibrary
         public int Width { get { return _renderForm.ClientSize.Width; } }
         public int Height { get { return _renderForm.ClientSize.Height; } }
         public Color Color { get; set; }
+        /// <summary>
+        /// Выводит 3Д объекты на экран
+        /// </summary>
         public DX11Drawer Drawer { get { return _drawer; } }
+        /// <summary>
+        /// Выводит 2Д объекты и Текст на экран
+        /// </summary>
+        public TextWirter Drawer2D { get { return _texWriter; } }
 
         /// <summary>
         /// Конструктор класса
         /// </summary>
         /// <param name="renderForm">Форма в котору будем рисовать наши объекты</param>
         public Game(RenderForm renderForm)
-        {       
+        {
             Color = new Color(0, 0, 128);
 
             _renderForm = renderForm;
@@ -89,7 +97,7 @@ namespace VictoremLibrary
 #if DEBUG
             shaderFlags = DeviceCreationFlags.Debug;
 #endif
-            
+
             //Создаем объектное преставление нашего GPU, его контекст и класс который будет менят местами буфферы в которые рисует наша GPU
             SharpDX.Direct3D11.Device.CreateWithSwapChain(
                  SharpDX.Direct3D.DriverType.Hardware,
@@ -147,6 +155,7 @@ namespace VictoremLibrary
             //Устанавливаем размер конечной картинки            
             _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderView);
+            _texWriter = new TextWirter(this.SwapChain.GetBackBuffer<Texture2D>(0), _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
         }
 
         private void Update(double time)
@@ -161,7 +170,7 @@ namespace VictoremLibrary
         {
             _dx11DeviceContext.ClearRenderTargetView(_renderView, Color);
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil, 1.0f, 0);
-            OnDraw?.Invoke(this, new EventArgs());
+            OnDraw?.Invoke(this, new UpdateArgs());
             _swapChain.Present(0, PresentFlags.None);
         }
 
@@ -184,6 +193,20 @@ namespace VictoremLibrary
             }
             Draw();
         }
+        public ComputeShader GetComputeShader(string sourse, SharpDX.Direct3D.ShaderMacro[] defines)
+        {
+            SharpDX.D3DCompiler.ShaderFlags shaderFlags = SharpDX.D3DCompiler.ShaderFlags.None;
+#if DEBUG
+            shaderFlags = SharpDX.D3DCompiler.ShaderFlags.Debug;
+#endif
+            using (var horizBC = SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile(sourse,
+                "CS",
+                "cs_5_0",
+                shaderFlags,
+             SharpDX.D3DCompiler.EffectFlags.None,
+                defines, null))
+                return new ComputeShader(_dx11Device, horizBC);
+        }
 
         public void Dispose()
         {
@@ -201,6 +224,7 @@ namespace VictoremLibrary
             _swapChain?.Dispose();
             _dx11Device?.Dispose();
             _drawer.Dispose();
+            _texWriter.Dispose();
         }
 
     }

@@ -49,6 +49,7 @@ namespace VictoremLibrary
         Keyboard _keyboard;
         DX11Drawer _drawer = null;
         TextWirter _texWriter = null;
+        FilterCS _filter = null;
 
         //Свойства
         public float ViewRatio { get; set; }
@@ -66,6 +67,10 @@ namespace VictoremLibrary
         /// Выводит 2Д объекты и Текст на экран
         /// </summary>
         public TextWirter Drawer2D { get { return _texWriter; } }
+        /// <summary>
+        /// Придоставляет методы для наложения различных эффектов ( размытия, яркости и т. д.) на текстуру.
+        /// </summary>
+        public FilterCS FilterFoTexture { get { return _filter; } }
 
         /// <summary>
         /// Конструктор класса
@@ -86,6 +91,7 @@ namespace VictoremLibrary
             _keyboard.Properties.BufferSize = 128;
             _keyboard.Acquire();
             _drawer = new DX11Drawer(_dx11DeviceContext);
+            _filter = new FilterCS(this);
         }
 
         /// <summary>
@@ -193,6 +199,7 @@ namespace VictoremLibrary
             }
             Draw();
         }
+
         public ComputeShader GetComputeShader(string sourse, SharpDX.Direct3D.ShaderMacro[] defines)
         {
             SharpDX.D3DCompiler.ShaderFlags shaderFlags = SharpDX.D3DCompiler.ShaderFlags.None;
@@ -224,7 +231,7 @@ namespace VictoremLibrary
             _swapChain?.Dispose();
             _dx11Device?.Dispose();
             _drawer.Dispose();
-            _texWriter.Dispose();
+            _texWriter.Dispose();            
         }
 
     }

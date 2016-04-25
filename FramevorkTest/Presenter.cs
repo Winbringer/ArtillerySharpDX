@@ -19,7 +19,7 @@ namespace FramevorkTest
     class Presenter : IDisposable
     {
         TextWirter Drawer2d;
-        Bitmap bitmap;       
+        Bitmap bitmap;
         public Presenter(Game game)
         {
             game.OnDraw += Draw;
@@ -36,16 +36,18 @@ namespace FramevorkTest
 
             var computeBuffer = new Buffer(game.DeviceContext.Device,
                 Utilities.SizeOf<ComputeConstants>(),
-                ResourceUsage.Default, BindFlags.ConstantBuffer, 
-                CpuAccessFlags.None, 
+                ResourceUsage.Default, BindFlags.ConstantBuffer,
+                CpuAccessFlags.None,
                 ResourceOptionFlags.None, 0);
-            var constants = new ComputeConstants { Intensity =0 };
+
+            var constants = new ComputeConstants { Intensity = 0.5f };
+
             game.DeviceContext.UpdateSubresource(ref constants, computeBuffer);
 
             // Define the thread group size 
             SharpDX.Direct3D.ShaderMacro[] defines = new[] {
-                new SharpDX.Direct3D.ShaderMacro("THREADSX", 16),
-                new SharpDX.Direct3D.ShaderMacro("THREADSY", 4), };
+                new SharpDX.Direct3D.ShaderMacro("THREADSX", 32),
+                new SharpDX.Direct3D.ShaderMacro("THREADSY", 32), };
             ShaderFlags shaderFlags = ShaderFlags.None;
 #if DEBUG
             shaderFlags = ShaderFlags.Debug;
@@ -60,16 +62,16 @@ namespace FramevorkTest
                     game.DeviceContext.ComputeShader.SetShaderResource(0, srcTextureSRV);
                     // Set the destination resource 
                     game.DeviceContext.ComputeShader.SetUnorderedAccessView(0, targetUAV);
-                    game.DeviceContext.ComputeShader.SetConstantBuffer(0, computeBuffer);                    
-                    // e.g. 640x480 -> Dispatch(40, 120, 1); 
-                    game.DeviceContext.Dispatch((int)Math.Ceiling(desc.Width / 16.0),
-                        (int)Math.Ceiling(desc.Height / 4.0), 1);
+                    game.DeviceContext.ComputeShader.SetConstantBuffer(0, computeBuffer);
+                    // e.g. 640x480 -> Dispatch(20, 15, 1); 
+                    game.DeviceContext.Dispatch((int)Math.Ceiling(desc.Width / 32.0),
+                        (int)Math.Ceiling(desc.Height / 32.0), 1);
                 }
             }
-           
+
             Utilities.Dispose(ref computeBuffer);
             Drawer2d = new TextWirter(game.SwapChain.GetBackBuffer<Texture2D>(0), 800, 600);
-            StaticMetods.CopyUAVToSRV(game.DeviceContext.Device,ref srcTextureSRV, targetUAV);
+            StaticMetods.CopyUAVToSRV(game.DeviceContext.Device, ref srcTextureSRV, targetUAV);
             bitmap = StaticMetods.GetBitmapFromSRV(srcTextureSRV, Drawer2d.RenderTarget);
             Drawer2d.SetTextColor(Color.Red);
             Drawer2d.SetTextSize(36);
@@ -86,8 +88,8 @@ namespace FramevorkTest
         }
 
         private void Draw(object sender, EventArgs e)
-        {           
-            Drawer2d.DrawBitmap(bitmap);            
+        {
+            Drawer2d.DrawBitmap(bitmap);
             Drawer2d.DrawText("ПОЕХАЛИ!");
         }
 

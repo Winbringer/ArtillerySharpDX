@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace VictoremLibrary
 {
-  public static  class StaticMetods
+    public static class StaticMetods
     {
         /// <summary>
         /// Создает форму в которую будет происходить рендеринг. На ней нужно обязательно вызвать метод Dispose. Форма закрываеть при нажатии Esc. Форма создаеться по размеру экрана и в его центре.
@@ -19,7 +19,7 @@ namespace VictoremLibrary
         /// <param name="Text">Текст в заголовке формы</param>
         /// <param name="IconFile">Файл в формает .ico для инконки в заголовке формы</param>
         /// <returns></returns>
-        public static SharpDX.Windows.RenderForm GetRenderForm( string Text, string IconFile)
+        public static SharpDX.Windows.RenderForm GetRenderForm(string Text, string IconFile)
         {
             if (!SharpDX.Direct3D11.Device.IsSupportedFeatureLevel(SharpDX.Direct3D.FeatureLevel.Level_11_0))
             {
@@ -46,7 +46,7 @@ namespace VictoremLibrary
 
         private static readonly ImagingFactory Imgfactory = new ImagingFactory();
 
-        public static Bitmap1 LoadBitmap( SharpDX.Direct3D11.DeviceContext device, string filename )
+        public static Bitmap1 LoadBitmap(SharpDX.Direct3D11.DeviceContext device, string filename)
         {
             var props = new BitmapProperties1
             {
@@ -54,10 +54,10 @@ namespace VictoremLibrary
                     new SharpDX.Direct2D1.PixelFormat(Format.R8G8B8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied)
             };
 
-            return Bitmap1.FromWicBitmap(device.QueryInterface< SharpDX.Direct2D1.DeviceContext>(), LoadBitmapSource(device,filename), props);
+            return Bitmap1.FromWicBitmap(device.QueryInterface<SharpDX.Direct2D1.DeviceContext>(), LoadBitmapSource(device, filename), props);
         }
 
-        public static BitmapSource LoadBitmapSource( SharpDX.Direct3D11.DeviceContext device, string filename)
+        public static BitmapSource LoadBitmapSource(SharpDX.Direct3D11.DeviceContext device, string filename)
         {
             var d = new BitmapDecoder(
                 Imgfactory,
@@ -77,13 +77,13 @@ namespace VictoremLibrary
             return fconv;
         }
 
-        public static SharpDX.Direct3D11.Texture2D CreateTex2DFromFile( SharpDX.Direct3D11.DeviceContext device, string filename)
+        public static SharpDX.Direct3D11.Texture2D CreateTex2DFromFile(SharpDX.Direct3D11.DeviceContext device, string filename)
         {
-            var bSource = LoadBitmapSource(device,filename);
+            var bSource = LoadBitmapSource(device, filename);
             return CreateTex2DFromBitmap(device, bSource);
         }
 
-        public static SharpDX.Direct3D11.Texture2D CreateTex2DFromBitmap( SharpDX.Direct3D11.DeviceContext device, BitmapSource bsource)
+        public static SharpDX.Direct3D11.Texture2D CreateTex2DFromBitmap(SharpDX.Direct3D11.DeviceContext device, BitmapSource bsource)
         {
 
             SharpDX.Direct3D11.Texture2DDescription desc;
@@ -105,7 +105,6 @@ namespace VictoremLibrary
             var rect = new DataRectangle(s.DataPointer, bsource.Size.Width * 4);
 
             var t2D = new SharpDX.Direct3D11.Texture2D(device.Device, desc, rect);
-
             return t2D;
         }
 
@@ -115,9 +114,9 @@ namespace VictoremLibrary
         /// <param name="device">Контекст Директ Икс 11</param>
         /// <param name="filename">Путь к файлу картинки</param>
         /// <returns> Текстуру готовую для использования в шейдере</returns>
-        public static SharpDX.Direct3D11.ShaderResourceView LoadTextureFromFile( SharpDX.Direct3D11.DeviceContext device, string filename)
+        public static SharpDX.Direct3D11.ShaderResourceView LoadTextureFromFile(SharpDX.Direct3D11.DeviceContext device, string filename)
         {
-            return new SharpDX.Direct3D11.ShaderResourceView(device.Device, CreateTex2DFromFile(device,filename));
+            return new SharpDX.Direct3D11.ShaderResourceView(device.Device, CreateTex2DFromFile(device, filename));
         }
 
         /// <summary>
@@ -144,9 +143,9 @@ namespace VictoremLibrary
         /// <param name="device">Устройстов используемое для отрисовки 3д</param>
         /// <param name="srv">ShaderResourceView с данными тестуры в который будем копировать данные UnorderedAccessView.</param>
         /// <param name="uav">UnorderedAccessView из которого будем брать данные</param>
-        public static void CopyUAVToSRV(SharpDX.Direct3D11.Device device,ref SharpDX.Direct3D11.ShaderResourceView srv, SharpDX.Direct3D11.UnorderedAccessView uav)
+        public static void CopyUAVToSRV(SharpDX.Direct3D11.Device device, ref SharpDX.Direct3D11.ShaderResourceView srv, SharpDX.Direct3D11.UnorderedAccessView uav)
         {
-            
+
 
             using (var t = srv.ResourceAs<Texture2D>())
             {
@@ -156,6 +155,91 @@ namespace VictoremLibrary
                     device.ImmediateContext.CopyResource(t2, t);
                 }
             }
+        }
+
+        /// <summary>
+        /// Создает карту битов из массива битов
+        /// </summary>
+        /// <param name="data">Массив битов который будет записан в карту</param>
+        /// <param name="rt">Рендер таргет связанный с текущей видеокартой можно получить из класса TextWriter</param>
+        /// <param name="Width">Ширина Будущей картинки в писелях</param>
+        /// <param name="Height">Высота карты битов в пикселях</param>
+        /// <returns></returns>
+        public static SharpDX.Direct2D1.Bitmap BimapFromByteArray(byte[] data, RenderTarget rt, int Width, int Height)
+        {
+            var _backBufferBmp = new SharpDX.Direct2D1.Bitmap(rt, new Size2(Width, Height), new BitmapProperties(rt.PixelFormat));
+            _backBufferBmp.CopyFromMemory(data, Width * 4);
+            return _backBufferBmp;
+        }
+
+        /// <summary>
+        /// Получает массив байтов и Текстуры.
+        /// </summary>
+        /// <param name="texture">Текстура с данными</param>
+        /// <returns>Массив байтов с данными</returns>
+        public static byte[] GetByteArrayFromTexture2D(Texture2D texture)
+        {
+            byte[] data = null;
+
+            using (Surface surface = texture.QueryInterface<Surface>())
+            {
+                DataStream dataStream;
+                var map = surface.Map(SharpDX.DXGI.MapFlags.Write, out dataStream);
+                int lines = (int)(dataStream.Length / map.Pitch);
+                data = new byte[surface.Description.Width * surface.Description.Height * 4];
+
+                int dataCounter = 0;
+                int actualWidth = surface.Description.Width * 4;
+                for (int y = 0; y < lines; y++)
+                {
+                    for (int x = 0; x < map.Pitch; x++)
+                    {
+                        if (x < actualWidth)
+                        {
+                           data[dataCounter++] = dataStream.Read<byte>();
+                        }
+                        else
+                        {
+                            dataStream.Read<byte>();
+                        }
+                    }
+                }
+               dataStream.Dispose();
+                surface.Unmap();
+            }
+
+            return data;
+        }
+
+        /// <summary>
+        /// Получает текстуру из массива байтов
+        /// </summary>
+        /// <param name="data">Массив байтов</param>
+        /// <param name="game">Игра для которой будет использоваться эта текстура</param>
+        /// <param name="Width">Ширина текстуры</param>
+        /// <param name="Height">Высота текстуры</param>
+        /// <returns></returns>
+        public static Texture2D GetTexture2DFromByteArray(byte[] data, Game game, int Width, int Height)
+        {
+            var stream = new DataStream(data.Length, true, true);
+            stream.Write(data, 0, data.Length);
+            Texture2DDescription readDesc = new Texture2DDescription()
+            {
+                ArraySize = 1,
+                MipLevels = 1,
+                SampleDescription = game.SwapChain.Description.SampleDescription,
+                Format = game.SwapChain.Description.ModeDescription.Format,
+                CpuAccessFlags = CpuAccessFlags.Read,
+                BindFlags = BindFlags.None,
+                Usage = ResourceUsage.Staging,
+                Height = Height,
+                Width = Width
+            };
+            var readTex = new Texture2D(game.DeviceContext.Device, readDesc, new[] { new DataBox(stream.DataPointer, readDesc.Width * (int)FormatHelper.SizeOfInBytes(readDesc.Format), 0) });
+            //  Texture2D readTex = new Texture2D(game.DeviceContext.Device, readDesc);
+
+            //  game.DeviceContext.UpdateSubresource(data, readTex);
+            return readTex;
         }
     }
 }

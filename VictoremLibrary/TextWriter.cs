@@ -8,9 +8,10 @@ using SharpDX.DirectWrite;
 using System.Diagnostics;
 
 namespace VictoremLibrary
-{/// <summary>
- /// Рисует текст и 2Д объекты на экран.
- /// </summary>
+{
+    /// <summary>
+    /// Рисует текст и 2Д объекты на экран.
+    /// </summary>
     public sealed class TextWirter : System.IDisposable
     {
         private Factory _Factory2D;
@@ -23,10 +24,12 @@ namespace VictoremLibrary
         int _heght;
         string TextFont;
         int TextSize;
+
         /// <summary>
         /// Обязательно вызвать Бегинд драв перед и Енд драв после рисования 2д примитивов.
         /// </summary>
         public RenderTarget RenderTarget { get { return _RenderTarget2D; } }
+
         /// <summary>
         /// Конструктор
         /// </summary>
@@ -55,7 +58,7 @@ namespace VictoremLibrary
             InitTextFormat();
             _RenderTarget2D.TextAntialiasMode = TextAntialiasMode.Cleartype;
             // Initialize a TextLayout
-           // _TextLayout = new TextLayout(_FactoryDWrite, "SharpDX D2D1 - DWrite", _TextFormat, Width, Height);
+            // _TextLayout = new TextLayout(_FactoryDWrite, "SharpDX D2D1 - DWrite", _TextFormat, Width, Height);
         }
 
         /// <summary>
@@ -145,7 +148,6 @@ namespace VictoremLibrary
             Utilities.Dispose(ref _FactoryDWrite);
             Utilities.Dispose(ref _RenderTarget2D);
             Utilities.Dispose(ref _SceneColorBrush);
-            Utilities.Dispose(ref _TextFormat);
             Utilities.Dispose(ref _TextLayout);
         }
     }

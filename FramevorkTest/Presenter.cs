@@ -21,7 +21,7 @@ namespace FramevorkTest
             game.OnKeyPressed += KeyKontroller;
 
             var srcTextureSRV = StaticMetods.LoadTextureFromFile(game.DeviceContext, "Village.png");
-
+            var b = StaticMetods.LoadBytesFormFile(game.DeviceContext, "Village.png");
             game.FilterFoTexture.SobelEdgeColor(ref srcTextureSRV, 0.5f);
             game.FilterFoTexture.Sepia(ref srcTextureSRV, 0.5f);
             game.FilterFoTexture.Contrast(ref srcTextureSRV, 2f);
@@ -29,8 +29,6 @@ namespace FramevorkTest
             bitmap = StaticMetods.GetBitmapFromSRV(srcTextureSRV, Drawer2d.RenderTarget);
             Drawer2d.SetTextColor(Color.Red);
             Drawer2d.SetTextSize(36);
-
-
         }
 
         private void KeyKontroller(object sender, EventArgs e)

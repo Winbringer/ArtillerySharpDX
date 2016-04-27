@@ -5,7 +5,7 @@ using SharpDX11GameByWinbringer.Models;
 using System;
 using System.Diagnostics;
 using SharpDX.Direct2D1;
-
+using Camera = VictoremLibrary.Camera;
 namespace SharpDX11GameByWinbringer
 {
     /// <summary>
@@ -13,6 +13,8 @@ namespace SharpDX11GameByWinbringer
     /// </summary>
     public sealed class Presenter : IDisposable
     {
+        Camera _camera;
+
         Matrix _World;
         Matrix _View;
         Matrix _Progection;
@@ -30,6 +32,8 @@ namespace SharpDX11GameByWinbringer
 
         public Presenter(Game game)
         {
+            _camera = new Camera();
+            _camera.Position = new Vector3(0, 0, -355f);
             _text2DWriter =
                 new TextWirter(
                 game.SwapChain.GetBackBuffer<Texture2D>(0),
@@ -103,15 +107,61 @@ namespace SharpDX11GameByWinbringer
         #region Вспомогательные методы
         private void ReadKeyboardState(KeyboardState KeyState, float time)
         {
-            const float speed = 0.2f;
-            if (KeyState.IsPressed(Key.A)) _View *= Matrix.Translation(speed * time, 0, 0);
-            if (KeyState.IsPressed(Key.D)) _View *= Matrix.Translation(-speed * time, 0, 0);
-            if (KeyState.IsPressed(Key.W)) _View *= Matrix.Translation(0, 0, -speed * time);
-            if (KeyState.IsPressed(Key.S)) _View *= Matrix.Translation(0, 0, speed * time);
-            if (KeyState.IsPressed(Key.Q)) _View *= Matrix.RotationY(speed / 200 * time);
-            if (KeyState.IsPressed(Key.E)) _View *= Matrix.RotationY(-speed / 200 * time);
-            if (KeyState.IsPressed(Key.Z)) _View *= Matrix.Translation(0, -speed * time, 0);
-            if (KeyState.IsPressed(Key.X)) _View *= Matrix.Translation(0, speed * time, 0);
+            float speed = 1.5f * time;
+            float rSpeed = 0.001f * time;
+            if (KeyState.IsPressed(Key.A))
+            {
+               _camera.moveLeftRight -= speed;
+            }
+            if (KeyState.IsPressed(Key.D))
+            {
+                _camera.moveLeftRight += speed;
+            }
+            if (KeyState.IsPressed(Key.W))
+            {
+                _camera.moveBackForward += speed;
+            }
+            if (KeyState.IsPressed(Key.S))
+            {
+                _camera.moveBackForward -= speed;
+            }
+            if (KeyState.IsPressed(Key.Up))
+            {
+                _camera.camYaw -= rSpeed;
+            }
+            if (KeyState.IsPressed(Key.Right))
+            {
+                _camera.camPitch += rSpeed;
+
+            }
+            if (KeyState.IsPressed(Key.Down))
+            {
+                _camera.camYaw += rSpeed;
+            }
+            if (KeyState.IsPressed(Key.Left))
+            {
+                _camera.camPitch -= rSpeed;
+
+            }
+            if (KeyState.IsPressed(Key.Z))
+            {
+                _camera.moveUpDown += speed;
+            }
+            if (KeyState.IsPressed(Key.X))
+            {
+                _camera.moveUpDown -= speed;
+
+            }
+            _View = _camera.GetLHView();
+            //const float speed = 0.2f;
+            //if (KeyState.IsPressed(Key.A)) _View *= Matrix.Translation(speed * time, 0, 0);
+            //if (KeyState.IsPressed(Key.D)) _View *= Matrix.Translation(-speed * time, 0, 0);
+            //if (KeyState.IsPressed(Key.W)) _View *= Matrix.Translation(0, 0, -speed * time);
+            //if (KeyState.IsPressed(Key.S)) _View *= Matrix.Translation(0, 0, speed * time);
+            //if (KeyState.IsPressed(Key.Q)) _View *= Matrix.RotationY(speed / 200 * time);
+            //if (KeyState.IsPressed(Key.E)) _View *= Matrix.RotationY(-speed / 200 * time);
+            //if (KeyState.IsPressed(Key.Z)) _View *= Matrix.Translation(0, -speed * time, 0);
+            //if (KeyState.IsPressed(Key.X)) _View *= Matrix.Translation(0, speed * time, 0);
         }
         #endregion
 

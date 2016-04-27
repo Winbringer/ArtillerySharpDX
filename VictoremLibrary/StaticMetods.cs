@@ -58,24 +58,51 @@ namespace VictoremLibrary
             return Bitmap1.FromWicBitmap(device.QueryInterface<SharpDX.Direct2D1.DeviceContext>(), LoadBitmapSource(device, filename), props);
         }
 
+        /// <summary>
+        /// Заргуражет писели из картинки
+        /// </summary>
+        /// <param name="device">Устройство с помощью которого будет рисоваться эта картинка</param>
+        /// <param name="filename">Путь к файлу с картинкой</param>
+        /// <returns>Набор пикселей</returns>
         public static BitmapSource LoadBitmapSource(SharpDX.Direct3D11.DeviceContext device, string filename)
         {
-            var d = new BitmapDecoder(
-                Imgfactory,
-                filename,
-                DecodeOptions.CacheOnDemand
-                );
+            using (var d = new BitmapDecoder(
+                 Imgfactory,
+                 filename,
+                 DecodeOptions.CacheOnDemand
+                 ))
+            using (var frame = d.GetFrame(0))
+            {
+                var fconv = new FormatConverter(Imgfactory);
+                fconv.Initialize(
+                    frame,
+                    SharpDX.WIC.PixelFormat.Format32bppPRGBA,
+                    BitmapDitherType.None, null,
+                    0.0, BitmapPaletteType.Custom);
 
-            var frame = d.GetFrame(0);
+                return fconv;
+            }
+        }
 
-            var fconv = new FormatConverter(Imgfactory);
-
-            fconv.Initialize(
-                frame,
-                SharpDX.WIC.PixelFormat.Format32bppPRGBA,
-                BitmapDitherType.None, null,
-                0.0, BitmapPaletteType.Custom);
-            return fconv;
+        public static byte[] LoadBytesFormFile(SharpDX.Direct3D11.DeviceContext device, string filename)
+        {
+            using (var d = new BitmapDecoder(
+                 Imgfactory,
+                 filename,
+                 DecodeOptions.CacheOnDemand
+                 ))
+            using (var frame = d.GetFrame(0))
+            using (var fconv = new FormatConverter(Imgfactory))
+            {
+                fconv.Initialize(
+                    frame,
+                    SharpDX.WIC.PixelFormat.Format32bppPRGBA,
+                    BitmapDitherType.None, null,
+                    0.0, BitmapPaletteType.Custom);
+                var b = new byte[fconv.Size.Width * fconv.Size.Height * 4];
+                fconv.CopyPixels(b, fconv.Size.Width * 4);
+                return b;
+            }
         }
 
         public static SharpDX.Direct3D11.Texture2D CreateTex2DFromFile(SharpDX.Direct3D11.DeviceContext device, string filename)
@@ -129,6 +156,23 @@ namespace VictoremLibrary
         public static SharpDX.Direct2D1.Bitmap GetBitmapFromSRV(SharpDX.Direct3D11.ShaderResourceView srv, RenderTarget renderTarger)
         {
             using (var texture = srv.ResourceAs<Texture2D>())
+            using (var surface = texture.QueryInterface<Surface>())
+            {
+                var bitmap = new SharpDX.Direct2D1.Bitmap(renderTarger, surface, new SharpDX.Direct2D1.BitmapProperties(new SharpDX.Direct2D1.PixelFormat(
+                                                          Format.R8G8B8A8_UNorm,
+                                                          SharpDX.Direct2D1.AlphaMode.Premultiplied)));
+                return bitmap;
+            }
+        }
+
+        /// <summary>
+        /// Получает карту битов из текстуры.
+        /// </summary>
+        /// <param name="texture">Текстура с данными</param>
+        /// <param name="renderTarger">Рендер таргет который будет рисовать нашу битмапу</param>
+        /// <returns></returns>
+        public static SharpDX.Direct2D1.Bitmap GetBitmapFromTexture2D(SharpDX.Direct3D11.Texture2D texture, RenderTarget renderTarger)
+        {
             using (var surface = texture.QueryInterface<Surface>())
             {
                 var bitmap = new SharpDX.Direct2D1.Bitmap(renderTarger, surface, new SharpDX.Direct2D1.BitmapProperties(new SharpDX.Direct2D1.PixelFormat(
@@ -242,6 +286,6 @@ namespace VictoremLibrary
             //  game.DeviceContext.UpdateSubresource(data, readTex);
             return readTex;
         }
-       
+
     }
 }

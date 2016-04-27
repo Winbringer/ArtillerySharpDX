@@ -20,15 +20,15 @@ namespace SharpDX11GameByWinbringer
         Matrix _Progection;
         _3DLineMaganer _lineManager;
 
-        TextWirter _text2DWriter;        
+        TextWirter _text2DWriter;
         //_3DWaveManager _waveManager;
         //Triangle _triangle;
         //ShadedCube _sCube;
         EarthFromOBJ _earth;
         MD5Model _boy;
         string _s;
-       Stopwatch _sw;
-       // Tesselation _ts;
+        Stopwatch _sw;
+        // Tesselation _ts;
 
         public Presenter(Game game)
         {
@@ -49,7 +49,7 @@ namespace SharpDX11GameByWinbringer
             _Progection = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
 
             //Создаем объеты нашей сцены
-           _lineManager = new _3DLineMaganer(game.DeviceContext);
+            _lineManager = new _3DLineMaganer(game.DeviceContext);
             //_waveManager = new _3DWaveManager(game.DeviceContext);                  
             //_triangle = new Triangle(game.DeviceContext);
             //_sCube = new ShadedCube(game.DeviceContext);
@@ -59,22 +59,22 @@ namespace SharpDX11GameByWinbringer
             _sw.Start();
 
             _earth = new EarthFromOBJ(game.DeviceContext);
-            _boy = new MD5Model(game.DeviceContext, "3DModelsFiles\\Wm\\","Female", "Shaders\\Boy.hlsl", false, 3,true);
-             _boy.World = Matrix.Scaling(10);
+            _boy = new MD5Model(game.DeviceContext, "3DModelsFiles\\Wm\\", "Female", "Shaders\\Boy.hlsl", false, 3, true);
+            _boy.World = Matrix.Scaling(10);
             // _ts = new Tesselation(game.DeviceContext.Device,6);
-            
+
         }
 
         void Update(double time)
         {
-           LPS();
-           //_sCube.UpdateConsBufData(_World, _View, _Progection);
+            LPS();
+            //_sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time);
-           _boy.Update((float)time);   
-           // _waveManager.World =Matrix.Translation(-50,0,-50)* Matrix.Scaling(10);
-           // _waveManager.Update(time);         
-           //_triangle.UpdateConsBufData(_World, _View, _Progection);
-           _earth.Update((float)time);
+            _boy.Update((float)time);
+            // _waveManager.World =Matrix.Translation(-50,0,-50)* Matrix.Scaling(10);
+            // _waveManager.Update(time);         
+            //_triangle.UpdateConsBufData(_World, _View, _Progection);
+            _earth.Update((float)time);
         }
 
         private void LPS()
@@ -87,8 +87,6 @@ namespace SharpDX11GameByWinbringer
 
         void Draw(double time)
         {
-          
-
             //_waveManager.Draw(_World, _View, _Progection);
             _lineManager.Draw(_World, _View, _Progection);
             //_triangle.DrawTriangle(SharpDX.Direct3D.PrimitiveTopology.TriangleList,
@@ -98,20 +96,21 @@ namespace SharpDX11GameByWinbringer
             //_sCube.Draw(SharpDX.Direct3D.PrimitiveTopology.TriangleList, true,
             //          new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
 
-            _earth.Draw(_World, _View, _Progection,1f,32);
-            _boy.Draw(_World, _View, _Progection,SharpDX.Direct3D.PrimitiveTopology.TriangleList);
-          //  _ts.Draw(_World, _View, _Progection);
-          _text2DWriter.DrawText(_s);
+            _earth.Draw(_World, _View, _Progection, 1f, 32);
+            _boy.Draw(_World, _View, _Progection, SharpDX.Direct3D.PrimitiveTopology.TriangleList);
+            //  _ts.Draw(_World, _View, _Progection);
+            _text2DWriter.DrawText(_s);
         }
 
         #region Вспомогательные методы
+
         private void ReadKeyboardState(KeyboardState KeyState, float time)
         {
             float speed = 1.5f * time;
             float rSpeed = 0.001f * time;
             if (KeyState.IsPressed(Key.A))
             {
-               _camera.moveLeftRight -= speed;
+                _camera.moveLeftRight -= speed;
             }
             if (KeyState.IsPressed(Key.D))
             {
@@ -127,7 +126,7 @@ namespace SharpDX11GameByWinbringer
             }
             if (KeyState.IsPressed(Key.Up))
             {
-                _camera.camYaw -= rSpeed;
+                if (_camera.camYaw > -1f) _camera.camYaw -= rSpeed;
             }
             if (KeyState.IsPressed(Key.Right))
             {
@@ -136,7 +135,7 @@ namespace SharpDX11GameByWinbringer
             }
             if (KeyState.IsPressed(Key.Down))
             {
-                _camera.camYaw += rSpeed;
+                if (_camera.camYaw < 0) _camera.camYaw += rSpeed;
             }
             if (KeyState.IsPressed(Key.Left))
             {
@@ -153,19 +152,12 @@ namespace SharpDX11GameByWinbringer
 
             }
             _View = _camera.GetLHView();
-            //const float speed = 0.2f;
-            //if (KeyState.IsPressed(Key.A)) _View *= Matrix.Translation(speed * time, 0, 0);
-            //if (KeyState.IsPressed(Key.D)) _View *= Matrix.Translation(-speed * time, 0, 0);
-            //if (KeyState.IsPressed(Key.W)) _View *= Matrix.Translation(0, 0, -speed * time);
-            //if (KeyState.IsPressed(Key.S)) _View *= Matrix.Translation(0, 0, speed * time);
-            //if (KeyState.IsPressed(Key.Q)) _View *= Matrix.RotationY(speed / 200 * time);
-            //if (KeyState.IsPressed(Key.E)) _View *= Matrix.RotationY(-speed / 200 * time);
-            //if (KeyState.IsPressed(Key.Z)) _View *= Matrix.Translation(0, -speed * time, 0);
-            //if (KeyState.IsPressed(Key.X)) _View *= Matrix.Translation(0, speed * time, 0);
         }
+
         #endregion
 
         #region IDisposable Support
+
         private bool disposedValue = false;
 
         void Dispose(bool disposing)
@@ -182,7 +174,7 @@ namespace SharpDX11GameByWinbringer
                     //Utilities.Dispose(ref _triangle);
                     //Utilities.Dispose(ref _sCube);
                     Utilities.Dispose(ref _boy);
-                   // Utilities.Dispose(ref _ts);
+                    // Utilities.Dispose(ref _ts);
                 }
 
                 // TODO: освободить неуправляемые ресурсы (неуправляемые объекты) и переопределить ниже метод завершения.

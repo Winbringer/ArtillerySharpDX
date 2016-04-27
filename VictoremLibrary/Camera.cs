@@ -10,11 +10,7 @@ namespace VictoremLibrary
 {
     public class Camera
     {
-
-        Vector3 DefaultForward = new Vector3(0, 0, 1f);
-        Vector3 DefaultRight = new Vector3(1f, 0, 0);
-        Vector3 DefaultRightRH = new Vector3(-1f, 0, 0);
-        Vector3 DefaultcamUp = new Vector3(0, 1f, 0);
+        #region Поля и Свойства
 
         Vector3 camPosition = new Vector3(0);
         Vector3 camTarget;
@@ -36,13 +32,18 @@ namespace VictoremLibrary
 
         public float camYaw = 0;
         public float camPitch = 0;
-       
+
+        #endregion
+
         /// <summary>
         /// Возвращает матрицу камеры в левосторонне системе координат
         /// </summary>
         /// <returns>Матрива вида в Левосторонней системе координат (Z удаляеться от на)</returns>
         public Matrix GetLHView()
         {
+            Vector3 DefaultForward = new Vector3(0, 0, 1f);
+            Vector3 DefaultRight = new Vector3(1f, 0, 0);
+            Vector3 DefaultcamUp = new Vector3(0, 1f, 0);
             Matrix camRotationMatrix;
             Matrix.RotationYawPitchRoll(camPitch, camYaw, 0, out camRotationMatrix);
             Vector3.Transform(ref DefaultForward, ref camRotationMatrix, out camTarget);
@@ -74,6 +75,9 @@ namespace VictoremLibrary
         /// <returns>Матрица вида в правосторонней системе координта</returns>
         public Matrix GetRHView()
         {
+            Vector3 DefaultForward = new Vector3(0, 0, 1f);
+            Vector3 DefaultRightRH = new Vector3(-1f, 0, 0);
+            Vector3 DefaultcamUp = new Vector3(0, 1f, 0);
             Matrix camRotationMatrix;
             Matrix.RotationYawPitchRoll(camPitch, camYaw, 0, out camRotationMatrix);
             Vector3.Transform(ref DefaultForward, ref camRotationMatrix, out camTarget);

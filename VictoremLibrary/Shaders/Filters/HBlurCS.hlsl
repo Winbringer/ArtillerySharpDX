@@ -19,7 +19,8 @@ groupshared float4 FilterGroupMemY[GROUPSIZE + (THREADSX * FILTERRADIUS * 2)];
 
 static const float BlurKernel[FILTERTAP] = (float[FILTERTAP]) (1.0 / (FILTERTAP));
 
-[numthreads(THREADSX, THREADSY, 1)]void CS(uint groupIndex : SV_GroupIndex, uint3 groupId : SV_GroupID, uint3 groupThreadId : SV_GroupThreadID, uint3 dispatchThreadId : SV_DispatchThreadID)
+[numthreads(THREADSX, THREADSY, 1)]
+void CS(uint groupIndex : SV_GroupIndex, uint3 groupId : SV_GroupID, uint3 groupThreadId : SV_GroupThreadID, uint3 dispatchThreadId : SV_DispatchThreadID)
 {
     // Calculate the correct index into FilterGroupMemX
     uint offsetGroupIndex = groupIndex + (groupThreadId.y * 2 * FILTERRADIUS) + FILTERRADIUS;
@@ -54,7 +55,7 @@ static const float BlurKernel[FILTERTAP] = (float[FILTERTAP]) (1.0 / (FILTERTAP)
     {
         int j = centerPixel + i;
         result += BlurKernel[i + FILTERRADIUS] * FilterGroupMemX[j];
-    } 
+    }
     // Write the result to the output 
     output[dispatchThreadId.xy] = lerp(FilterGroupMemX[offsetGroupIndex], result, Intensity);
 }

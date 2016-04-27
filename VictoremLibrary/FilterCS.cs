@@ -16,7 +16,8 @@ namespace VictoremLibrary
         public float Intensity;
         public Vector3 _padding0;
     }
- public   class FilterCS
+
+    public class FilterCS
     {
         Game _game;
         public FilterCS(Game game)
@@ -45,10 +46,10 @@ namespace VictoremLibrary
                              BindFlags.ConstantBuffer,
                              CpuAccessFlags.None,
                              ResourceOptionFlags.None, 0))
-                using (var horizCS = _game.GetComputeShader("Shaders\\Filters\\HBlurCS.hlsl", new[] {
+                using (var horizCS = StaticMetods.GetComputeShader(device, "Shaders\\Filters\\HBlurCS.hlsl", new[] {
                                         new SharpDX.Direct3D.ShaderMacro("THREADSX", 1024),
                                         new SharpDX.Direct3D.ShaderMacro("THREADSY", 1), }))
-                using (var vertCS = _game.GetComputeShader("Shaders\\Filters\\VBlurCS.hlsl", new[] {
+                using (var vertCS = StaticMetods.GetComputeShader(device, "Shaders\\Filters\\VBlurCS.hlsl", new[] {
                                         new SharpDX.Direct3D.ShaderMacro("THREADSX", 1),
                                         new SharpDX.Direct3D.ShaderMacro("THREADSY", 1024), }))
                 {
@@ -92,7 +93,7 @@ namespace VictoremLibrary
 
         public void Desaturate(ref ShaderResourceView srcTextureSRV, float fIntencity)
         {
-            srcTextureSRV = ApplyCS(srcTextureSRV, fIntencity, "Shaders\\Filters\\DesaturateCS.hlsl");            
+            srcTextureSRV = ApplyCS(srcTextureSRV, fIntencity, "Shaders\\Filters\\DesaturateCS.hlsl");
         }
 
         public void Contrast(ref ShaderResourceView srcTextureSRV, float fIntencity)
@@ -118,6 +119,52 @@ namespace VictoremLibrary
             srcTextureSRV = ApplyCS(srcTextureSRV, fIntencity, "Shaders\\Filters\\Sepia.hlsl");
         }
 
+        public int[] Histogram(ShaderResourceView srcTextureSRV)
+        {
+            SharpDX.Direct3D.ShaderMacro[] defines = new[] {
+                                        new SharpDX.Direct3D.ShaderMacro("THREADSX", 32),
+                                        new SharpDX.Direct3D.ShaderMacro("THREADSY", 32), };
+            using (var histogramResult = new SharpDX.Direct3D11.Buffer(_game.DeviceContext.Device,
+                 new BufferDescription
+                 {
+                     BindFlags = BindFlags.UnorderedAccess,
+                     CpuAccessFlags = CpuAccessFlags.None,
+                     OptionFlags = ResourceOptionFlags.BufferAllowRawViews,
+                     Usage = ResourceUsage.Default,
+                     SizeInBytes = 256 * 4,
+                     StructureByteStride = 4
+                 }))
+            using (var histogramUAV = StaticMetods.CreateBufferUAV(_game.DeviceContext.Device, histogramResult))
+            {
+                var cpuReadDesc = histogramResult.Description;
+                cpuReadDesc.OptionFlags = ResourceOptionFlags.None;
+                cpuReadDesc.BindFlags = BindFlags.None;
+                cpuReadDesc.CpuAccessFlags = CpuAccessFlags.Read;
+                cpuReadDesc.Usage = ResourceUsage.Staging;
+                _game.DeviceContext.ClearUnorderedAccessView(histogramUAV, Int4.Zero);
+
+                using (var histogramCPU = new Buffer(_game.DeviceContext.Device, cpuReadDesc))
+                using (var srcTexture = srcTextureSRV.ResourceAs<Texture2D>())
+                using (var cs = StaticMetods.GetComputeShader(_game.DeviceContext.Device, "Shaders\\Filters\\LumHistorgam.hlsl", defines))
+                {
+                    var desc = srcTexture.Description;
+
+                    _game.DeviceContext.ComputeShader.SetShaderResource(0, srcTextureSRV);
+                    _game.DeviceContext.ComputeShader.SetUnorderedAccessView(0, histogramUAV);
+                    _game.DeviceContext.ComputeShader.Set(cs);
+                    _game.DeviceContext.Dispatch((int)Math.Ceiling(desc.Width / 1024.0), (int)Math.Ceiling(desc.Height / 1.0), 1);
+
+                    _game.DeviceContext.ComputeShader.SetShaderResource(0, null);
+                    _game.DeviceContext.ComputeShader.SetUnorderedAccessView(0, null);
+
+                    // Копировать результат в буффер из которого наш Процессор может читать данные.
+                    _game.DeviceContext.CopyResource(histogramResult, histogramCPU);
+
+                    return StaticMetods.GetIntArrayFromByfferData(_game.DeviceContext, histogramCPU);
+                }
+            }
+        }
+
         private ShaderResourceView ApplyCS(ShaderResourceView srcTextureSRV, float fIntencity, string Shader)
         {
             SharpDX.Direct3D.ShaderMacro[] defines = new[] {
@@ -136,7 +183,7 @@ namespace VictoremLibrary
                                      CpuAccessFlags.None,
                                      ResourceOptionFlags.None,
                                      0))
-                using (var cs = _game.GetComputeShader(Shader, defines))
+                using (var cs = StaticMetods.GetComputeShader(_game.DeviceContext.Device, Shader, defines))
                 {
                     var constants = new ComputeConstants { Intensity = fIntencity };
                     _game.DeviceContext.UpdateSubresource(ref constants, computeBuffer);

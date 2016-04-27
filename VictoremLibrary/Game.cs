@@ -200,21 +200,6 @@ namespace VictoremLibrary
             Draw();
         }
 
-        public ComputeShader GetComputeShader(string sourse, SharpDX.Direct3D.ShaderMacro[] defines)
-        {
-            SharpDX.D3DCompiler.ShaderFlags shaderFlags = SharpDX.D3DCompiler.ShaderFlags.None;
-#if DEBUG
-            shaderFlags = SharpDX.D3DCompiler.ShaderFlags.Debug;
-#endif
-            using (var horizBC = SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile(sourse,
-                "CS",
-                "cs_5_0",
-                shaderFlags,
-             SharpDX.D3DCompiler.EffectFlags.None,
-                defines, null))
-                return new ComputeShader(_dx11Device, horizBC);
-        }
-
         public void Dispose()
         {
             OnKeyPressed = null;

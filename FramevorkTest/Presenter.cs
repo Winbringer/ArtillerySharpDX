@@ -22,6 +22,7 @@ namespace FramevorkTest
 
             var srcTextureSRV = StaticMetods.LoadTextureFromFile(game.DeviceContext, "Village.png");
             var b = StaticMetods.LoadBytesFormFile(game.DeviceContext, "Village.png");
+            var intt = game.FilterFoTexture.Histogram(srcTextureSRV);
             game.FilterFoTexture.SobelEdgeColor(ref srcTextureSRV, 0.5f);
             game.FilterFoTexture.Sepia(ref srcTextureSRV, 0.5f);
             game.FilterFoTexture.Contrast(ref srcTextureSRV, 2f);

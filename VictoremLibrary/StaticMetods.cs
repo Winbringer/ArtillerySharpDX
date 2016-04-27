@@ -287,5 +287,65 @@ namespace VictoremLibrary
             return readTex;
         }
 
+        /// <summary>
+        /// Создает Аноредеред Асес Вив для Компьюте шейдера из Raw или Структурде буффера.
+        /// </summary>
+        /// <param name="device">Устройство которое будет использовать этот буффер</param>
+        /// <param name="buffer">Буффер из которого нужно созда ан ордерерд асес вию</param>
+        /// <returns>Ан ордеред асес вью для использования в компьюте шейдере</returns>
+        public static UnorderedAccessView CreateBufferUAV(SharpDX.Direct3D11.Device device, SharpDX.Direct3D11.Buffer buffer)
+        {
+            UnorderedAccessViewDescription uavDesc = new UnorderedAccessViewDescription
+            {
+                Dimension = UnorderedAccessViewDimension.Buffer,
+                Buffer = new UnorderedAccessViewDescription.BufferResource { FirstElement = 0 }
+            };
+            if ((buffer.Description.OptionFlags & ResourceOptionFlags.BufferAllowRawViews) == ResourceOptionFlags.BufferAllowRawViews)
+            {
+                uavDesc.Format = Format.R32_Typeless;
+                uavDesc.Buffer.Flags = UnorderedAccessViewBufferFlags.Raw;
+                uavDesc.Buffer.ElementCount = buffer.Description.SizeInBytes / 4;
+            }
+            else if ((buffer.Description.OptionFlags & ResourceOptionFlags.BufferStructured) == ResourceOptionFlags.BufferStructured)
+            {
+                uavDesc.Format = Format.Unknown;
+                uavDesc.Buffer.ElementCount = buffer.Description.SizeInBytes / buffer.Description.StructureByteStride;
+            }
+            else
+            {
+                throw new ArgumentException("Buffer must be raw or  structured", "buffer");
+            }
+            return new UnorderedAccessView(device, buffer, uavDesc);
+        }
+        public static ComputeShader GetComputeShader(SharpDX.Direct3D11.Device _dx11Device,string sourse, SharpDX.Direct3D.ShaderMacro[] defines)
+        {
+            SharpDX.D3DCompiler.ShaderFlags shaderFlags = SharpDX.D3DCompiler.ShaderFlags.None;
+#if DEBUG
+            shaderFlags = SharpDX.D3DCompiler.ShaderFlags.Debug;
+#endif
+            using (var horizBC = SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile(sourse,
+                "CS",
+                "cs_5_0",
+                shaderFlags,
+             SharpDX.D3DCompiler.EffectFlags.None,
+                defines, null))
+                return new ComputeShader(_dx11Device, horizBC);
+        }
+
+        public static int[] GetIntArrayFromByfferData(SharpDX.Direct3D11.DeviceContext dc,  SharpDX.Direct3D11.Buffer histogramCPU)
+        {
+            try
+            {
+                var databox =dc.MapSubresource(histogramCPU, 0, MapMode.Read, SharpDX.Direct3D11.MapFlags.None);
+                int[] intArray = new int[databox.RowPitch / sizeof(int)];
+                System.Runtime.InteropServices.Marshal.Copy(databox.DataPointer, intArray, 0, intArray.Length);
+                return intArray;
+            }
+            finally
+            {
+               dc.UnmapSubresource(histogramCPU, 0);
+            }
+        }
+
     }
 }

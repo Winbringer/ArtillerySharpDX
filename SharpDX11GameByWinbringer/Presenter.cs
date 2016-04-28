@@ -13,11 +13,14 @@ namespace SharpDX11GameByWinbringer
     /// </summary>
     public sealed class Presenter : IDisposable
     {
+        Game _game;
         Camera _camera;
 
         Matrix _World;
         Matrix _View;
         Matrix _Progection;
+        Matrix _View1;
+
         _3DLineMaganer _lineManager;
 
         TextWirter _text2DWriter;
@@ -32,6 +35,7 @@ namespace SharpDX11GameByWinbringer
 
         public Presenter(Game game)
         {
+            _game = game;
             _camera = new Camera();
             _camera.Position = new Vector3(0, 0, -355f);
             _text2DWriter =
@@ -47,7 +51,7 @@ namespace SharpDX11GameByWinbringer
             _World = Matrix.Identity;
             _View = Matrix.LookAtLH(new Vector3(0, 0, -355f), new Vector3(0, 0, 0), Vector3.Up);
             _Progection = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
-
+            _View1= Matrix.LookAtLH(new Vector3(0, 700f, -1f), new Vector3(0, 0, 0), Vector3.Up);
             //Создаем объеты нашей сцены
             _lineManager = new _3DLineMaganer(game.DeviceContext);
             _waveManager = new _3DWaveManager(game.DeviceContext);                  
@@ -60,7 +64,7 @@ namespace SharpDX11GameByWinbringer
 
             _earth = new EarthFromOBJ(game.DeviceContext);
             _boy = new MD5Model(game.DeviceContext, "3DModelsFiles\\Wm\\", "Female", "Shaders\\Boy.hlsl", false, 3, true);
-          var m = new VictoremLibrary.AssimpModel("3DModelsFiles\\Wm\\Female.md5mesh");          
+         // var m = new VictoremLibrary.AssimpModel("3DModelsFiles\\Wm\\Female.md5mesh");          
             _boy.World = Matrix.Scaling(10);
             // _ts = new Tesselation(game.DeviceContext.Device,6);
 
@@ -88,6 +92,7 @@ namespace SharpDX11GameByWinbringer
 
         void Draw(double time)
         {
+           _game.DeviceContext.Rasterizer.SetViewport(0, 0, _game.Width, _game.Height);           
             _waveManager.Draw(_World, _View, _Progection);
             _lineManager.Draw(_World, _View, _Progection);
             //_triangle.DrawTriangle(SharpDX.Direct3D.PrimitiveTopology.TriangleList,
@@ -99,6 +104,22 @@ namespace SharpDX11GameByWinbringer
 
             _earth.Draw(_World, _View, _Progection, 1f, 32);
             _boy.Draw(_World, _View, _Progection, SharpDX.Direct3D.PrimitiveTopology.TriangleList);
+            //  _ts.Draw(_World, _View, _Progection);
+
+
+            _game.DeviceContext.Rasterizer.SetViewport(0, 0, _game.Width/4, _game.Height/4);
+
+            _waveManager.Draw(_World, _View1, _Progection);
+            _lineManager.Draw(_World, _View1, _Progection);
+            //_triangle.DrawTriangle(SharpDX.Direct3D.PrimitiveTopology.TriangleList,
+            //                        true,
+            //                        new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
+
+            //_sCube.Draw(SharpDX.Direct3D.PrimitiveTopology.TriangleList, true,
+            //          new SharpDX.Mathematics.Interop.RawColor4(0.1f, 0.1f, 0.1f, 0.1f));
+
+            _earth.Draw(_World, _View1, _Progection, 1f, 32);
+            _boy.Draw(_World, _View1, _Progection, SharpDX.Direct3D.PrimitiveTopology.TriangleList);
             //  _ts.Draw(_World, _View, _Progection);
             _text2DWriter.DrawText(_s);
         }

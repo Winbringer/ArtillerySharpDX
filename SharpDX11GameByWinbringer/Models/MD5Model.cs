@@ -513,7 +513,7 @@ namespace SharpDX11GameByWinbringer.Models
                     normalSum = Vector3.Normalize(normalSum);
 
                     var mt = subset[k].vertices[i];
-                    mt.normal = normalSum;
+                    mt.normal = new Vector3( normalSum.X, normalSum.Z,normalSum.Y);
                     subset[k].vertices[i] = mt;
 
                     normalSum = new Vector3(0.0f);

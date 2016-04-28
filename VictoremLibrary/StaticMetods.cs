@@ -1,4 +1,5 @@
-﻿using SharpDX;
+﻿using Assimp;
+using SharpDX;
 using SharpDX.D3DCompiler;
 using SharpDX.Direct2D1;
 using SharpDX.Direct3D11;
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 namespace VictoremLibrary
 {
     public static class StaticMetods
-    {
+    {      
         /// <summary>
         /// Создает форму в которую будет происходить рендеринг. На ней нужно обязательно вызвать метод Dispose. Форма закрываеть при нажатии Esc. Форма создаеться по размеру экрана и в его центре.
         /// </summary>

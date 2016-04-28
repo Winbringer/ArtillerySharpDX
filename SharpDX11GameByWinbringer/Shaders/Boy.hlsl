@@ -118,18 +118,22 @@ void GS(triangle GS_IN input[3], inout TriangleStream<PS_IN> TriStream)
     PS_IN A = (PS_IN) 0;
     A.position = mul(input[0].position, ViewProjection);
     A.WorldNormal = Nrm;
+    //input[0].WorldNormal;
+    //Nrm;
     A.TextureUV = input[0].TextureUV;
     A.WorldTangent = t;
 
     PS_IN B = (PS_IN) 0;
     B.position = mul(input[1].position, ViewProjection);
     B.WorldNormal = Nrm;
+    //input[1].WorldNormal; //Nrm;
     B.TextureUV = input[1].TextureUV;
     B.WorldTangent = t;
 	
     PS_IN C = (PS_IN) 0;
     C.position = mul(input[2].position, ViewProjection);
-    C.WorldNormal = Nrm;
+    C.WorldNormal = Nrm; //input[2].WorldNormal;
+    //Nrm;
     C.TextureUV = input[2].TextureUV;
     C.WorldTangent = t;
 	

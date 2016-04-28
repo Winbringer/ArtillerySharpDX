@@ -10,7 +10,9 @@ namespace SharpDX11GameByWinbringer
         [System.STAThread]
         static void Main(string[] args)
         {
-            System.Console.WriteLine("Для начала игры нажмите Enter");
+            System.Console.WriteLine("Для начала игры нажмите \"Enter\"");
+            System.Console.WriteLine("Для выхода из игры нажмите \"Esc\"");
+            System.Console.WriteLine("Для паузы нажмите латинскую \"P\"");
             System.Console.ReadLine();
             double start = System.Environment.TickCount;      
             if (!SharpDX.Direct3D11.Device.IsSupportedFeatureLevel(SharpDX.Direct3D.FeatureLevel.Level_11_0))

@@ -136,12 +136,13 @@ namespace VictoremLibrary
                  }))
             using (var histogramUAV = StaticMetods.CreateBufferUAV(_game.DeviceContext.Device, histogramResult))
             {
+                _game.DeviceContext.ClearUnorderedAccessView(histogramUAV, Int4.Zero);
+
                 var cpuReadDesc = histogramResult.Description;
                 cpuReadDesc.OptionFlags = ResourceOptionFlags.None;
                 cpuReadDesc.BindFlags = BindFlags.None;
                 cpuReadDesc.CpuAccessFlags = CpuAccessFlags.Read;
                 cpuReadDesc.Usage = ResourceUsage.Staging;
-                _game.DeviceContext.ClearUnorderedAccessView(histogramUAV, Int4.Zero);
 
                 using (var histogramCPU = new Buffer(_game.DeviceContext.Device, cpuReadDesc))
                 using (var srcTexture = srcTextureSRV.ResourceAs<Texture2D>())

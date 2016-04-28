@@ -34,6 +34,7 @@ namespace SharpDX11GameByWinbringer
         DirectInput _directInput;
         Keyboard _keyboard;
         Mouse _mouse;
+        bool isPaused = false;
         //Свойства
         public float ViewRatio { get; set; }
         public DX11.DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
@@ -45,7 +46,7 @@ namespace SharpDX11GameByWinbringer
         public Game(SharpDX.Windows.RenderForm renderForm)
         {
             _renderForm = renderForm;
-
+            _renderForm.KeyDown += (sender, e) => { if (e.KeyCode == System.Windows.Forms.Keys.P) isPaused = !isPaused; };
             ViewRatio = (float)_renderForm.ClientSize.Width / _renderForm.ClientSize.Height;
 
             InitializeDeviceResources();
@@ -158,6 +159,7 @@ namespace SharpDX11GameByWinbringer
 
         private void Update(double time)
         {
+            if (isPaused) return;
             // Poll events from joystick
             // keyboard.Poll();
             var m = _keyboard.GetCurrentState();
@@ -170,8 +172,13 @@ namespace SharpDX11GameByWinbringer
 
         private void Draw()
         {
+            if (isPaused) return;
             _dx11DeviceContext.ClearRenderTargetView(_renderView, new SharpDX.Color(0, 0, 128));
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DX11.DepthStencilClearFlags.Depth | DX11.DepthStencilClearFlags.Stencil, 1.0f, 0);
+
+            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
+            OnDraw?.Invoke(1);
+            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _renderForm.ClientSize.Width / 4, _renderForm.ClientSize.Height / 4);
             OnDraw?.Invoke(1);
             _swapChain.Present(0, PresentFlags.None);
         }

@@ -6,12 +6,12 @@ namespace SharpDX11GameByWinbringer.Models
 {
     sealed class Wave : GameObject<Vertex, DataT>
     {
-        private readonly float _size = 100F;
+        private readonly float _size = 500f;
         readonly int _N = 500;
         public string Texture { set { _texture = _device.ImmediateContext.LoadTextureFromFile(value); } }
         public Wave(Device device, string textureFile)
         {
-            _world = Matrix.Translation(new Vector3(-50,-4,-50));
+            _world = Matrix.Translation(new Vector3(-500,-4,-500));
             CreateVerteces();
             _constantBufferData = new DataT();
             CreateBuffers(device, textureFile);
@@ -38,7 +38,7 @@ namespace SharpDX11GameByWinbringer.Models
                     int index = (i * _N) + j;
 
                     _verteces[index].Position = new Vector3(delta * j, 0, delta * i);
-                    _verteces[index].TextureUV = new Vector2(j, i) / 40;
+                    _verteces[index].TextureUV = new Vector2(j, i) / 500;
 
                 }
             }

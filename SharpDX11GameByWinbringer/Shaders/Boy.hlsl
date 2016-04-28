@@ -62,6 +62,8 @@ GS_IN VS(VS_IN input)
     return output;
 }
 
+static const float3 ToL = normalize(float3(-1, 1, -1));
+
 float4 PS(PS_IN input) : SV_Target
 {
     
@@ -70,7 +72,7 @@ float4 PS(PS_IN input) : SV_Target
     normal = ApplyNormalMap(normal, float4(tangent, input.WorldTangent.w), NormalMap.Sample(textureSampler, input.TextureUV).rgb);
     float4 color = textureMap.Sample(textureSampler, input.TextureUV);
     float4 amb = color * 0.2f;
-    float4 diff = color * saturate(dot(normalize(normal), normalize(float3(-1, 1, -1)))) * 0.8f;
+    float4 diff = color * saturate(dot(normalize(normal), ToL)) * 0.8f;
     return amb + diff;
     //float3 normal = normalize(input.WorldNormal);
     //float3 toLight = normalize(LightPosition - input.WorldPosition);

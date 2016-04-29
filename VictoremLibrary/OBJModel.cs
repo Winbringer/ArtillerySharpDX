@@ -29,7 +29,7 @@ namespace VictoremLibrary
             F = new List<Face>();
         }
     }
-    class OBJModel
+   public class OBJModel
     {
 
         #region Поля и свойства
@@ -101,7 +101,7 @@ namespace VictoremLibrary
             string MTLfile = null;
             string material = null;
             meshes.Add(new OBJMesh());
-            using (StreamReader reader = new StreamReader(obj))
+            using (StreamReader reader = new StreamReader(path+obj))
             {
                 while (true)
                 {

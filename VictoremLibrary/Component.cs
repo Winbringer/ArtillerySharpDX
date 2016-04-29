@@ -33,7 +33,7 @@ namespace VictoremLibrary
         /// <summary>
         /// Количество индексов
         /// </summary>
-        public int IndexCount { get { return _indeces.Count(); } }
+        public int IndexCount { get { return _indeces.Length; } }
 
         /// <summary>
         /// Количество вершин.

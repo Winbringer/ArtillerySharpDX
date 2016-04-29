@@ -57,11 +57,11 @@ namespace VictoremLibrary
 
         void SetMaterial(string mtlFile, string mtlName)
         {
-            mtlName= mtlName.Trim().Replace("\"", "");
-            mtlFile = mtlFile.Trim().Replace("\"", "");
-
+            mtlName= mtlName?.Trim().Replace("\"", "");
+            mtlFile = mtlFile?.Trim().Replace("\"", "");
+            if (string.IsNullOrEmpty(mtlName)) return;
             if (string.IsNullOrEmpty(mtlFile.Trim()) && string.IsNullOrEmpty(mtlName.Trim())) return;
-
+            
             if (mtlName.Contains('.'))
             {
                 Material.Dif_Map = mtlName;

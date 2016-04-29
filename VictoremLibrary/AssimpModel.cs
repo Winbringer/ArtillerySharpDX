@@ -11,7 +11,7 @@ using SharpDX;
 
 namespace VictoremLibrary
 {
-  internal  struct JointBone
+    internal struct JointBone
     {
         public string ParentName;
         public string Name;
@@ -25,7 +25,7 @@ namespace VictoremLibrary
         public float Wheight;
 
     }
-   public struct AssimpVertex
+    public struct AssimpVertex
     {
         public Vector3 position;
         public Vector3 uv;
@@ -39,13 +39,13 @@ namespace VictoremLibrary
     {
         public string Texture { get; set; } = null;
         public AssimpVertex[] Veteces { get; set; } = null;
-        public int[] Indeces { get; set; } = null;
+        public uint[] Indeces { get; set; } = null;
         public string NormalMap { get; set; } = null;
         public string DiplacementMap { get; set; } = null;
         public string SpecularMap { get; set; } = null;
     }
 
-     class AssimpAnimation
+    class AssimpAnimation
     {
         public int numFrames { get; set; }
         public List<List<JointBone>> Frames { get; set; }
@@ -83,20 +83,21 @@ namespace VictoremLibrary
                     if (Model.Meshes[0].HasBones)
                         _boneHierarhy = GetHierarhy(Model);
                     if (Model.HasAnimations && Model.Animations[0].HasNodeAnimations)
-                        _animatons = GetAnimation(Model);                   
+                        _animatons = GetAnimation(Model);
                 }
             }
         }
 
-     public   void AplyAnimashonFrame(int animaton, int frame)
+        public void AplyAnimashonFrame(int animaton, int frame)
         {
-            var a = _animatons[animaton].Frames[frame].ToList();
-            var aa = _boneHierarhy.Select(h => {if (a.Any(aaa => aaa.Name == h.Name)) h.Transform = a.First(aaa => aaa.Name == h.Name).Transform; return h; }).ToList();
-            var m = aa.Select(i => i = CalculateBoneToWorldTransform(i, aa)).ToList();
+            var a = _animatons[animaton].Frames[frame];
+            var aa = _boneHierarhy.Select(j => new JointBone() { Name = j.Name, ParentName =j.ParentName , Transform=a.Any(y => y.Name == j.Name)? a.First(y => y.Name == j.Name).Transform: j.Transform }).ToList();
+            var m = CalculateBoneToWorldTransform(aa);
+
             Matrix transform = new Matrix();
             foreach (var mesh in _meshes)
             {
-                for(int i=0; i< mesh.Veteces.Count(); ++i)
+                for (int i = 0; i < mesh.Veteces.Count(); ++i)
                 {
                     foreach (var bone in mesh.Veteces[i].Bones)
                     {
@@ -104,24 +105,30 @@ namespace VictoremLibrary
                     }
                     var vec = new Vector3();
 
-                   Vector3.Transform( ref mesh.Veteces[i].position, ref  transform , out vec );
+                    Vector3.Transform(ref mesh.Veteces[i].position, ref transform, out vec);
                     mesh.Veteces[i].position = vec;
                 }
             }
 
         }
 
-        JointBone CalculateBoneToWorldTransform(JointBone child, List<JointBone> jb)
+        List<JointBone> CalculateBoneToWorldTransform(List<JointBone> jb)
         {
-            child.GlobalTransform = child.Transform;
-            var parent = child.ParentName;
-            while (parent != null)
+            List<JointBone> bones = new List<JointBone>();
+            for (int i = 0; i < jb.Count; i++)
             {
-                JointBone p = jb.First(i => i.Name == parent);
-                child.GlobalTransform *= p.Transform;
-                parent = p.ParentName;
+                var child = jb[i];
+                child.GlobalTransform = child.Transform;
+                var parent = child.ParentName;
+                while (parent != null)
+                {
+                    JointBone p = jb.First(b => b.Name == parent);
+                    child.GlobalTransform *= p.Transform;
+                    parent = p.ParentName;
+                }
+                bones.Add(child);
             }
-            return child;
+            return bones;
         }
 
         List<JointBone> GetHierarhy(Scene model)
@@ -179,15 +186,17 @@ namespace VictoremLibrary
                 var pos = new Vector3D(0);
                 if (ch.HasPositionKeys)
                     pos = frame < ch.PositionKeyCount ? ch.PositionKeys[frame].Value : ch.PositionKeys.Last().Value;
+                Matrix4x4 tr = Matrix4x4.FromTranslation(pos);
                 var rot = new Assimp.Quaternion();
                 if (ch.HasRotationKeys)
                     rot = frame < ch.RotationKeyCount ? ch.RotationKeys[frame].Value : ch.RotationKeys.Last().Value;
+                Matrix4x4 r = new Matrix4x4(rot.GetMatrix());
                 var scale = new Vector3D(0);
                 if (ch.HasScalingKeys)
                     scale = frame < ch.ScalingKeyCount ? ch.ScalingKeys[frame].Value : ch.ScalingKeys.Last().Value;
-                Matrix M = ToMatrix(Matrix4x4.FromScaling(scale));
-                Matrix M1 = Matrix.AffineTransformation(1f, ToQuat(rot), ToVector3(pos));
-                b.Add(new JointBone() { Name = ch.NodeName, Transform = M1 * M });
+                Matrix4x4 s = Matrix4x4.FromScaling(scale);
+                Matrix4x4 res = tr * r * s;
+                b.Add(new JointBone() { Name = ch.NodeName, Transform = ToMatrix(res) });
             }
             return b.ToList();
         }
@@ -206,12 +215,12 @@ namespace VictoremLibrary
             {
                 m.Add(new AssimpMesh()
                 {
-                    Indeces = mesh.GetIndices(),
+                    Indeces = mesh.GetIndices().Select(i=> (uint)i).ToArray(),
                     Texture = model.Materials[mesh.MaterialIndex].TextureDiffuse.FilePath,
                     Veteces = GetVertex(mesh).ToArray(),
                     NormalMap = model.Materials[mesh.MaterialIndex].TextureNormal.FilePath,
                     SpecularMap = model.Materials[mesh.MaterialIndex].TextureSpecular.FilePath,
-                    DiplacementMap = model.Materials[mesh.MaterialIndex].TextureDisplacement.FilePath                   
+                    DiplacementMap = model.Materials[mesh.MaterialIndex].TextureDisplacement.FilePath
                 });
             }
             return m;

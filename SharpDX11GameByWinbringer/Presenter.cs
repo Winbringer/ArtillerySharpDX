@@ -63,8 +63,7 @@ namespace SharpDX11GameByWinbringer
             _sw.Start();
 
             _earth = new EarthFromOBJ(game.DeviceContext);
-            _boy = new MD5Model(game.DeviceContext, "3DModelsFiles\\Wm\\", "Female", "Shaders\\Boy.hlsl", false, 3, true);
-         // var m = new VictoremLibrary.AssimpModel("3DModelsFiles\\Wm\\Female.md5mesh");          
+            _boy = new MD5Model(game.DeviceContext, "3DModelsFiles\\Wm\\", "Female", "Shaders\\Boy.hlsl", false, 3, true);                         
             _boy.World = Matrix.Scaling(2);
             // _ts = new Tesselation(game.DeviceContext.Device,6);
             _waveManager.World = Matrix.Translation(new Vector3(-250, -4, -250))*Matrix.Scaling(2f);

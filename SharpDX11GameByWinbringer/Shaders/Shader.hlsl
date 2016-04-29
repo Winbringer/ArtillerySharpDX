@@ -71,10 +71,10 @@ PS_IN VS(VS_IN input)
     //GerstnerWaveTessendorf(2, 2, 0.5, 1, direction, vertex.position, waveOffset, N, T);
 
    // Gentle ocean waves 
-    GerstnerWaveTessendorf(80, 0.005, 3, 1, direction, vertex.position, waveOffset, N, T);
-    GerstnerWaveTessendorf(40, 0.005, 4, 1, direction + float2(0, 0.5), vertex.position, waveOffset, N, T);
-    GerstnerWaveTessendorf(30, 0.005, 3, 1, direction + float2(0, 1), vertex.position, waveOffset, N, T);
-    GerstnerWaveTessendorf(25, 0.005, 2, 1, direction, vertex.position, waveOffset, N, T);
+    GerstnerWaveTessendorf(80, 0.01, 3, 1, direction, vertex.position, waveOffset, N, T);
+    GerstnerWaveTessendorf(40, 0.01, 4, 1, direction + float2(0, 0.5), vertex.position, waveOffset, N, T);
+    GerstnerWaveTessendorf(30, 0.01, 3, 1, direction + float2(0, 1), vertex.position, waveOffset, N, T);
+    GerstnerWaveTessendorf(25, 0.01, 2, 1, direction, vertex.position, waveOffset, N, T);
 
     vertex.position.xyz += waveOffset;
     vertex.Normal = normalize(N);

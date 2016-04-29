@@ -7,37 +7,37 @@ frameRate 30
 numAnimatedComponents 186
 
 hierarchy {
-	"Bip01"	-1 63 0 	// 
-	"Bip01 Pelvis"	0 63 6	// Bip01
-	"Bip01 Spine"	1 63 12	// Bip01 Pelvis
-	"Bip01 Spine1"	2 63 18	// Bip01 Spine
-	"Bip01 Spine2"	3 63 24	// Bip01 Spine1
-	"Bip01 Spine3"	4 63 30	// Bip01 Spine2
-	"Bip01 Neck"	5 63 36	// Bip01 Spine3
-	"Bip01 L Clavicle"	6 63 42	// Bip01 Neck
-	"Bip01 L UpperArm"	7 63 48	// Bip01 L Clavicle
-	"Bip01 L Forearm"	8 63 54	// Bip01 L UpperArm
-	"Bip01 L Hand"	9 63 60	// Bip01 L Forearm
-	"Bip01 L Finger0"	10 63 66	// Bip01 L Hand
-	"Bip01 R Clavicle"	6 63 72	// Bip01 Neck
-	"Bip01 R UpperArm"	12 63 78	// Bip01 R Clavicle
-	"Bip01 R Forearm"	13 63 84	// Bip01 R UpperArm
-	"Bip01 R Hand"	14 63 90	// Bip01 R Forearm
-	"Bip01 R Finger0"	15 63 96	// Bip01 R Hand
-	"Bip01 L Thigh"	2 63 102	// Bip01 Spine
-	"Bip01 L Calf"	17 63 108	// Bip01 L Thigh
-	"Bip01 L Foot"	18 63 114	// Bip01 L Calf
-	"Bip01 L Toe0"	19 63 120	// Bip01 L Foot
-	"Bip01 L Toe01"	20 63 126	// Bip01 L Toe0
-	"Bip01 L Toe02"	21 63 132	// Bip01 L Toe01
-	"Bip01 R Thigh"	2 63 138	// Bip01 Spine
-	"Bip01 R Calf"	23 63 144	// Bip01 R Thigh
-	"Bip01 R Foot"	24 63 150	// Bip01 R Calf
-	"Bip01 R Toe0"	25 63 156	// Bip01 R Foot
-	"Bip01 R Toe01"	26 63 162	// Bip01 R Toe0
-	"Bip01 R Toe02"	27 63 168	// Bip01 R Toe01
-	"Bip01 Head"	6 63 174	// Bip01 Neck
-	"Bip01 HeadNub"	29 63 180	// Bip01 Head
+	"Bip01"	-1 63 0 	 
+	"Bip01Pelvis"	0 63 6	
+	"Bip01Spine"	1 63 12	
+	"Bip01Spine1"	2 63 18	
+	"Bip01Spine2"	3 63 24	
+	"Bip01Spine3"	4 63 30	
+	"Bip01Neck"	5 63 36	
+	"Bip01LClavicle"	6 63 42	
+	"Bip01LUpperArm"	7 63 48	
+	"Bip01LForearm"	8 63 54	
+	"Bip01LHand"	9 63 60	
+	"Bip01LFinger0"	10 63 66	
+	"Bip01RClavicle"	6 63 72	
+	"Bip01RUpperArm"	12 63 78
+	"Bip01RForearm"	13 63 84	
+	"Bip01RHand"	14 63 90	
+	"Bip01RFinger0"	15 63 96	
+	"Bip01LThigh"	2 63 102	
+	"Bip01LCalf"	17 63 108	
+	"Bip01LFoot"	18 63 114	
+	"Bip01LToe0"	19 63 120	
+	"Bip01LToe01"	20 63 126	
+	"Bip01LToe02"	21 63 132	
+	"Bip01RThigh"	2 63 138	
+	"Bip01RCalf"	23 63 144	
+	"Bip01RFoot"	24 63 150	
+	"Bip01 R Toe0"	25 63 156	
+	"Bip01 R Toe01"	26 63 162	
+	"Bip01 R Toe02"	27 63 168	
+	"Bip01 Head"	6 63 174	
+	"Bip01 HeadNub"	29 63 180	
 }
 
 bounds {

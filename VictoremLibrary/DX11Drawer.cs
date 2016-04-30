@@ -104,7 +104,20 @@ namespace VictoremLibrary
             _dx11DeviceContext.Draw(vertexCount, startVetex);
         }
 
+        public Buffer CreateIndexBuffer(uint[] index)
+        {
+            return Buffer.Create(_dx11DeviceContext.Device, BindFlags.IndexBuffer, index);
+        }
 
+        public VertexBufferBinding CreateVertexBuffer<V>(V[] vertex) where V : struct
+        {
+            return new VertexBufferBinding( Buffer.Create<V>(_dx11DeviceContext.Device, BindFlags.VertexBuffer, vertex), Utilities.SizeOf<V>(),0);
+        }
+
+        public Buffer CreateConstantBuffer<V>(V constant) where V : struct
+        {
+            return new Buffer(_dx11DeviceContext.Device, Utilities.SizeOf<V>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+        }
         public void Dispose()
         {
             Utilities.Dispose(ref _rasterizerState);

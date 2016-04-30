@@ -14,8 +14,8 @@ namespace FramevorkTest
     {
         TextWirter Drawer2d;
         Bitmap bitmap;
-        //private AssimpModel m;
-        //private OBJModel bb;
+
+        private AssimpModel m;
 
         public Presenter(Game game)
         {
@@ -23,20 +23,21 @@ namespace FramevorkTest
             game.OnUpdate += Upadate;
             game.OnKeyPressed += KeyKontroller;
 
-            var srcTextureSRV = StaticMetods.LoadTextureFromFile(game.DeviceContext, "Village.png");
-            var b = StaticMetods.LoadBytesFormFile(game.DeviceContext, "Village.png");
-            var intt = game.FilterFoTexture.Histogram(srcTextureSRV);
-            game.FilterFoTexture.SobelEdgeColor(ref srcTextureSRV, 0.5f);
-            game.FilterFoTexture.Sepia(ref srcTextureSRV, 0.5f);
-            game.FilterFoTexture.Contrast(ref srcTextureSRV, 2f);
-            Drawer2d = new TextWirter(game.SwapChain.GetBackBuffer<Texture2D>(0), 800, 600);
-            bitmap = StaticMetods.GetBitmapFromSRV(srcTextureSRV, Drawer2d.RenderTarget);
-            Drawer2d.SetTextColor(Color.Red);
-            Drawer2d.SetTextSize(36);
-            //m = new AssimpModel("3DModelsFiles\\Earth\\earth.obj");
-            //bb = new OBJModel(game.DeviceContext, "3DModelsFiles\\Earth\\", "earth.obj");
-           
-          //  m.AplyAnimashonFrame(0, 0);
+            //var srcTextureSRV = StaticMetods.LoadTextureFromFile(game.DeviceContext, "Village.png");
+            //var b = StaticMetods.LoadBytesFormFile(game.DeviceContext, "Village.png");
+            //var intt = game.FilterFoTexture.Histogram(srcTextureSRV);
+            //game.FilterFoTexture.SobelEdgeColor(ref srcTextureSRV, 0.5f);
+            //game.FilterFoTexture.Sepia(ref srcTextureSRV, 0.5f);
+            //game.FilterFoTexture.Contrast(ref srcTextureSRV, 2f);
+            //Drawer2d = new TextWirter(game.SwapChain.GetBackBuffer<Texture2D>(0), 800, 600);
+            //bitmap = StaticMetods.GetBitmapFromSRV(srcTextureSRV, Drawer2d.RenderTarget);
+            //Drawer2d.SetTextColor(Color.Red);
+            //Drawer2d.SetTextSize(36);
+
+           m = new AssimpModel("3DModelsFiles\\Wm\\Female.md5mesh");
+
+         var   bbb = 10;
+        //  m.AplyAnimashonFrame(0,20);
         }
 
         private void KeyKontroller(object sender, EventArgs e)
@@ -54,25 +55,25 @@ namespace FramevorkTest
         {
             var a = (UpdateArgs)e;
             var g = (Game)sender;
-            //var MVP = Matrix.Identity * Matrix.LookAtLH(new Vector3(0, 0, -500), Vector3.Zero, Vector3.Up) * Matrix.PerspectiveFovLH(MathUtil.PiOverFour, g.Form.Width / (float)g.Form.Height, 1f, 1000f);
-            //MVP.Transpose();
+            // Matrix.RotationY(MathUtil.PiOverTwo) 
+            var MVP =Matrix.Identity* Matrix.LookAtRH(new Vector3(-100, 10, -10), Vector3.Zero, Vector3.Up) * Matrix.PerspectiveFovRH(MathUtil.PiOverFour, g.Form.Width / (float)g.Form.Height, 1f, 1000f);
+            MVP.Transpose();
 
-            //foreach (var mesh in m.Meshes)
-            //    using (var v = Buffer.Create(g.DeviceContext.Device, BindFlags.VertexBuffer, mesh.Veteces))
-            //    using (var index = Buffer.Create(g.DeviceContext.Device, BindFlags.IndexBuffer, mesh.Indeces))
-            //    using (var cb = Buffer.Create<Matrix>(g.DeviceContext.Device, ref MVP, new BufferDescription(Utilities.SizeOf<Matrix>(), BindFlags.ConstantBuffer, ResourceUsage.Default)))
-            //    {
-            //        g.DeviceContext.UpdateSubresource(ref MVP, cb);
-            //        using (Shader s = new Shader(g.DeviceContext, Environment.CurrentDirectory + "\\Assimp.hlsl", new[] { new SharpDX.Direct3D11.InputElement("POSITION", 0, Format.R32G32B32_Float, 0, 0) }))
-            //        {
-            //            s.Begin(null, null, new[] { cb });
-            //            g.Drawer.DrawIndexed(bb.Meshes[0].VertexBinding, bb.Meshes[0].IndexBuffer, bb.Meshes[0].IndexCount);
-            //            g.Drawer.DrawIndexed(new VertexBufferBinding(v, Utilities.SizeOf<AssimpVertex>(), 0), index, mesh.Indeces.Length);
-            //            s.End();
-            //        }
-            //    }
-            Drawer2d.DrawBitmap(bitmap);
-            Drawer2d.DrawText("ПОЕХАЛИ!");
+            foreach (var mesh in m.Meshes)
+                using (var v = Buffer.Create(g.DeviceContext.Device, BindFlags.VertexBuffer, mesh.Veteces))
+                using (var index = Buffer.Create(g.DeviceContext.Device, BindFlags.IndexBuffer, mesh.Indeces))
+                using (var cb = Buffer.Create<Matrix>(g.DeviceContext.Device, ref MVP, new BufferDescription(Utilities.SizeOf<Matrix>(), BindFlags.ConstantBuffer, ResourceUsage.Default)))
+                {
+                    g.DeviceContext.UpdateSubresource(ref MVP, cb);
+                    using (Shader s = new Shader(g.DeviceContext, Environment.CurrentDirectory + "\\Assimp.hlsl", new[] { new SharpDX.Direct3D11.InputElement("POSITION", 0, Format.R32G32B32_Float, 0, 0) }))
+                    {
+                        s.Begin(null, null, new[] { cb });                        
+                        g.Drawer.DrawIndexed(new VertexBufferBinding(v, Utilities.SizeOf<AssimpVertex>(), 0), index, mesh.Indeces.Length);
+                        s.End();
+                    }
+                }
+            //Drawer2d.DrawBitmap(bitmap);
+            //Drawer2d.DrawText("ПОЕХАЛИ!");
 
         }
 

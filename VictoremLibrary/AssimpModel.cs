@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using SharpDX;
+using System.Runtime.InteropServices;
 
 namespace VictoremLibrary
 {
@@ -18,13 +19,8 @@ namespace VictoremLibrary
         public Matrix Transform;
         public Matrix GlobalTransform;
     }
-
-    public struct VertexBone
-    {
-        public string Name;
-        public float Wheight;
-
-    }
+    
+    [StructLayout(LayoutKind.Sequential)]
     public struct AssimpVertex
     {
         public Vector3 position;
@@ -32,7 +28,8 @@ namespace VictoremLibrary
         public Vector3 normal;
         public Vector3 tangent;
         public Vector3 biTangent;
-        public List<VertexBone> Bones;
+        public Vector4 BoneID;
+        public Vector4 BoneWheight;
     }
 
     public class AssimpMesh
@@ -55,7 +52,7 @@ namespace VictoremLibrary
     {
         public List<AssimpMesh> Meshes { get { return _meshes; } }
         List<AssimpMesh> _meshes;
-        List<JointBone> _boneHierarhy;
+       Dictionary<string,JointBone> _boneHierarhy;
         List<AssimpAnimation> _animatons;
 
         public AssimpModel(string File)
@@ -66,51 +63,52 @@ namespace VictoremLibrary
             {
                 NormalSmoothingAngleConfig config = new NormalSmoothingAngleConfig(66.0f);
                 importer.SetConfig(config);
+#if DEBUG
                 using (LogStream logstream = new LogStream(delegate (String msg, String userData)
                  {
-#if DEBUG
+
                      Console.WriteLine(msg);
-#endif
+
 
                  }))
-                {
                     logstream.Attach();
 
-                    var Model = importer.ImportFile(fileName, PostProcessPreset.TargetRealTimeMaximumQuality | PostProcessSteps.GenerateNormals | PostProcessSteps.CalculateTangentSpace | PostProcessSteps.MakeLeftHanded | PostProcessSteps.RemoveComponent);
+#endif
+                var Model = importer.ImportFile(fileName, PostProcessPreset.ConvertToLeftHanded| PostProcessSteps.GenerateNormals|PostProcessSteps.CalculateTangentSpace|PostProcessSteps.Triangulate);
 
-                    //TODO: Загрузить данные в мои собственные классы и структуры.  
-                    _meshes = GetMeshes(Model);
-                    if (Model.Meshes[0].HasBones)
-                        _boneHierarhy = GetHierarhy(Model);
-                    if (Model.HasAnimations && Model.Animations[0].HasNodeAnimations)
-                        _animatons = GetAnimation(Model);
-                }
+                //TODO: Загрузить данные в мои собственные классы и структуры.  
+                _meshes = GetMeshes(Model);
+                //if (Model.Meshes[0].HasBones)
+                //    _boneHierarhy = GetHierarhy(Model);
+                //if (Model.HasAnimations && Model.Animations[0].HasNodeAnimations)
+                //    _animatons = GetAnimation(Model);
+
             }
         }
 
-        public void AplyAnimashonFrame(int animaton, int frame)
-        {
-            var a = _animatons[animaton].Frames[frame];
-            var aa = _boneHierarhy.Select(j => new JointBone() { Name = j.Name, ParentName =j.ParentName , Transform=a.Any(y => y.Name == j.Name)? a.First(y => y.Name == j.Name).Transform: j.Transform }).ToList();
-            var m = CalculateBoneToWorldTransform(aa);
+        //public void AplyAnimashonFrame(int animaton, int frame)
+        //{
+        //    var a = _animatons[animaton].Frames[frame];
+        //    var aa = _boneHierarhy.Select(j => new JointBone() { Name = j.Name, ParentName =j.ParentName , Transform=a.Any(y => y.Name == j.Name)? a.First(y => y.Name == j.Name).Transform: j.Transform }).ToList();
+        //   // var m = CalculateBoneToWorldTransform(aa);
 
-            Matrix transform = new Matrix();
-            foreach (var mesh in _meshes)
-            {
-                for (int i = 0; i < mesh.Veteces.Count(); ++i)
-                {
-                    foreach (var bone in mesh.Veteces[i].Bones)
-                    {
-                        transform += m.First(mm => mm.Name == bone.Name).GlobalTransform * bone.Wheight;
-                    }
-                    var vec = new Vector3();
+        //    Matrix transform = new Matrix();
+        //    foreach (var mesh in _meshes)
+        //    {
+        //        for (int i = 0; i < mesh.Veteces.Count(); ++i)
+        //        {
+        //            foreach (var bone in mesh.Veteces[i].Bones)
+        //            {
+        //                transform += aa.First(mm => mm.Name == bone.Name).Transform * bone.Wheight;
+        //            }
+        //            var vec = new Vector3();
 
-                    Vector3.Transform(ref mesh.Veteces[i].position, ref transform, out vec);
-                    mesh.Veteces[i].position = vec;
-                }
-            }
+        //            Vector3.Transform(ref mesh.Veteces[i].position, ref transform, out vec);
+        //            mesh.Veteces[i].position = vec;
+        //        }
+        //    }
 
-        }
+        //}
 
         List<JointBone> CalculateBoneToWorldTransform(List<JointBone> jb)
         {
@@ -215,7 +213,7 @@ namespace VictoremLibrary
             {
                 m.Add(new AssimpMesh()
                 {
-                    Indeces = mesh.GetIndices().Select(i=> (uint)i).ToArray(),
+                    Indeces = mesh.GetIndices().Select(i => (uint)i).ToArray(),
                     Texture = model.Materials[mesh.MaterialIndex].TextureDiffuse.FilePath,
                     Veteces = GetVertex(mesh).ToArray(),
                     NormalMap = model.Materials[mesh.MaterialIndex].TextureNormal.FilePath,
@@ -237,14 +235,17 @@ namespace VictoremLibrary
                 {
                     position = new Vector3(m.Vertices[i].X, m.Vertices[i].Y, m.Vertices[i].Z),
                     uv = new Vector3(m.TextureCoordinateChannels[0][i].X, m.TextureCoordinateChannels[0][i].Y, m.TextureCoordinateChannels[0][i].Z),
-                    Bones = m.Bones
-                    .Where(bb => bb.HasVertexWeights && bb.VertexWeights.Any(tt => tt.VertexID == i))
-                    .Select(ib => new VertexBone()
-                    {
-                        Name = ib.Name,
-                        Wheight = ib.VertexWeights.First(l => l.VertexID == i).Weight
-                    })
-                        .ToList()
+                    tangent = ToVector3(m.Tangents[i]),
+                    biTangent = ToVector3(m.BiTangents[i]),
+                    normal = ToVector3(m.Normals[i])
+                    //Bones = m.Bones
+                    //.Where(bb => bb.HasVertexWeights && bb.VertexWeights.Any(tt => tt.VertexID == i))
+                    //.Select(ib => new VertexBone()
+                    //{
+                    //    Name = ib.Name,
+                    //    Wheight = ib.VertexWeights.First(l => l.VertexID == i).Weight
+                    //})
+                    //    .ToList()
                 });
             }
 

@@ -51,10 +51,10 @@ namespace SharpDX11GameByWinbringer
             _World = Matrix.Identity;
             _View = Matrix.LookAtLH(new Vector3(0, 0, -355f), new Vector3(0, 0, 0), Vector3.Up);
             _Progection = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 2000f);
-            _View1= Matrix.LookAtLH(new Vector3(0, 700f, -1f), new Vector3(0, 0, 0), Vector3.Up);
+            _View1 = Matrix.LookAtLH(new Vector3(0, 700f, -1f), new Vector3(0, 0, 0), Vector3.Up);
             //Создаем объеты нашей сцены
             _lineManager = new _3DLineMaganer(game.DeviceContext);
-            _waveManager = new _3DWaveManager(game.DeviceContext);                  
+            _waveManager = new _3DWaveManager(game.DeviceContext);
             //_triangle = new Triangle(game.DeviceContext);
             //_sCube = new ShadedCube(game.DeviceContext);
             //_sCube.World = Matrix.Translation(0, -70, 0);
@@ -64,11 +64,11 @@ namespace SharpDX11GameByWinbringer
 
             _earth = new EarthFromOBJ(game.DeviceContext);
             _boy = new MD5Model(game.DeviceContext, "3DModelsFiles\\Wm\\", "Female", "Shaders\\Boy.hlsl", false, 3, true);
-           
-               
+
+
             _boy.World = Matrix.Scaling(2);
             // _ts = new Tesselation(game.DeviceContext.Device,6);
-            _waveManager.World = Matrix.Translation(new Vector3(-250, -4, -250))*Matrix.Scaling(2f);
+            _waveManager.World = Matrix.Translation(new Vector3(-250, -4, -250)) * Matrix.Scaling(2f);
 
         }
 
@@ -77,8 +77,8 @@ namespace SharpDX11GameByWinbringer
             LPS();
             //_sCube.UpdateConsBufData(_World, _View, _Progection);
             _lineManager.Update(time);
-            _boy.Update((float)time);         
-            _waveManager.Update(time);         
+            _boy.Update((float)time);
+            _waveManager.Update(time);
             //_triangle.UpdateConsBufData(_World, _View, _Progection);
             _earth.Update((float)time);
         }
@@ -93,7 +93,7 @@ namespace SharpDX11GameByWinbringer
 
         void Draw(double time)
         {
-           _game.DeviceContext.Rasterizer.SetViewport(0, 0, _game.Width, _game.Height);           
+            _game.DeviceContext.Rasterizer.SetViewport(0, 0, _game.Width, _game.Height);
             _waveManager.Draw(_World, _View, _Progection);
             _lineManager.Draw(_World, _View, _Progection);
             //_triangle.DrawTriangle(SharpDX.Direct3D.PrimitiveTopology.TriangleList,
@@ -108,7 +108,7 @@ namespace SharpDX11GameByWinbringer
             //  _ts.Draw(_World, _View, _Progection);
 
 
-            _game.DeviceContext.Rasterizer.SetViewport(0, 0, _game.Width/4, _game.Height/4);
+            _game.DeviceContext.Rasterizer.SetViewport(0, 0, _game.Width / 4, _game.Height / 4);
 
             _waveManager.Draw(_World, _View1, _Progection);
             _lineManager.Draw(_World, _View1, _Progection);
@@ -151,14 +151,14 @@ namespace SharpDX11GameByWinbringer
             {
                 if (_camera.camYaw > -1f) _camera.camYaw -= rSpeed;
             }
+            if (KeyState.IsPressed(Key.Down))
+            {
+                if (_camera.camYaw < 0) _camera.camYaw += rSpeed;
+            }
             if (KeyState.IsPressed(Key.Right))
             {
                 _camera.camPitch += rSpeed;
 
-            }
-            if (KeyState.IsPressed(Key.Down))
-            {
-                if (_camera.camYaw < 0) _camera.camYaw += rSpeed;
             }
             if (KeyState.IsPressed(Key.Left))
             {
@@ -174,6 +174,7 @@ namespace SharpDX11GameByWinbringer
                 _camera.moveUpDown -= speed;
 
             }
+
             _View = _camera.GetLHView();
         }
 

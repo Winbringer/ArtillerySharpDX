@@ -32,7 +32,6 @@ namespace VictoremLibrary
 
         public float camYaw = 0;
         public float camPitch = 0;
-
         #endregion
 
         /// <summary>
@@ -45,6 +44,7 @@ namespace VictoremLibrary
             Vector3 DefaultRight = new Vector3(1f, 0, 0);
             Vector3 DefaultcamUp = new Vector3(0, 1f, 0);
             Matrix camRotationMatrix;
+
             Matrix.RotationYawPitchRoll(camPitch, camYaw, 0, out camRotationMatrix);
             Vector3.Transform(ref DefaultForward, ref camRotationMatrix, out camTarget);
             camTarget = Vector3.Normalize(camTarget);
@@ -55,7 +55,6 @@ namespace VictoremLibrary
             Vector3.Transform(ref DefaultRight, ref RotateYTempMatrix, out camRight);
             Vector3.Transform(ref DefaultcamUp, ref RotateYTempMatrix, out camUp);
             Vector3.Transform(ref DefaultForward, ref RotateYTempMatrix, out camForward);
-            camUp = Vector3.Normalize(camUp);
 
             camPosition += moveLeftRight * camRight;
             camPosition += moveBackForward * camForward;
@@ -79,7 +78,7 @@ namespace VictoremLibrary
             Vector3 DefaultRightRH = new Vector3(-1f, 0, 0);
             Vector3 DefaultcamUp = new Vector3(0, 1f, 0);
             Matrix camRotationMatrix;
-            Matrix.RotationYawPitchRoll(camPitch, camYaw, 0, out camRotationMatrix);
+            Matrix.RotationYawPitchRoll(camYaw,camPitch, 0, out camRotationMatrix);
             Vector3.Transform(ref DefaultForward, ref camRotationMatrix, out camTarget);
             camTarget = Vector3.Normalize(camTarget);
 
@@ -89,7 +88,6 @@ namespace VictoremLibrary
             Vector3.Transform(ref DefaultRightRH, ref RotateYTempMatrix, out camRight);
             Vector3.Transform(ref DefaultcamUp, ref RotateYTempMatrix, out camUp);
             Vector3.Transform(ref DefaultForward, ref RotateYTempMatrix, out camForward);
-            camUp = Vector3.Normalize(camUp);
 
             camPosition += moveLeftRight * camRight;
             camPosition += moveBackForward * camForward;

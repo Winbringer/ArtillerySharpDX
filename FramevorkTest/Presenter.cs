@@ -6,9 +6,50 @@ using Buffer = SharpDX.Direct3D11.Buffer;
 using VictoremLibrary;
 using SharpDX.Direct2D1;
 using SharpDX.DXGI;
+using System.Runtime.InteropServices;
 
 namespace FramevorkTest
 {
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    struct AnimConst
+    {
+        public Matrix WVP;
+        public uint HasAnimaton;
+        Vector3 padding0;
+        
+        public AnimConst(Matrix w, Matrix v, Matrix p, uint HasAnim)
+        {
+          
+            HasAnimaton = HasAnim;
+            WVP = w * v * p;           
+            padding0 = new Vector3();
+        }       
+        
+        public void Transpose()
+        {
+            WVP.Transpose();
+        }
+    }
+    public class BonesConst
+    {
+        public Matrix[] Bones;
+
+        public BonesConst(Matrix[] bones)
+        {
+            Bones = new Matrix[1024];
+            for (int i = 0; i < bones.Length; i++)
+            {
+                var m = bones[i];
+                m.Transpose();
+                Bones[i] = m;
+            }
+        }
+        public int Size2()
+        {
+            return Utilities.SizeOf<Matrix>() * 1024;
+        }
+
+    }
 
     class Presenter : IDisposable
     {
@@ -55,19 +96,24 @@ namespace FramevorkTest
         {
             var a = (UpdateArgs)e;
             var g = (Game)sender;
-            // Matrix.RotationY(MathUtil.PiOverTwo) 
-            var MVP =Matrix.Identity* Matrix.LookAtRH(new Vector3(-100, 10, -10), Vector3.Zero, Vector3.Up) * Matrix.PerspectiveFovRH(MathUtil.PiOverFour, g.Form.Width / (float)g.Form.Height, 1f, 1000f);
+            var w = Matrix.RotationX(MathUtil.PiOverTwo);
+            var vi = Matrix.LookAtLH(new Vector3(-10, 10, -70), Vector3.Zero, Vector3.Up);
+            var p = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, g.Form.Width / (float)g.Form.Height, 1f, 1000f);
+            var MVP = new AnimConst(w, vi, p,0);// m.GetAnimationFrame(0,0));
             MVP.Transpose();
-
+            var bo = new BonesConst(m.GetAnimationFrame(0, 0));
             foreach (var mesh in m.Meshes)
                 using (var v = Buffer.Create(g.DeviceContext.Device, BindFlags.VertexBuffer, mesh.Veteces))
                 using (var index = Buffer.Create(g.DeviceContext.Device, BindFlags.IndexBuffer, mesh.Indeces))
-                using (var cb = Buffer.Create<Matrix>(g.DeviceContext.Device, ref MVP, new BufferDescription(Utilities.SizeOf<Matrix>(), BindFlags.ConstantBuffer, ResourceUsage.Default)))
+                using (var cb = Buffer.Create(g.DeviceContext.Device, ref MVP, new BufferDescription(Utilities.SizeOf<AnimConst>(), BindFlags.ConstantBuffer, ResourceUsage.Default)))
+                using(var cb2 = new Buffer(g.DeviceContext.Device, bo.Size2(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0))
                 {
                     g.DeviceContext.UpdateSubresource(ref MVP, cb);
-                    using (Shader s = new Shader(g.DeviceContext, Environment.CurrentDirectory + "\\Assimp.hlsl", new[] { new SharpDX.Direct3D11.InputElement("POSITION", 0, Format.R32G32B32_Float, 0, 0) }))
+                    g.DeviceContext.UpdateSubresource( bo.Bones, cb2);
+
+                    using (Shader s = new Shader(g.DeviceContext, Environment.CurrentDirectory + "\\Assimp.hlsl", AssimpModel.SkinnedPosNormalTexTanBi))
                     {
-                        s.Begin(null, null, new[] { cb });                        
+                        s.Begin(null, null, new[] { cb,cb2 });
                         g.Drawer.DrawIndexed(new VertexBufferBinding(v, Utilities.SizeOf<AssimpVertex>(), 0), index, mesh.Indeces.Length);
                         s.End();
                     }
@@ -81,10 +127,7 @@ namespace FramevorkTest
         {
             Drawer2d?.Dispose();
             bitmap?.Dispose();
-            //foreach(var m in bb.Meshes)
-            //{
-            //    m.Dispose();
-            //}
+           
         }
     }
 }

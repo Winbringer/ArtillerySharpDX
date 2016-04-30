@@ -71,6 +71,19 @@ namespace VictoremLibrary
             _inputLayout = new InputLayout(_dx11DeviceContext.Device, _inputSignature, inputElements);
         }
 
+        public static Effect GetEffect(Device device, string file)
+        {
+            ShaderFlags shaderFlags = ShaderFlags.None;
+#if DEBUG
+            shaderFlags = ShaderFlags.Debug;
+#endif
+            using (var effectByteCode = ShaderBytecode.CompileFromFile(file, "fx_5_0", shaderFlags, EffectFlags.None))
+            {
+                var effect = new Effect(device, effectByteCode);
+                return effect;
+            }
+        }
+
         /// <summary>
         /// Устанавливает шейдеры и входные данные для них.
         /// </summary>

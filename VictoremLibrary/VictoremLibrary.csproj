@@ -59,6 +59,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\ConsoleApplication1\packages\SharpDX.Direct3D11.3.0.1\lib\net45\SharpDX.Direct3D11.dll</HintPath>
     </Reference>
+    <Reference Include="SharpDX.Direct3D11.Effects">
+      <HintPath>..\packages\SharpDX.Direct3D11.Effects.3.0.1\lib\net45\SharpDX.Direct3D11.Effects.dll</HintPath>
+    </Reference>
     <Reference Include="SharpDX.DirectInput">
       <HintPath>..\packages\SharpDX.DirectInput.3.0.1\lib\net45\SharpDX.DirectInput.dll</HintPath>
     </Reference>
@@ -88,9 +91,7 @@
     <Compile Include="FilterCS.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="HLSLInklude.cs" />
-    <Compile Include="MD5Model.cs" />
     <Compile Include="Meshcs.cs" />
-    <Compile Include="OBJModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Shader.cs" />
     <Compile Include="StaticMetods.cs" />

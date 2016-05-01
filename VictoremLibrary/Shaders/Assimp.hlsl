@@ -67,6 +67,6 @@ float4 PS(PS_IN input) : SV_Target0
     if (hasDif)
         color = textureMap.Sample(textureSampler, input.uv);
     float3 amb = color.rgb * 0.3;
-    float3 dif = color.rgb * saturate(dot(input.normal, ToL)) * 0.8;
+    float3 dif = color.rgb * saturate(dot(normalize(input.normal),normalize( ToL))) * 0.8;
     return float4(dif + amb, color.w);
 }

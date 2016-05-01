@@ -138,11 +138,47 @@ namespace VictoremLibrary
         public string DiplacementMap { get; set; } = null;
         public string SpecularMap { get; set; } = null;
     }
-    
+
+    public class Mesh3D : Component<AssimpVertex>
+    {
+        ShaderResourceView _textures;
+        public ShaderResourceView Texture { get { return _textures; } set { Utilities.Dispose(ref _textures); _textures = value; } }
+        ShaderResourceView _normalMap;
+        public ShaderResourceView NormalMap { get { return _normalMap; } set { Utilities.Dispose(ref _normalMap); _normalMap = value; } }
+        ShaderResourceView _specularMap;
+        public ShaderResourceView SpecularMap { get { return _specularMap; } set { Utilities.Dispose(ref _specularMap); _specularMap = value; } }
+        ShaderResourceView _displacementMap;
+        public ShaderResourceView DisplacementMap { get { return _displacementMap; } set { Utilities.Dispose(ref _displacementMap); _displacementMap = value; } }
+
+        public Mesh3D(SharpDX.Direct3D11.Device device, AssimpMesh mesh, string texturFolder)
+        {
+            this._indeces = mesh.Indeces;
+            this._veteces = mesh.Veteces;
+            InitBuffers(device);
+            if (!string.IsNullOrEmpty(mesh.Texture))
+                _textures = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Environment.CurrentDirectory + texturFolder + mesh.Texture);
+            if (!string.IsNullOrEmpty(mesh.NormalMap))
+                _normalMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Environment.CurrentDirectory + texturFolder + mesh.NormalMap);
+            if (!string.IsNullOrEmpty(mesh.SpecularMap))
+                _specularMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Environment.CurrentDirectory + texturFolder + mesh.SpecularMap);
+            if (!string.IsNullOrEmpty(mesh.NormalMap))
+                _displacementMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Environment.CurrentDirectory + texturFolder + mesh.DiplacementMap);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            Utilities.Dispose(ref _textures);
+            Utilities.Dispose(ref _normalMap);
+            Utilities.Dispose(ref _displacementMap);
+            Utilities.Dispose(ref _specularMap);
+        }
+    }
+
     /// <summary>
     /// Класс для загрузки 3Д моделей и скелейтной анимации из файлов
     /// </summary>
-    public class AssimpModel
+    public class AssimpModel :IDisposable
     {
         #region Инпут элементы
         public static readonly InputElement[] SkinnedPosNormalTexTanBi = {
@@ -178,16 +214,17 @@ namespace VictoremLibrary
         public bool HasAnimations { get; private set; }
         public AssimpMesh[] Meshes { get { return _meshes; } }
         public int AnimationsCount { get { return _animatons.Length; } }
+        public List<Mesh3D> Meshes3D { get { return _3dMeshes; } }
 
         AssimpMesh[] _meshes;        
         AssimpAnimation[] _animatons;
-
+        List<Mesh3D> _3dMeshes;
 
         /// <summary>
         /// Загружает модель из файла
         /// </summary>
         /// <param name="File">Локальный путь к файлу модели</param>
-        public AssimpModel(string File)
+        public AssimpModel(DeviceContext dc,string textureFolder, string File)
         {
             String fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), File);
 
@@ -209,101 +246,15 @@ namespace VictoremLibrary
                     _animatons = GetAnimation(Model, _boneHierarhy);
                     HasAnimations = true;
                 }
-
-            }
-        }
-
-
-
-        #region Пример из Гита
-        private void ComputeBoundingBox(Scene m_model)
-        {
-            var m_sceneMin = new Vector3(1e10f, 1e10f, 1e10f);
-            var m_sceneMax = new Vector3(-1e10f, -1e10f, -1e10f);
-            var m_sceneCenter = new Vector3(0);
-            Matrix identity = Matrix.Identity;
-
-            ComputeBoundingBox(m_model, m_model.RootNode, ref m_sceneMin, ref m_sceneMax, ref identity);
-
-            m_sceneCenter.X = (m_sceneMin.X + m_sceneMax.X) / 2.0f;
-            m_sceneCenter.Y = (m_sceneMin.Y + m_sceneMax.Y) / 2.0f;
-            m_sceneCenter.Z = (m_sceneMin.Z + m_sceneMax.Z) / 2.0f;
-        }
-
-        private void ComputeBoundingBox(Scene m_model, Node node, ref Vector3 min, ref Vector3 max, ref Matrix trafo)
-        {
-            Matrix prev = trafo;
-            trafo = Matrix.Multiply(prev, FromMatrix(node.Transform));
-
-            if (node.HasMeshes)
-            {
-                foreach (int index in node.MeshIndices)
+                _3dMeshes = new List<Mesh3D>();
+                foreach (var item in _meshes)
                 {
-                    Assimp.Mesh mesh = m_model.Meshes[index];
-                    for (int i = 0; i < mesh.VertexCount; i++)
-                    {
-                        Vector3 tmp = FromVector(mesh.Vertices[i]);
-                        Vector3.Transform(ref tmp, ref trafo, out tmp);
-
-                        min.X = Math.Min(min.X, tmp.X);
-                        min.Y = Math.Min(min.Y, tmp.Y);
-                        min.Z = Math.Min(min.Z, tmp.Z);
-
-                        max.X = Math.Max(max.X, tmp.X);
-                        max.Y = Math.Max(max.Y, tmp.Y);
-                        max.Z = Math.Max(max.Z, tmp.Z);
-                    }
+                    _3dMeshes.Add(new Mesh3D(dc.Device, item, textureFolder));
                 }
+
             }
-
-            for (int i = 0; i < node.ChildCount; i++)
-            {
-                ComputeBoundingBox(m_model, node.Children[i], ref min, ref max, ref trafo);
-            }
-            trafo = prev;
         }
-
-        private Matrix FromMatrix(Matrix4x4 mat)
-        {
-            Matrix m = new Matrix();
-            m.M11 = mat.A1;
-            m.M12 = mat.A2;
-            m.M13 = mat.A3;
-            m.M14 = mat.A4;
-            m.M21 = mat.B1;
-            m.M22 = mat.B2;
-            m.M23 = mat.B3;
-            m.M24 = mat.B4;
-            m.M31 = mat.C1;
-            m.M32 = mat.C2;
-            m.M33 = mat.C3;
-            m.M34 = mat.C4;
-            m.M41 = mat.D1;
-            m.M42 = mat.D2;
-            m.M43 = mat.D3;
-            m.M44 = mat.D4;
-            return m;
-        }
-
-        private Vector3 FromVector(Vector3D vec)
-        {
-            Vector3 v;
-            v.X = vec.X;
-            v.Y = vec.Y;
-            v.Z = vec.Z;
-            return v;
-        }
-
-        private Color4 FromColor(Color4D color)
-        {
-            Color4 c;
-            c.Red = color.R;
-            c.Green = color.G;
-            c.Blue = color.B;
-            c.Alpha = color.A;
-            return c;
-        }
-        #endregion
+        
 
         /// <summary>
         /// Сколько фреймов есть у анимации
@@ -449,6 +400,14 @@ namespace VictoremLibrary
             ret.Z = my.Length > 2 ? my[2].Weight : 0;
             ret.W = my.Length > 3 ? my[3].Weight : 0;
             return ret;
+        }
+
+        public void Dispose()
+        {
+            for (int i = 0; i < _3dMeshes.Count; i++)
+            {
+                _3dMeshes[i].Dispose();
+            }
         }
     }
 }

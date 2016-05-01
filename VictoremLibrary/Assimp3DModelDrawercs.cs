@@ -63,24 +63,7 @@ namespace VictoremLibrary
 
     }
 
-    class Mehs3D : Component<AssimpVertex>
-    {
-        ShaderResourceView _textures;
-        public ShaderResourceView Texture { get { return _textures; } set { Utilities.Dispose(ref _textures); _textures = value; } }
-        public Mehs3D(Device device, AssimpMesh mesh, string texturFolder)
-        {
-            this._indeces = mesh.Indeces;
-            this._veteces = mesh.Veteces;
-            InitBuffers(device);
-            if (!string.IsNullOrEmpty(mesh.Texture))
-                _textures = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Environment.CurrentDirectory + texturFolder + mesh.Texture);
-        }
-        public override void Dispose()
-        {
-            base.Dispose();
-            Utilities.Dispose(ref _textures);
-        }
-    }
+  
 
     public class Assimp3DModel : IDisposable
     {
@@ -90,10 +73,9 @@ namespace VictoremLibrary
         Game _game;
         SamplerState _samler;
         BonesConst _bones;
-        List<Mehs3D> _mesh = new List<Mehs3D>();
-    public  Matrix _world =Matrix.Identity;
-    public  Matrix _view = Matrix.LookAtLH(new Vector3(0, 50, -100), Vector3.Zero, Vector3.Up);
-    public  Matrix _proj;
+        public Matrix _world = Matrix.Identity;
+        public Matrix _view = Matrix.LookAtLH(new Vector3(0, 50, -100), Vector3.Zero, Vector3.Up);
+        public Matrix _proj;
         AnimConst _constData = new AnimConst();
         private SharpDX.Direct3D11.Buffer _constBuffer1;
         private SharpDX.Direct3D11.Buffer _constBuffer0;
@@ -103,12 +85,9 @@ namespace VictoremLibrary
             _proj = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.Form.Width / (float)game.Form.Height, 1f, 1000f);
             _bones = new BonesConst();
             _game = game;
-            _model = new AssimpModel(modelFile); ;
+            _model = new AssimpModel(game.DeviceContext, textureFolder, modelFile);
             _shader = new Shader(game.DeviceContext, "Shaders\\Assimp.hlsl", AssimpModel.SkinnedPosNormalTexTanBi);
-            foreach (var item in _model.Meshes)
-            {
-                _mesh.Add(new Mehs3D(game.DeviceContext.Device, item, textureFolder));
-            }
+           
             var sD = SamplerStateDescription.Default();
             sD.AddressU = TextureAddressMode.Wrap;
             sD.AddressV = TextureAddressMode.Wrap;
@@ -119,7 +98,7 @@ namespace VictoremLibrary
             sD.Filter = Filter.MinMagMipLinear;
             _samler = new SamplerState(game.DeviceContext.Device, sD);
             _constData.HasAnimaton = _model.HasAnimations ? 1u : 0;
-            _constData.HasDiffuseTexture = _mesh[0].Texture != null ? 1u : 0;
+            _constData.HasDiffuseTexture =_model.Meshes3D[0].Texture != null ? 1u : 0;
             _constData.World = _world;
             _constData.WVP = _world * _view * _proj;
             _constData.Transpose();
@@ -148,7 +127,7 @@ namespace VictoremLibrary
             _constData.Transpose();
             _game.DeviceContext.UpdateSubresource(ref _constData, _constBuffer0);
             _game.DeviceContext.UpdateSubresource(_bones.Bones, _constBuffer1);
-            foreach (var item in _mesh)
+            foreach (var item in _model.Meshes3D)
             {
                 _shader.Begin(new[] { _samler }, new[] { item.Texture }, new[] { _constBuffer0, _constBuffer1 });
                 _game.Drawer.DrawIndexed(item.VertexBinding, item.IndexBuffer, item.IndexCount);
@@ -162,10 +141,7 @@ namespace VictoremLibrary
             Utilities.Dispose(ref _constBuffer0);
             Utilities.Dispose(ref _constBuffer1);
             _shader?.Dispose();
-            for (int i = 0; i < _mesh.Count; i++)
-            {
-                _mesh?[i]?.Dispose();
-            }
+            _model?.Dispose();
         }
     }
 }

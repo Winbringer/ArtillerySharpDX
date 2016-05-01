@@ -348,5 +348,39 @@ namespace VictoremLibrary
             }
         }
 
+        internal static Matrix ToMatrix(this Assimp.Matrix4x4 input)
+        {
+            input.Transpose();
+            var retVal = new Matrix(input.A1, input.A2, input.A3, input.A4,
+                input.B1, input.B2, input.B3, input.B4,
+                input.C1, input.C2, input.C3, input.C4,
+                input.D1, input.D2, input.D3, input.D4);
+            return retVal;
+        }
+
+        internal static Vector3 ToVector3(this Assimp.Vector3D vec)
+        {
+            Vector3 v;
+            v.X = vec.X;
+            v.Y = vec.Y;
+            v.Z = vec.Z;
+            return v;
+        }
+
+        internal static Color ToColor(this Assimp.Color4D color)
+        {
+            Color c;
+            c.R = (byte)(color.R * 255);
+            c.G = (byte)(color.G * 255);
+            c.B = (byte)(color.B * 255);
+            c.A = (byte)(color.A * 255);
+            return c;
+        }
+
+       internal static SharpDX.Quaternion ToQuat(this Assimp.Quaternion q)
+        {
+            return new SharpDX.Quaternion(q.X, q.Y, q.Z, q.W);
+        }
+
     }
 }

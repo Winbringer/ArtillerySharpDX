@@ -15,7 +15,19 @@ namespace VictoremLibrary
     struct JointBone
     {
         public string ParentName;
+        public string Name;
         public Matrix Transform;
+        public Matrix Offset;
+    }
+
+    struct Joint
+    {
+        public string PName;
+        public string Name;
+        public Vector3 Pos;
+        public SharpDX.Quaternion Quat;
+        public Matrix scaling;
+        public Matrix matrix;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -30,34 +42,14 @@ namespace VictoremLibrary
         public Vector4 BoneWheight;
     }
 
-    public class AssimpMesh
-    {
-        public bool HasBones { get; set; }
-        public string Texture { get; set; } = null;
-        public AssimpVertex[] Veteces { get; set; } = null;
-        public uint[] Indeces { get; set; } = null;
-        public string NormalMap { get; set; } = null;
-        public string DiplacementMap { get; set; } = null;
-        public string SpecularMap { get; set; } = null;
-    }
-
-    struct Joint
-    {
-        public string PName;
-        public string Name;
-        public Vector3D Pos;
-        public Assimp.Quaternion Quat;
-        public Matrix matrix;
-    }
-
     class AssimpAnimation
     {
         public int numFrames { get; private set; }
         public double framesPerSecond { get; private set; }
         public Matrix[][] Frames { get; private set; }
-       
 
-        public AssimpAnimation(Animation animation, Dictionary<string, JointBone> Hierarhy, Matrix inv)
+
+        public AssimpAnimation(Animation animation, Dictionary<string, JointBone> Hierarhy)
         {
             Dictionary<string, JointBone> hier = new Dictionary<string, JointBone>();
             for (int i = 0; i < Hierarhy.Count; i++)
@@ -66,17 +58,16 @@ namespace VictoremLibrary
             }
             numFrames = (int)animation.DurationInTicks + 1;
             framesPerSecond = animation.TicksPerSecond != 0 ? animation.TicksPerSecond : 25d;
-            // Frames =  // GetFrames(animation, Hierarhy, inv);
-            Dictionary<string, Joint>[]  Transforms = GetTransforms(animation, hier, numFrames);
-            Frames = ToFrames(Transforms);
+            Dictionary<string, Joint>[] Transforms = GetTransforms(animation, hier, numFrames);
+            Frames = ToFrames(Transforms, hier);
         }
 
-        Matrix[][] ToFrames(Dictionary<string, Joint>[] tr)
+        Matrix[][] ToFrames(Dictionary<string, Joint>[] tr, Dictionary<string, JointBone> hier)
         {
             List<Matrix[]> m = new List<Matrix[]>();
             for (int i = 0; i < numFrames; i++)
             {
-               m.Add( tr[i].Select(j => j.Value.matrix).ToArray());
+                m.Add(tr[i].Select(j => hier[j.Value.Name].Offset * j.Value.matrix).ToArray());
             }
             return m.ToArray();
         }
@@ -86,7 +77,7 @@ namespace VictoremLibrary
             List<Dictionary<string, Joint>> tr = new List<Dictionary<string, Joint>>();
             for (int i = 0; i < numFrames; i++)
             {
-                tr.Add(buildJoints(GetJoints(a, i, h)));
+                tr.Add(GetJoints(a, i, h));
             }
             return tr.ToArray();
 
@@ -101,11 +92,14 @@ namespace VictoremLibrary
                 {
                     Name = node.NodeName,
                     PName = h[node.NodeName].ParentName,
-                    Pos = node.PositionKeys.Any(pky => pky.Time == f) ? node.PositionKeys.First(pk => pk.Time == f).Value : node.PositionKeys.First(pk => pk.Time == node.PositionKeys.Max(m => m.Time)).Value,
-                    Quat = node.RotationKeys.Any(pky => pky.Time == f) ? node.RotationKeys.First(pk => pk.Time == f).Value : node.RotationKeys.First(pk => pk.Time == node.RotationKeys.Max(m => m.Time)).Value
+                    Pos = (node.PositionKeys.Any(pky => pky.Time == f) ? node.PositionKeys.First(pk => pk.Time == f).Value : node.PositionKeys.First(pk => pk.Time == node.PositionKeys.Max(m => m.Time)).Value).ToVector3(),
+                    Quat = (node.RotationKeys.Any(pky => pky.Time == f) ? node.RotationKeys.First(pk => pk.Time == f).Value : node.RotationKeys.First(pk => pk.Time == node.RotationKeys.Max(m => m.Time)).Value).ToQuat(),
+                    scaling =Matrix4x4.FromScaling(node.ScalingKeys.Any(pky => pky.Time == f) ? node.ScalingKeys.First(pk => pk.Time == f).Value : node.ScalingKeys.First(pk => pk.Time == node.ScalingKeys.Max(m => m.Time)).Value).ToMatrix()
                 });
             }
-            return j;
+
+            Dictionary<string, Joint> jbilded = buildJoints(j);
+            return jbilded;
         }
 
         Dictionary<string, Joint> buildJoints(Dictionary<string, Joint> joints)
@@ -116,124 +110,35 @@ namespace VictoremLibrary
                 if (j.Value.PName != null)
                 {
                     Joint b = j.Value;
-                    b.Pos = joints[b.PName].Pos + Assimp.Quaternion.Rotate(b.Pos, joints[b.PName].Quat);
+                    b.Pos = joints[b.PName].Pos + Vector3.Transform(b.Pos, joints[b.PName].Quat);
                     b.Quat = joints[b.PName].Quat * b.Quat;
-                    b.matrix = Matrix.AffineTransformation(1, ToQuat(b.Quat), ToVector3( b.Pos));
+                    b.scaling = joints[b.PName].scaling * b.scaling;
+                    b.matrix =b.scaling* Matrix.AffineTransformation(1, b.Quat, b.Pos);
                     joints[b.Name] = b;
                 }
-                if(string.IsNullOrEmpty(j.Value.PName))
+                if (string.IsNullOrEmpty(j.Value.PName))
                 {
                     Joint b = j.Value;
-                    b.matrix = Matrix.AffineTransformation(1, ToQuat(b.Quat), ToVector3(b.Pos));
+                    b.matrix = Matrix.AffineTransformation(1, b.Quat, b.Pos);
                     joints[b.Name] = b;
                 }
             }
             return joints;
         }
 
-        //Matrix[][] GetFrames(Animation animation, Dictionary<string, JointBone> Hierarhy, Matrix inverse)
-        //{
-        //    List<Matrix[]> mat = new List<Matrix[]>();
-        //    for (int i = 0; i < numFrames; i++)
-        //    {
-        //        mat.Add(buildJoints(SetHierarhiMatices(animation.NodeAnimationChannels.ToArray(), Hierarhy, i), inverse));
-        //    }
-        //    return mat.ToArray();
-        //}
-
-        //Dictionary<string, JointBone> SetHierarhiMatices(NodeAnimationChannel[] nodeAnimCannels, Dictionary<string, JointBone> Hierarhy, int i)
-        //{
-        //    foreach (var nodeAnim in nodeAnimCannels)
-        //    {
-        //        var j = Hierarhy[nodeAnim.NodeName];
-        //        j.Transform = GetFramMatrix(nodeAnim, i);
-        //        Hierarhy[nodeAnim.NodeName] = j;
-        //    }
-        //    return Hierarhy;
-        //}
-
-        //Matrix GetFramMatrix(NodeAnimationChannel nodeAnim, int i)
-        //{
-        //    Matrix matrix;
-        //    if (nodeAnim.HasPositionKeys)
-        //    {
-        //        var pPosition = i < nodeAnim.PositionKeyCount ? nodeAnim.PositionKeys[i].Value : nodeAnim.PositionKeys.Last().Value;
-
-        //        var pRot = i < nodeAnim.RotationKeyCount ? nodeAnim.RotationKeys[i].Value : nodeAnim.RotationKeys.Last().Value;
-
-        //        var pscale = i < nodeAnim.ScalingKeyCount ? nodeAnim.ScalingKeys[i].Value : nodeAnim.ScalingKeys.Last().Value;
-
-        //        // create the combined transformation matrix
-        //        pRot.Normalize();
-        //        var mat = new Assimp.Matrix4x4(pRot.GetMatrix());
-        //        mat.A1 *= pscale.X; mat.B1 *= pscale.X; mat.C1 *= pscale.X;
-        //        mat.A2 *= pscale.Y; mat.B2 *= pscale.Y; mat.C2 *= pscale.Y;
-        //        mat.A3 *= pscale.Z; mat.B3 *= pscale.Z; mat.C3 *= pscale.Z;
-        //        mat.A4 = pPosition.X; mat.B4 = pPosition.Y; mat.C4 = pPosition.Z;
-        //        matrix = ToMatrix(mat);
-        //    }
-        //    else { matrix = Matrix.Identity; }
-
-        //    return matrix;
-        //}
-
-        //Matrix[] buildJoints(Dictionary<string, JointBone> hierarhy, Matrix inverse)
-        //{
-        //    var m = new List<Matrix>();
-        //    for (int i = 0; i < hierarhy.Count; i++)
-        //    {
-        //        var j = hierarhy.ElementAt(i).Value;
-
-        //        if (j.ParentName != null)
-        //        {
-        //            j.Transform = inverse * j.Transform * hierarhy[j.ParentName].Transform;
-        //        }
-        //        m.Add(j.Transform);
-        //    }
-        //    return m.ToArray();
-        //}
-
-        //Matrix[] CalculateTransforms(Dictionary<string, JointBone> hierarhy)
-        //{
-        //    var m = new List<Matrix>();
-        //    foreach (var j in hierarhy)
-        //    {
-        //        m.Add(CalculatPartnTransform(j.Value, hierarhy));
-        //    }
-        //    return m.ToArray();
-        //}
-
-        //Matrix CalculatPartnTransform(JointBone jB, Dictionary<string, JointBone> hierarhy)
-        //{
-        //    if (jB.ParentName == null) return jB.Transform;
-        //    return  jB.Transform* CalculatPartnTransform(hierarhy[jB.ParentName], hierarhy);
-        //}
-
-        Vector3 ToVector3(Vector3D v)
-        {
-            return new Vector3(v.X, v.Y, v.Z);
-        }
-
-        Matrix ToMatrix(Matrix4x4 m)
-        {
-
-            var ret = Matrix.Identity;
-            for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    ret[i, j] = m[i + 1, j + 1];
-                }
-            }
-            return ret;
-        }
-
-        SharpDX.Quaternion ToQuat(Assimp.Quaternion q)
-        {
-            return new SharpDX.Quaternion(q.X, q.Y, q.Z, q.W);
-        }
     }
 
+    public class AssimpMesh
+    {
+        public bool HasBones { get; set; }
+        public string Texture { get; set; } = null;
+        public AssimpVertex[] Veteces { get; set; } = null;
+        public uint[] Indeces { get; set; } = null;
+        public string NormalMap { get; set; } = null;
+        public string DiplacementMap { get; set; } = null;
+        public string SpecularMap { get; set; } = null;
+    }
+    
     /// <summary>
     /// Класс для загрузки 3Д моделей и скелейтной анимации из файлов
     /// </summary>
@@ -273,9 +178,132 @@ namespace VictoremLibrary
         public bool HasAnimations { get; private set; }
         public AssimpMesh[] Meshes { get { return _meshes; } }
         public int AnimationsCount { get { return _animatons.Length; } }
-        AssimpMesh[] _meshes;
-        Dictionary<string, JointBone> _boneHierarhy;
+
+        AssimpMesh[] _meshes;        
         AssimpAnimation[] _animatons;
+
+
+        /// <summary>
+        /// Загружает модель из файла
+        /// </summary>
+        /// <param name="File">Локальный путь к файлу модели</param>
+        public AssimpModel(string File)
+        {
+            String fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), File);
+
+            using (AssimpContext importer = new AssimpContext())
+            {
+                NormalSmoothingAngleConfig config = new NormalSmoothingAngleConfig(66.0f);
+                importer.SetConfig(config);
+                var Model = importer.ImportFile(fileName, PostProcessPreset.ConvertToLeftHanded | PostProcessPreset.TargetRealTimeMaximumQuality | PostProcessSteps.GenerateSmoothNormals | PostProcessSteps.CalculateTangentSpace );
+
+                //TODO: Загрузить данные в мои собственные классы и структуры.  
+                Dictionary<string, JointBone> _boneHierarhy = new Dictionary<string, JointBone>();
+
+                HasAnimations = false;
+                if (Model.Meshes[0].HasBones)
+                   _boneHierarhy = GetHierarhy(Model);
+                _meshes = GetMeshes(Model, _boneHierarhy);
+                if (Model.HasAnimations && Model.Animations[0].HasNodeAnimations)
+                {
+                    _animatons = GetAnimation(Model, _boneHierarhy);
+                    HasAnimations = true;
+                }
+
+            }
+        }
+
+
+
+        #region Пример из Гита
+        private void ComputeBoundingBox(Scene m_model)
+        {
+            var m_sceneMin = new Vector3(1e10f, 1e10f, 1e10f);
+            var m_sceneMax = new Vector3(-1e10f, -1e10f, -1e10f);
+            var m_sceneCenter = new Vector3(0);
+            Matrix identity = Matrix.Identity;
+
+            ComputeBoundingBox(m_model, m_model.RootNode, ref m_sceneMin, ref m_sceneMax, ref identity);
+
+            m_sceneCenter.X = (m_sceneMin.X + m_sceneMax.X) / 2.0f;
+            m_sceneCenter.Y = (m_sceneMin.Y + m_sceneMax.Y) / 2.0f;
+            m_sceneCenter.Z = (m_sceneMin.Z + m_sceneMax.Z) / 2.0f;
+        }
+
+        private void ComputeBoundingBox(Scene m_model, Node node, ref Vector3 min, ref Vector3 max, ref Matrix trafo)
+        {
+            Matrix prev = trafo;
+            trafo = Matrix.Multiply(prev, FromMatrix(node.Transform));
+
+            if (node.HasMeshes)
+            {
+                foreach (int index in node.MeshIndices)
+                {
+                    Assimp.Mesh mesh = m_model.Meshes[index];
+                    for (int i = 0; i < mesh.VertexCount; i++)
+                    {
+                        Vector3 tmp = FromVector(mesh.Vertices[i]);
+                        Vector3.Transform(ref tmp, ref trafo, out tmp);
+
+                        min.X = Math.Min(min.X, tmp.X);
+                        min.Y = Math.Min(min.Y, tmp.Y);
+                        min.Z = Math.Min(min.Z, tmp.Z);
+
+                        max.X = Math.Max(max.X, tmp.X);
+                        max.Y = Math.Max(max.Y, tmp.Y);
+                        max.Z = Math.Max(max.Z, tmp.Z);
+                    }
+                }
+            }
+
+            for (int i = 0; i < node.ChildCount; i++)
+            {
+                ComputeBoundingBox(m_model, node.Children[i], ref min, ref max, ref trafo);
+            }
+            trafo = prev;
+        }
+
+        private Matrix FromMatrix(Matrix4x4 mat)
+        {
+            Matrix m = new Matrix();
+            m.M11 = mat.A1;
+            m.M12 = mat.A2;
+            m.M13 = mat.A3;
+            m.M14 = mat.A4;
+            m.M21 = mat.B1;
+            m.M22 = mat.B2;
+            m.M23 = mat.B3;
+            m.M24 = mat.B4;
+            m.M31 = mat.C1;
+            m.M32 = mat.C2;
+            m.M33 = mat.C3;
+            m.M34 = mat.C4;
+            m.M41 = mat.D1;
+            m.M42 = mat.D2;
+            m.M43 = mat.D3;
+            m.M44 = mat.D4;
+            return m;
+        }
+
+        private Vector3 FromVector(Vector3D vec)
+        {
+            Vector3 v;
+            v.X = vec.X;
+            v.Y = vec.Y;
+            v.Z = vec.Z;
+            return v;
+        }
+
+        private Color4 FromColor(Color4D color)
+        {
+            Color4 c;
+            c.Red = color.R;
+            c.Green = color.G;
+            c.Blue = color.B;
+            c.Alpha = color.A;
+            return c;
+        }
+        #endregion
 
         /// <summary>
         /// Сколько фреймов есть у анимации
@@ -305,51 +333,11 @@ namespace VictoremLibrary
         /// <returns>Матрицу с преобразований для скелета</returns>
         public Matrix[] GetAnimationFrame(int animaton, int frame)
         {
-            return _animatons[animaton].Frames[0];
+            if (!HasAnimations) throw new Exception("У этой модели нет скелетной анимации!");
+            return _animatons[animaton].Frames[frame];
         }
 
-        /// <summary>
-        /// Загружает модель из файла
-        /// </summary>
-        /// <param name="File">Локальный путь к файлу модели</param>
-        public AssimpModel(string File)
-        {
-            String fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), File);
-
-            using (AssimpContext importer = new AssimpContext())
-            {
-                NormalSmoothingAngleConfig config = new NormalSmoothingAngleConfig(66.0f);
-                importer.SetConfig(config);
-#if DEBUG
-                using (LogStream logstream = new LogStream(delegate (String msg, String userData)
-                 {
-
-                     Console.WriteLine(msg);
-
-
-                 }))
-                    logstream.Attach();
-#endif
-                var Model = importer.ImportFile(fileName, PostProcessPreset.ConvertToLeftHanded | PostProcessSteps.GenerateSmoothNormals | PostProcessSteps.CalculateTangentSpace | PostProcessSteps.Triangulate | PostProcessSteps.JoinIdenticalVertices);
-
-                var m_GlobalInverseTransform = Model.RootNode.Transform;
-                m_GlobalInverseTransform.Inverse();
-
-                //TODO: Загрузить данные в мои собственные классы и структуры.  
-                HasAnimations = false;
-                if (Model.Meshes[0].HasBones)
-                    _boneHierarhy = GetHierarhy(Model);
-                _meshes = GetMeshes(Model);
-                if (Model.HasAnimations && Model.Animations[0].HasNodeAnimations)
-                {
-                    _animatons = GetAnimation(Model, ToMatrix(m_GlobalInverseTransform));
-                    HasAnimations = true;
-                }
-
-            }
-        }
-
-        AssimpMesh[] GetMeshes(Scene model)
+        AssimpMesh[] GetMeshes(Scene model, Dictionary<string, JointBone> _boneHierarhy)
         {
             var m = new List<AssimpMesh>();
             foreach (var mesh in model.Meshes)
@@ -358,7 +346,7 @@ namespace VictoremLibrary
                 {
                     Indeces = mesh.GetIndices().Select(i => (uint)i).ToArray(),
                     Texture = model.Materials[mesh.MaterialIndex].TextureDiffuse.FilePath,
-                    Veteces = GetVertex(mesh).ToArray(),
+                    Veteces = GetVertex(mesh,_boneHierarhy).ToArray(),
                     NormalMap = model.Materials[mesh.MaterialIndex].TextureNormal.FilePath,
                     SpecularMap = model.Materials[mesh.MaterialIndex].TextureSpecular.FilePath,
                     DiplacementMap = model.Materials[mesh.MaterialIndex].TextureDisplacement.FilePath,
@@ -371,69 +359,74 @@ namespace VictoremLibrary
         Dictionary<string, JointBone> GetHierarhy(Scene model)
         {
             Dictionary<string, JointBone> jb = new Dictionary<string, JointBone>();
-            GetChildren(model.RootNode, ref jb);
+            GetChildren(model.RootNode, ref jb, ref model);
             var m = jb.Where(j => j.Key.Contains("<")).Select(jj => jj.Key).ToArray();
             foreach (var item in m)
             {
                 jb.Remove(item);
             }
-          var n = jb.Where(ji => ji.Value.ParentName.Contains("<")).Select(jt=>jt.Key).ToArray();
+            var n = jb.Where(ji => ji.Value.ParentName.Contains("<")).Select(jt => jt.Key).ToArray();
             foreach (var i in n)
             {
                 var jbone = jb[i];
-                jbone.ParentName= null;
+                jbone.ParentName = null;
                 jb[i] = jbone;
             }
             return jb;
         }
 
-        AssimpAnimation[] GetAnimation(Scene model, Matrix inv)
+        AssimpAnimation[] GetAnimation(Scene model, Dictionary<string, JointBone> _boneHierarhy)
         {
+
             var a = new List<AssimpAnimation>();
 
             foreach (var item in model.Animations)
             {
-                a.Add(new AssimpAnimation(item, _boneHierarhy, inv));
+                a.Add(new AssimpAnimation(item, _boneHierarhy));
             }
             return a.ToArray();
         }
 
-        void GetChildren(Node n, ref Dictionary<string, JointBone> jb)
+        void GetChildren(Node n, ref Dictionary<string, JointBone> jb, ref Scene model)
         {
             jb.Add(n.Name, new JointBone()
             {
                 ParentName = n.Parent?.Name,
-                Transform = ToMatrix(n.Transform)
+                Transform = n.Transform.ToMatrix(),
+                Name = n.Name,
+                Offset = model.Meshes.SelectMany(m => m.Bones).FirstOrDefault(b => b.Name == n.Name)?.OffsetMatrix.ToMatrix() ?? Matrix.Identity
+
             });
             if (n.HasChildren)
                 for (int i = 0; i < n.ChildCount; ++i)
                 {
-                    GetChildren(n.Children[i], ref jb);
+                    GetChildren(n.Children[i], ref jb, ref model);
                 }
         }
 
-        List<AssimpVertex> GetVertex(Assimp.Mesh m)
+        List<AssimpVertex> GetVertex(Assimp.Mesh m, Dictionary<string, JointBone> _boneHierarhy)
         {
             List<AssimpVertex> v = new List<AssimpVertex>();
 
             for (int i = 0; i < m.VertexCount; ++i)
             {
+                Vector3 cc = new Vector3(m.Vertices[i].X, m.Vertices[i].Y, m.Vertices[i].Z);
                 v.Add(new AssimpVertex()
                 {
-                    position = new Vector3(m.Vertices[i].X, m.Vertices[i].Y, m.Vertices[i].Z),
-                    uv = new Vector3(m.TextureCoordinateChannels[0][i].X, m.TextureCoordinateChannels[0][i].Y, m.TextureCoordinateChannels[0][i].Z),
-                    tangent = ToVector3(m.Tangents[i]),
-                    biTangent = ToVector3(m.BiTangents[i]),
-                    normal = ToVector3(m.Normals[i]),
-                    BoneWheight = GetWheightID(m, i),
-                    BoneID = GetBoneID(m, i)
+                    position = cc,
+                    uv =m.TextureCoordinateChannelCount>0? new Vector3(m.TextureCoordinateChannels[0][i].X, m.TextureCoordinateChannels[0][i].Y, m.TextureCoordinateChannels[0][i].Z): new Vector3(),
+                    tangent =m.Tangents.Count>0? m.Tangents[i].ToVector3(): new Vector3(),
+                    biTangent =m.BiTangents.Count>0? m.BiTangents[i].ToVector3():new Vector3(),
+                    normal =m.HasNormals? m.Normals[i].ToVector3():new Vector3(),
+                    BoneWheight =m.HasBones? GetWheightID(m, i): new Vector4(),
+                    BoneID = m.HasBones ? GetBoneID(m, i, _boneHierarhy): new Vector4()
                 });
             }
 
             return v;
         }
 
-        Vector4 GetBoneID(Assimp.Mesh m, int i)
+        Vector4 GetBoneID(Assimp.Mesh m, int i, Dictionary<string, JointBone> _boneHierarhy)
         {
             Vector4 ret = new Vector4();
             var my = m.Bones
@@ -450,38 +443,13 @@ namespace VictoremLibrary
         {
             Vector4 ret = new Vector4();
             var my = m.Bones.SelectMany(b => b.VertexWeights).Where(w => w.VertexID == i).ToArray();
-            var sum = my.Sum(x => x.Weight);
+
             ret.X = my[0].Weight;
             ret.Y = my.Length > 1 ? my[1].Weight : 0;
             ret.Z = my.Length > 2 ? my[2].Weight : 0;
             ret.W = my.Length > 3 ? my[3].Weight : 0;
             return ret;
         }
-
-        Vector3 ToVector3(Vector3D v)
-        {
-            return new Vector3(v.X, v.Y, v.Z);
-        }
-
-        Matrix ToMatrix(Matrix4x4 m)
-        {
-
-            var ret = Matrix.Identity;
-            for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    ret[i, j] = m[i + 1, j + 1];
-                }
-            }
-            return ret;
-        }
-
-        SharpDX.Quaternion ToQuat(Assimp.Quaternion q)
-        {
-            return new SharpDX.Quaternion(q.X, q.Y, q.Z, q.W);
-        }
-
     }
 }
 

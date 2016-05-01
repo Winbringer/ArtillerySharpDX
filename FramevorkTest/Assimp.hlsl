@@ -17,7 +17,7 @@ struct VS_IN
     float2 uv : TEXCOORD;
     float3 tangent : TANGENT;
     float3 biTangent : BINORMAL;
-    uint4 boneID : BLENDINDICES;
+    float4 boneID : BLENDINDICES;
     float4 wheights : BLENDWEIGHT;
 };
 
@@ -27,7 +27,7 @@ struct PS_IN
     float3 normal : NORMAL;
 };
 
-void SkinVertex(float4 weights, uint4 bones, inout float4 position, inout float3 normal, inout float3 tangent, inout float3 biTangent)
+void SkinVertex(float4 weights, float4 bones, inout float4 position, inout float3 normal, inout float3 tangent, inout float3 biTangent)
 {
     float4x4 skinTransform = Bones[bones.x] * weights.x + Bones[bones.y] * weights.y + Bones[bones.z] * weights.z + Bones[bones.w] * weights.w;
            

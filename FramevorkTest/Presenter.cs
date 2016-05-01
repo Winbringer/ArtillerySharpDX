@@ -44,7 +44,7 @@ namespace FramevorkTest
                 Bones[i] = m;
             }
         }
-        public int Size2()
+        public static int Size()
         {
             return Utilities.SizeOf<Matrix>() * 1024;
         }
@@ -55,7 +55,7 @@ namespace FramevorkTest
     {
         TextWirter Drawer2d;
         Bitmap bitmap;
-
+        Shader s;
         private AssimpModel m;
 
         public Presenter(Game game)
@@ -63,19 +63,21 @@ namespace FramevorkTest
             game.OnDraw += Draw;
             game.OnUpdate += Upadate;
             game.OnKeyPressed += KeyKontroller;
+             s = new Shader(game.DeviceContext, Environment.CurrentDirectory + "\\Assimp.hlsl", AssimpModel.SkinnedPosNormalTexTanBi);
+           
 
-            //var srcTextureSRV = StaticMetods.LoadTextureFromFile(game.DeviceContext, "Village.png");
-            //var b = StaticMetods.LoadBytesFormFile(game.DeviceContext, "Village.png");
-            //var intt = game.FilterFoTexture.Histogram(srcTextureSRV);
-            //game.FilterFoTexture.SobelEdgeColor(ref srcTextureSRV, 0.5f);
-            //game.FilterFoTexture.Sepia(ref srcTextureSRV, 0.5f);
-            //game.FilterFoTexture.Contrast(ref srcTextureSRV, 2f);
-            //Drawer2d = new TextWirter(game.SwapChain.GetBackBuffer<Texture2D>(0), 800, 600);
-            //bitmap = StaticMetods.GetBitmapFromSRV(srcTextureSRV, Drawer2d.RenderTarget);
-            //Drawer2d.SetTextColor(Color.Red);
-            //Drawer2d.SetTextSize(36);
+                //var srcTextureSRV = StaticMetods.LoadTextureFromFile(game.DeviceContext, "Village.png");
+                //var b = StaticMetods.LoadBytesFormFile(game.DeviceContext, "Village.png");
+                //var intt = game.FilterFoTexture.Histogram(srcTextureSRV);
+                //game.FilterFoTexture.SobelEdgeColor(ref srcTextureSRV, 0.5f);
+                //game.FilterFoTexture.Sepia(ref srcTextureSRV, 0.5f);
+                //game.FilterFoTexture.Contrast(ref srcTextureSRV, 2f);
+                //Drawer2d = new TextWirter(game.SwapChain.GetBackBuffer<Texture2D>(0), 800, 600);
+                //bitmap = StaticMetods.GetBitmapFromSRV(srcTextureSRV, Drawer2d.RenderTarget);
+                //Drawer2d.SetTextColor(Color.Red);
+                //Drawer2d.SetTextSize(36);
 
-           m = new AssimpModel("3DModelsFiles\\Wm\\Female.md5mesh");
+                m = new AssimpModel("3DModelsFiles\\Wm\\Female.md5mesh");
 
          var   bbb = 10;
         //  m.AplyAnimashonFrame(0,20);
@@ -96,27 +98,26 @@ namespace FramevorkTest
         {
             var a = (UpdateArgs)e;
             var g = (Game)sender;
-            var w = Matrix.RotationX(MathUtil.PiOverTwo);
-            var vi = Matrix.LookAtLH(new Vector3(-10, 10, -70), Vector3.Zero, Vector3.Up);
+            var w = Matrix.Identity;//RotationX(MathUtil.PiOverTwo);
+            var vi = Matrix.LookAtLH(new Vector3(-10, 10, -100), Vector3.Zero, Vector3.Up);
             var p = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, g.Form.Width / (float)g.Form.Height, 1f, 1000f);
-            var MVP = new AnimConst(w, vi, p,0);// m.GetAnimationFrame(0,0));
+            var MVP = new AnimConst(w, vi, p,1);// m.GetAnimationFrame(0,0));
             MVP.Transpose();
             var bo = new BonesConst(m.GetAnimationFrame(0, 0));
             foreach (var mesh in m.Meshes)
                 using (var v = Buffer.Create(g.DeviceContext.Device, BindFlags.VertexBuffer, mesh.Veteces))
                 using (var index = Buffer.Create(g.DeviceContext.Device, BindFlags.IndexBuffer, mesh.Indeces))
                 using (var cb = Buffer.Create(g.DeviceContext.Device, ref MVP, new BufferDescription(Utilities.SizeOf<AnimConst>(), BindFlags.ConstantBuffer, ResourceUsage.Default)))
-                using(var cb2 = new Buffer(g.DeviceContext.Device, bo.Size2(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0))
+                using(var cb2 = new Buffer(g.DeviceContext.Device, BonesConst.Size(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0))
                 {
                     g.DeviceContext.UpdateSubresource(ref MVP, cb);
                     g.DeviceContext.UpdateSubresource( bo.Bones, cb2);
 
-                    using (Shader s = new Shader(g.DeviceContext, Environment.CurrentDirectory + "\\Assimp.hlsl", AssimpModel.SkinnedPosNormalTexTanBi))
-                    {
+                   
                         s.Begin(null, null, new[] { cb,cb2 });
                         g.Drawer.DrawIndexed(new VertexBufferBinding(v, Utilities.SizeOf<AssimpVertex>(), 0), index, mesh.Indeces.Length);
                         s.End();
-                    }
+                   
                 }
             //Drawer2d.DrawBitmap(bitmap);
             //Drawer2d.DrawText("ПОЕХАЛИ!");
@@ -127,7 +128,7 @@ namespace FramevorkTest
         {
             Drawer2d?.Dispose();
             bitmap?.Dispose();
-           
+            s?.Dispose();
         }
     }
 }

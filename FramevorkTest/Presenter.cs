@@ -10,62 +10,15 @@ using System.Runtime.InteropServices;
 
 namespace FramevorkTest
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    struct AnimConst
-    {
-        public Matrix WVP;
-        public uint HasAnimaton;
-        public uint HasDiffuseTexture;
-        Vector2 padding0;
-        public Matrix World;
-
-        public AnimConst(Matrix w, Matrix v, Matrix p, uint HasAnim, uint HasTex)
-        {
-
-            HasAnimaton = HasAnim;
-            HasDiffuseTexture = HasTex;
-            WVP = w * v * p;
-            World = w;
-            padding0 = new Vector2();
-        }
-
-        public void Transpose()
-        {
-            WVP.Transpose();
-        }
-    }
-    public class BonesConst
-    {
-        public Matrix[] Bones;
-
-        public BonesConst()
-        {
-            Bones = new Matrix[1024];
-
-        }
-        public void init(Matrix[] bones)
-        {
-            for (int i = 0; i < bones.Length; i++)
-            {
-                var m = bones[i];
-                m.Transpose();
-                Bones[i] = m;
-            }
-        }
-        public static int Size()
-        {
-            return Utilities.SizeOf<Matrix>() * 1024;
-        }
-
-    }
+  
 
     class Presenter : IDisposable
     {
         TextWirter Drawer2d;
         Bitmap bitmap;
-        Shader s;
-        private AssimpModel m;
-        SamplerState samler;
+      
+        private Assimp3DModel model;
+
         public Presenter(Game game)
         {
             game.OnDraw += Draw;
@@ -81,17 +34,9 @@ namespace FramevorkTest
             //bitmap = StaticMetods.GetBitmapFromSRV(srcTextureSRV, Drawer2d.RenderTarget);
             //Drawer2d.SetTextColor(Color.Red);
             //Drawer2d.SetTextSize(36);
-            var sD = SamplerStateDescription.Default();
-            sD.AddressU = TextureAddressMode.Wrap;
-            sD.AddressV = TextureAddressMode.Wrap;
-            sD.AddressW = TextureAddressMode.Wrap;
-            sD.MaximumAnisotropy = 16;
-            sD.MaximumLod = float.MaxValue;
-            sD.MinimumLod = 0;
-            sD.Filter = SharpDX.Direct3D11.Filter.MinMagMipLinear;
-            samler = new SamplerState(game.DeviceContext.Device, sD);
-            s = new Shader(game.DeviceContext, Environment.CurrentDirectory + "\\Assimp.hlsl", AssimpModel.SkinnedPosNormalTexTanBi);
-            m = new AssimpModel("3DModelsFiles\\Wm\\Female.md5mesh");
+          
+            model = new Assimp3DModel( game, "3DModelsFiles\\Wm\\Female.md5mesh", "\\3DModelsFiles\\Wm\\");
+            model._world = Matrix.RotationX(MathUtil.PiOverTwo);
         }
 
         private void KeyKontroller(object sender, EventArgs e)
@@ -102,36 +47,17 @@ namespace FramevorkTest
         private void Upadate(object sender, EventArgs e)
         {
             var a = (UpdateArgs)e;
-
+            model.Update(a.Time, true);
         }
-        int frame = 0;
-        BonesConst bo = new BonesConst();
+       
+       
         private void Draw(object sender, EventArgs e)
         {
             var a = (UpdateArgs)e;
             var g = (Game)sender;
-            var w = Matrix.Identity;//Matrix.RotationX(MathUtil.PiOverTwo);
-            var vi = Matrix.LookAtLH(new Vector3(0, 50, -100), Vector3.Zero, Vector3.Up);
-            var p = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, g.Form.Width / (float)g.Form.Height, 1f, 1000f);
-            var MVP = new AnimConst(w, vi, p, 1, 1);
-            MVP.Transpose();
-            ++frame;
-            if (frame >= m.AnimationNumFrames(0)) frame = 0;
-            bo.init(m.GetAnimationFrame(0, frame));
-            foreach (var mesh in m.Meshes)
-                using(var tex = StaticMetods.LoadTextureFromFile(g.DeviceContext, Environment.CurrentDirectory+"\\3DModelsFiles\\Wm\\" + mesh.Texture))
-                using (var v = Buffer.Create(g.DeviceContext.Device, BindFlags.VertexBuffer, mesh.Veteces))
-                using (var index = Buffer.Create(g.DeviceContext.Device, BindFlags.IndexBuffer, mesh.Indeces))
-                using (var cb = Buffer.Create(g.DeviceContext.Device, ref MVP, new BufferDescription(Utilities.SizeOf<AnimConst>(), BindFlags.ConstantBuffer, ResourceUsage.Default)))
-                using (var cb2 = new Buffer(g.DeviceContext.Device, BonesConst.Size(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0))
-                {
-                    g.DeviceContext.UpdateSubresource(ref MVP, cb);
-                   g.DeviceContext.UpdateSubresource(bo.Bones, cb2);
-                    s.Begin( new[] { samler }, new[] { tex }, new[] { cb, cb2 });
-                    g.Drawer.DrawIndexed(new VertexBufferBinding(v, Utilities.SizeOf<AssimpVertex>(), 0), index, mesh.Indeces.Length);
-                    s.End();
 
-                }
+            model.Draw();
+
             //Drawer2d.DrawBitmap(bitmap);
             //Drawer2d.DrawText("ПОЕХАЛИ!");
 
@@ -141,8 +67,7 @@ namespace FramevorkTest
         {
             Drawer2d?.Dispose();
             bitmap?.Dispose();
-            s?.Dispose();
-            samler.Dispose();
+            model?.Dispose();
         }
     }
 }

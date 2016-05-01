@@ -22,8 +22,8 @@ namespace VictoremLibrary
 
         #region Свойства
         public RawColor4? BlendFactor { get; set; } = null;
-        public DepthStencilStateDescription DepthStencilDescripshion { set { Utilities.Dispose(ref _DState); _DState = new DepthStencilState(_dx11DeviceContext.Device, value); } }
-        public RasterizerStateDescription RasterizerDescription { set { Utilities.Dispose(ref _rasterizerState); _rasterizerState = new RasterizerState(_dx11DeviceContext.Device, value); } }
+        public DepthStencilStateDescription DepthStencilDescripshion { set { Utilities.Dispose(ref _DState); _DState = new DepthStencilState(_dx11DeviceContext.Device, value); _dx11DeviceContext.OutputMerger.DepthStencilState = _DState; } }
+        public RasterizerStateDescription RasterizerDescription { set { Utilities.Dispose(ref _rasterizerState); _rasterizerState = new RasterizerState(_dx11DeviceContext.Device, value); _dx11DeviceContext.Rasterizer.State = _rasterizerState; } }
         public BlendStateDescription BlendDescription { set { Utilities.Dispose(ref _blendState); _blendState = new BlendState(_dx11DeviceContext.Device, value); } }
         #endregion
 
@@ -45,6 +45,8 @@ namespace VictoremLibrary
             var b = BlendStateDescription.Default();
             b.AlphaToCoverageEnable = new RawBool(true);
             BlendDescription = b;
+          
+            
         }
 
         #region Методы
@@ -67,9 +69,6 @@ namespace VictoremLibrary
             //Перенос данных буферов в видеокарту
             _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, vertexBinging);
             _dx11DeviceContext.InputAssembler.SetIndexBuffer(indexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);
-
-            _dx11DeviceContext.Rasterizer.State = _rasterizerState;
-            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
 
             _dx11DeviceContext.OutputMerger.SetBlendState(null, null);
             if (isBlending) _dx11DeviceContext.OutputMerger.SetBlendState(_blendState, BlendFactor);

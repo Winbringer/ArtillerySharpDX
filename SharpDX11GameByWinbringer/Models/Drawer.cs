@@ -31,8 +31,8 @@ namespace SharpDX11GameByWinbringer.Models
         public RawColor4? BlendFactor { get; set; } = null;
 
         public SamplerStateDescription Samplerdescription { set { _samplerState?.Dispose(); _samplerState = new SamplerState(_dx11DeviceContext.Device, value); } }
-        public DepthStencilStateDescription DepthStencilDescripshion { set { _DState?.Dispose(); _DState = new DepthStencilState(_dx11DeviceContext.Device, value); } }
-        public RasterizerStateDescription RasterizerDescription { set { _rasterizerState?.Dispose(); _rasterizerState = new RasterizerState(_dx11DeviceContext.Device, value); } }
+        public DepthStencilStateDescription DepthStencilDescripshion { set { _DState?.Dispose(); _DState = new DepthStencilState(_dx11DeviceContext.Device, value);  _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;         } }
+        public RasterizerStateDescription RasterizerDescription { set { _rasterizerState?.Dispose(); _rasterizerState = new RasterizerState(_dx11DeviceContext.Device, value); _dx11DeviceContext.Rasterizer.State = _rasterizerState; } }
         public BlendStateDescription BlendDescription { set { _blendState?.Dispose(); _blendState = new BlendState(_dx11DeviceContext.Device, value); } }
 
         #endregion
@@ -152,8 +152,6 @@ namespace SharpDX11GameByWinbringer.Models
                     _dx11DeviceContext.PixelShader.SetShaderResource(i, VM.Textures?[i]);
                 }
             // _dx11DeviceContext.PixelShader.SetShaderResources(0, 1, VM.Textures);
-            _dx11DeviceContext.Rasterizer.State = _rasterizerState;
-            _dx11DeviceContext.OutputMerger.DepthStencilState = _DState;
 
             _dx11DeviceContext.OutputMerger.SetBlendState(null, null);
             if (isBlending) _dx11DeviceContext.OutputMerger.SetBlendState(_blendState, BlendFactor);

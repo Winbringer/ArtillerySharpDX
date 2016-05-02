@@ -294,30 +294,37 @@ namespace VictoremLibrary
         /// <param name="device">Устройство которое будет использовать этот буффер</param>
         /// <param name="buffer">Буффер из которого нужно созда ан ордерерд асес вию</param>
         /// <returns>Ан ордеред асес вью для использования в компьюте шейдере</returns>
-        public static UnorderedAccessView CreateBufferUAV(SharpDX.Direct3D11.Device device, SharpDX.Direct3D11.Buffer buffer)
+        public static UnorderedAccessView CreateBufferUAV(SharpDX.Direct3D11.Device device,
+            SharpDX.Direct3D11.Buffer buffer,
+             UnorderedAccessViewBufferFlags flags = UnorderedAccessViewBufferFlags.None)
         {
             UnorderedAccessViewDescription uavDesc = new UnorderedAccessViewDescription
             {
                 Dimension = UnorderedAccessViewDimension.Buffer,
                 Buffer = new UnorderedAccessViewDescription.BufferResource { FirstElement = 0 }
             };
+
             if ((buffer.Description.OptionFlags & ResourceOptionFlags.BufferAllowRawViews) == ResourceOptionFlags.BufferAllowRawViews)
             {
                 uavDesc.Format = Format.R32_Typeless;
                 uavDesc.Buffer.Flags = UnorderedAccessViewBufferFlags.Raw;
                 uavDesc.Buffer.ElementCount = buffer.Description.SizeInBytes / 4;
             }
+
             else if ((buffer.Description.OptionFlags & ResourceOptionFlags.BufferStructured) == ResourceOptionFlags.BufferStructured)
             {
                 uavDesc.Format = Format.Unknown;
+                uavDesc.Buffer.Flags = flags;
                 uavDesc.Buffer.ElementCount = buffer.Description.SizeInBytes / buffer.Description.StructureByteStride;
             }
+
             else
             {
                 throw new ArgumentException("Buffer must be raw or  structured", "buffer");
             }
             return new UnorderedAccessView(device, buffer, uavDesc);
         }
+
         public static ComputeShader GetComputeShader(SharpDX.Direct3D11.Device _dx11Device,string sourse, SharpDX.Direct3D.ShaderMacro[] defines)
         {
             SharpDX.D3DCompiler.ShaderFlags shaderFlags = SharpDX.D3DCompiler.ShaderFlags.None;

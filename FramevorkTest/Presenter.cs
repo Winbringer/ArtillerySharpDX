@@ -36,7 +36,7 @@ namespace FramevorkTest
             //Drawer2d.SetTextSize(36);
           
             model = new Assimp3DModel( game, "Female.md5mesh", "3DModelsFiles\\Wm\\");
-           // model._world = Matrix.RotationX(MathUtil.PiOverTwo);
+           model._world = Matrix.RotationX(MathUtil.PiOverTwo);
         }
 
         private void KeyKontroller(object sender, EventArgs e)

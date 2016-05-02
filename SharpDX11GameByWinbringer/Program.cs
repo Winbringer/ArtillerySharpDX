@@ -10,10 +10,7 @@ namespace SharpDX11GameByWinbringer
         [System.STAThread]
         static void Main(string[] args)
         {
-            System.Console.WriteLine("Для начала игры нажмите \"Enter\"");
-            System.Console.WriteLine("Для выхода из игры нажмите \"Esc\"");
-            System.Console.WriteLine("Для паузы нажмите латинскую \"P\"");
-            System.Console.ReadLine();
+            System.Console.WriteLine("Загрузка ресурсов ...");
             double start = System.Environment.TickCount;      
             if (!SharpDX.Direct3D11.Device.IsSupportedFeatureLevel(SharpDX.Direct3D.FeatureLevel.Level_11_0))
             {
@@ -37,6 +34,11 @@ namespace SharpDX11GameByWinbringer
                 _renderForm.KeyDown += (sender, e) => { if (e.KeyCode == Keys.Escape) _renderForm.Close(); };
                 using (Game game = new Game(_renderForm))
                 {
+                    System.Console.WriteLine("Для начала игры нажмите \"Enter\"");
+                    System.Console.WriteLine("Для выхода из игры нажмите \"Esc\"");
+                    System.Console.WriteLine("Для паузы нажмите латинскую \"P\"");
+                    System.Console.ReadLine();
+
                     game.Run();
                 }
             }

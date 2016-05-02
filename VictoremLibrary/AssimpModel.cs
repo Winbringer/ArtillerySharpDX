@@ -12,7 +12,7 @@ using SharpDX.DXGI;
 
 namespace VictoremLibrary
 {
-    struct JointBone
+  public  struct JointBone
     {
         public string ParentName;
         public string Name;
@@ -28,6 +28,7 @@ namespace VictoremLibrary
         public SharpDX.Quaternion Quat;
         public Matrix scaling;
         public Matrix matrix;
+        public Matrix Offset;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -42,7 +43,7 @@ namespace VictoremLibrary
         public Vector4 BoneWheight;
     }
 
-    class AssimpAnimation
+    public class AssimpAnimation
     {
         public int numFrames { get; private set; }
         public double framesPerSecond { get; private set; }
@@ -94,7 +95,7 @@ namespace VictoremLibrary
                     PName = h[node.NodeName].ParentName,
                     Pos = (node.PositionKeys.Any(pky => pky.Time == f) ? node.PositionKeys.First(pk => pk.Time == f).Value : node.PositionKeys.First(pk => pk.Time == node.PositionKeys.Max(m => m.Time)).Value).ToVector3(),
                     Quat = (node.RotationKeys.Any(pky => pky.Time == f) ? node.RotationKeys.First(pk => pk.Time == f).Value : node.RotationKeys.First(pk => pk.Time == node.RotationKeys.Max(m => m.Time)).Value).ToQuat(),
-                    scaling =Matrix4x4.FromScaling(node.ScalingKeys.Any(pky => pky.Time == f) ? node.ScalingKeys.First(pk => pk.Time == f).Value : node.ScalingKeys.First(pk => pk.Time == node.ScalingKeys.Max(m => m.Time)).Value).ToMatrix()
+                    scaling = Matrix4x4.FromScaling(node.ScalingKeys.Any(pky => pky.Time == f) ? node.ScalingKeys.First(pk => pk.Time == f).Value : node.ScalingKeys.First(pk => pk.Time == node.ScalingKeys.Max(m => m.Time)).Value).ToMatrix()
                 });
             }
 
@@ -113,7 +114,7 @@ namespace VictoremLibrary
                     b.Pos = joints[b.PName].Pos + Vector3.Transform(b.Pos, joints[b.PName].Quat);
                     b.Quat = joints[b.PName].Quat * b.Quat;
                     b.scaling = joints[b.PName].scaling * b.scaling;
-                    b.matrix =b.scaling* Matrix.AffineTransformation(1, b.Quat, b.Pos);
+                    b.matrix = b.scaling * Matrix.AffineTransformation(1, b.Quat, b.Pos);
                     joints[b.Name] = b;
                 }
                 if (string.IsNullOrEmpty(j.Value.PName))
@@ -156,13 +157,13 @@ namespace VictoremLibrary
             this._veteces = mesh.Veteces;
             InitBuffers(device);
             if (!string.IsNullOrEmpty(mesh.Texture))
-                _textures = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Environment.CurrentDirectory + texturFolder + mesh.Texture);
+                _textures = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.Texture)));
             if (!string.IsNullOrEmpty(mesh.NormalMap))
-                _normalMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Environment.CurrentDirectory + texturFolder + mesh.NormalMap);
+                _normalMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.NormalMap)));
             if (!string.IsNullOrEmpty(mesh.SpecularMap))
-                _specularMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Environment.CurrentDirectory + texturFolder + mesh.SpecularMap);
-            if (!string.IsNullOrEmpty(mesh.NormalMap))
-                _displacementMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Environment.CurrentDirectory + texturFolder + mesh.DiplacementMap);
+                _specularMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.SpecularMap)));
+            if (!string.IsNullOrEmpty(mesh.DiplacementMap))
+                _displacementMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.DiplacementMap)));
         }
 
         public override void Dispose()
@@ -178,7 +179,7 @@ namespace VictoremLibrary
     /// <summary>
     /// Класс для загрузки 3Д моделей и скелейтной анимации из файлов
     /// </summary>
-    public class AssimpModel :IDisposable
+    public class AssimpModel : IDisposable
     {
         #region Инпут элементы
         public static readonly InputElement[] SkinnedPosNormalTexTanBi = {
@@ -211,36 +212,48 @@ namespace VictoremLibrary
 };
         #endregion
 
-        public bool HasAnimations { get; private set; }
-        public AssimpMesh[] Meshes { get { return _meshes; } }
-        public int AnimationsCount { get { return _animatons.Length; } }
-        public List<Mesh3D> Meshes3D { get { return _3dMeshes; } }
 
-        AssimpMesh[] _meshes;        
         AssimpAnimation[] _animatons;
         List<Mesh3D> _3dMeshes;
-
         /// <summary>
-        /// Загружает модель из файла
+        /// Есть ли у модели анимация
         /// </summary>
-        /// <param name="File">Локальный путь к файлу модели</param>
-        public AssimpModel(DeviceContext dc,string textureFolder, string File)
+        public bool HasAnimations { get; private set; }
+        /// <summary>
+        /// Количество анимаций модели
+        /// </summary>
+        public int AnimationsCount { get { return _animatons.Length; } }
+        /// <summary>
+        /// Меши нашей анимации с буферами данных и ресурсами текстур
+        /// </summary>
+        public List<Mesh3D> Meshes3D { get { return _3dMeshes; } }
+        /// <summary>
+        /// Анимация содержащая готовые матрицы преобразований скелета
+        /// </summary>
+        public AssimpAnimation[] Animatons { get { return _animatons; } }
+        /// <summary>
+        /// Загружает 3Д модель из файла
+        /// </summary>
+        /// <param name="dc">Устройстов для рендеринга модели</param>
+        /// <param name="Folder">Папка с моделью</param>
+        /// <param name="File">Файлы модели</param>
+        public AssimpModel(DeviceContext dc, string Folder, string File)
         {
-            String fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), File);
+            String fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), Folder + File);
 
             using (AssimpContext importer = new AssimpContext())
             {
                 NormalSmoothingAngleConfig config = new NormalSmoothingAngleConfig(66.0f);
                 importer.SetConfig(config);
-                var Model = importer.ImportFile(fileName, PostProcessPreset.ConvertToLeftHanded | PostProcessPreset.TargetRealTimeMaximumQuality | PostProcessSteps.GenerateSmoothNormals | PostProcessSteps.CalculateTangentSpace );
+                var Model = importer.ImportFile(fileName, PostProcessPreset.ConvertToLeftHanded | PostProcessPreset.TargetRealTimeMaximumQuality | PostProcessSteps.GenerateSmoothNormals | PostProcessSteps.CalculateTangentSpace);
 
                 //TODO: Загрузить данные в мои собственные классы и структуры.  
                 Dictionary<string, JointBone> _boneHierarhy = new Dictionary<string, JointBone>();
 
                 HasAnimations = false;
                 if (Model.Meshes[0].HasBones)
-                   _boneHierarhy = GetHierarhy(Model);
-                _meshes = GetMeshes(Model, _boneHierarhy);
+                    _boneHierarhy = GetHierarhy(Model);
+                AssimpMesh[] _meshes = GetMeshes(Model, _boneHierarhy);
                 if (Model.HasAnimations && Model.Animations[0].HasNodeAnimations)
                 {
                     _animatons = GetAnimation(Model, _boneHierarhy);
@@ -249,33 +262,11 @@ namespace VictoremLibrary
                 _3dMeshes = new List<Mesh3D>();
                 foreach (var item in _meshes)
                 {
-                    _3dMeshes.Add(new Mesh3D(dc.Device, item, textureFolder));
+                    _3dMeshes.Add(new Mesh3D(dc.Device, item, Folder));
                 }
 
             }
-        }
-        
-
-        /// <summary>
-        /// Сколько фреймов есть у анимации
-        /// </summary>
-        /// <param name="animaton">Номер анимации для которой нужно получить данные</param>
-        /// <returns>Сколько фреймов есть у анимации</returns>
-        public int AnimationNumFrames(int animaton)
-        {
-            return _animatons[animaton].numFrames;
-        }
-
-        /// <summary>
-        /// Количество фреймов в секунду
-        /// </summary>
-        /// <param name="animaton">Номер анимации для которой нужно получить данные</param>
-        /// <returns>Количество фреймов в секунду</returns>
-        public float AnimFramesPerSecond(int animaton)
-        {
-            return (float)_animatons[animaton].framesPerSecond;
-        }
-
+        }       
         /// <summary>
         /// Возврашает массив Костей для скелетной анимации.
         /// </summary>
@@ -297,7 +288,7 @@ namespace VictoremLibrary
                 {
                     Indeces = mesh.GetIndices().Select(i => (uint)i).ToArray(),
                     Texture = model.Materials[mesh.MaterialIndex].TextureDiffuse.FilePath,
-                    Veteces = GetVertex(mesh,_boneHierarhy).ToArray(),
+                    Veteces = GetVertex(mesh, _boneHierarhy).ToArray(),
                     NormalMap = model.Materials[mesh.MaterialIndex].TextureNormal.FilePath,
                     SpecularMap = model.Materials[mesh.MaterialIndex].TextureSpecular.FilePath,
                     DiplacementMap = model.Materials[mesh.MaterialIndex].TextureDisplacement.FilePath,
@@ -365,12 +356,12 @@ namespace VictoremLibrary
                 v.Add(new AssimpVertex()
                 {
                     position = cc,
-                    uv =m.TextureCoordinateChannelCount>0? new Vector3(m.TextureCoordinateChannels[0][i].X, m.TextureCoordinateChannels[0][i].Y, m.TextureCoordinateChannels[0][i].Z): new Vector3(),
-                    tangent =m.Tangents.Count>0? m.Tangents[i].ToVector3(): new Vector3(),
-                    biTangent =m.BiTangents.Count>0? m.BiTangents[i].ToVector3():new Vector3(),
-                    normal =m.HasNormals? m.Normals[i].ToVector3():new Vector3(),
-                    BoneWheight =m.HasBones? GetWheightID(m, i): new Vector4(),
-                    BoneID = m.HasBones ? GetBoneID(m, i, _boneHierarhy): new Vector4()
+                    uv = m.TextureCoordinateChannelCount > 0 ? new Vector3(m.TextureCoordinateChannels[0][i].X, m.TextureCoordinateChannels[0][i].Y, m.TextureCoordinateChannels[0][i].Z) : new Vector3(),
+                    tangent = m.Tangents.Count > 0 ? m.Tangents[i].ToVector3() : new Vector3(),
+                    biTangent = m.BiTangents.Count > 0 ? m.BiTangents[i].ToVector3() : new Vector3(),
+                    normal = m.HasNormals ? m.Normals[i].ToVector3() : new Vector3(),
+                    BoneWheight = m.HasBones ? GetWheightID(m, i) : new Vector4(),
+                    BoneID = m.HasBones ? GetBoneID(m, i, _boneHierarhy) : new Vector4()
                 });
             }
 
@@ -406,7 +397,7 @@ namespace VictoremLibrary
         {
             for (int i = 0; i < _3dMeshes.Count; i++)
             {
-                _3dMeshes[i].Dispose();
+                _3dMeshes?[i]?.Dispose();
             }
         }
     }

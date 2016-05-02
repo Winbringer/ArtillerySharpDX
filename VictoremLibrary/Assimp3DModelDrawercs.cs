@@ -1,12 +1,7 @@
 ﻿using SharpDX.Direct3D11;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SharpDX;
 using System.Runtime.InteropServices;
-
 namespace VictoremLibrary
 {
 
@@ -74,18 +69,18 @@ namespace VictoremLibrary
         SamplerState _samler;
         BonesConst _bones;
         public Matrix _world = Matrix.Identity;
-        public Matrix _view = Matrix.LookAtLH(new Vector3(0, 50, -100), Vector3.Zero, Vector3.Up);
+        public Matrix _view = Matrix.LookAtLH(new Vector3(0, 0, -150), Vector3.Zero, Vector3.Up);
         public Matrix _proj;
         AnimConst _constData = new AnimConst();
         private SharpDX.Direct3D11.Buffer _constBuffer1;
         private SharpDX.Direct3D11.Buffer _constBuffer0;
 
-        public Assimp3DModel(Game game, string modelFile, string textureFolder)
+        public Assimp3DModel(Game game, string modelFile, string Folder)
         {
             _proj = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.Form.Width / (float)game.Form.Height, 1f, 1000f);
             _bones = new BonesConst();
             _game = game;
-            _model = new AssimpModel(game.DeviceContext, textureFolder, modelFile);
+            _model = new AssimpModel(game.DeviceContext, Folder, modelFile);
             _shader = new Shader(game.DeviceContext, "Shaders\\Assimp.hlsl", AssimpModel.SkinnedPosNormalTexTanBi);
            
             var sD = SamplerStateDescription.Default();
@@ -102,7 +97,6 @@ namespace VictoremLibrary
             _constData.World = _world;
             _constData.WVP = _world * _view * _proj;
             _constData.Transpose();
-
             _constBuffer0 = new SharpDX.Direct3D11.Buffer(_game.DeviceContext.Device, Utilities.SizeOf<AnimConst>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
             _constBuffer1 = new SharpDX.Direct3D11.Buffer(_game.DeviceContext.Device, BonesConst.Size(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
         }
@@ -114,7 +108,7 @@ namespace VictoremLibrary
             {
                 _constData.HasAnimaton = 1;
                 ++frame;
-                if (frame >= _model.AnimationNumFrames(numAnimation)) frame = 0;
+                if (frame >= _model.Animatons[numAnimation].numFrames) frame = 0;
                 _bones.init(_model.GetAnimationFrame(numAnimation, frame));
             }
 

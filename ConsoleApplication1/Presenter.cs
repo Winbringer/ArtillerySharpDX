@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VictoremLibrary;
 using System.Diagnostics;
+using SharpDX.DirectInput;
 
 namespace ConsoleApplication1
 {
@@ -36,20 +37,16 @@ namespace ConsoleApplication1
             simTime.Start();
         }
 
-        private void KeyKontroller(object sender, EventArgs e)
+        private void KeyKontroller(float time, KeyboardState kState)
         {
-            var a = (UpdateArgs)e;
         }
 
-        private void Upadate(object sender, EventArgs e)
+        private void Upadate(float time)
         {
-            var a = (UpdateArgs)e;
         }
 
-        private void Draw(object sender, EventArgs e)
+        private void Draw(float time)
         {
-            var a = (UpdateArgs)e;
-            var g = (Game)sender;
             // 1. Update the particle simulation
             if (simTime.IsRunning)
             {

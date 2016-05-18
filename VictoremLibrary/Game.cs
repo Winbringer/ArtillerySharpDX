@@ -20,18 +20,20 @@ namespace VictoremLibrary
     /// </summary>
     public class Game : IDisposable
     {
+        public delegate void KeyPressHandler(float time, KeyboardState kState);
+        public delegate void UpdateHandler(float time);
         /// <summary>
         /// Происходит при нажатии клавиатуры. Тип данных передоваемых в переменную e - UpdateArgs.
         /// </summary>
-        public event EventHandler OnKeyPressed = null;
+        public event KeyPressHandler OnKeyPressed = null;
         /// <summary>
         /// Вызываеться при обновлении логики игры.Тип данных передоваемых в переменную  e - UpdateArgs.
         /// </summary>
-        public event EventHandler OnUpdate = null;
+        public event UpdateHandler OnUpdate = null;
         /// <summary>
         /// Вызываеться при рендеринге игры
         /// </summary>
-        public event EventHandler OnDraw = null;
+        public event UpdateHandler OnDraw = null;
 
         SharpDX.DXGI.Factory _factory;
         //Форма куда будем вставлять наше представление renderTargetView.
@@ -163,20 +165,21 @@ namespace VictoremLibrary
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderView);
             _texWriter = new TextWirter(this.SwapChain.GetBackBuffer<Texture2D>(0), _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
         }
-
+        float Time = 0;
         private void Update(double time)
         {
+            Time = (float)time;
             var m = _keyboard.GetCurrentState();
             if (m.PressedKeys.Count > 0)
-                OnKeyPressed?.Invoke(this, new UpdateArgs() { Time = (float)time, KeyboardState = m });
-            OnUpdate?.Invoke(this, new UpdateArgs() { Time = (float)time });
+                OnKeyPressed?.Invoke(Time, m);
+            OnUpdate?.Invoke(Time);
         }
 
         private void Draw()
         {
             _dx11DeviceContext.ClearRenderTargetView(_renderView, Color);
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil, 1.0f, 0);
-            OnDraw?.Invoke(this, new UpdateArgs());
+            OnDraw?.Invoke(Time);
             _swapChain.Present(0, PresentFlags.None);
         }
 
@@ -216,7 +219,7 @@ namespace VictoremLibrary
             _swapChain?.Dispose();
             _dx11Device?.Dispose();
             _drawer.Dispose();
-            _texWriter.Dispose();            
+            _texWriter.Dispose();
         }
 
     }

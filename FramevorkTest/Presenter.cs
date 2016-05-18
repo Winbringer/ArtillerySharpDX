@@ -7,16 +7,17 @@ using VictoremLibrary;
 using SharpDX.Direct2D1;
 using SharpDX.DXGI;
 using System.Runtime.InteropServices;
+using SharpDX.DirectInput;
 
 namespace FramevorkTest
 {
-  
+
 
     class Presenter : IDisposable
     {
-        TextWirter Drawer2d;
-        Bitmap bitmap;
-      
+        //TextWirter Drawer2d;
+        //Bitmap bitmap;
+
         private Assimp3DModel model;
 
         public Presenter(Game game)
@@ -34,28 +35,24 @@ namespace FramevorkTest
             //bitmap = StaticMetods.GetBitmapFromSRV(srcTextureSRV, Drawer2d.RenderTarget);
             //Drawer2d.SetTextColor(Color.Red);
             //Drawer2d.SetTextSize(36);
-          
-            model = new Assimp3DModel( game, "Female.md5mesh", "3DModelsFiles\\Wm\\");
-           model._world = Matrix.RotationX(MathUtil.PiOverTwo);
+
+            model = new Assimp3DModel(game, "Female.md5mesh", "3DModelsFiles\\Wm\\");
+            model._world = Matrix.RotationX(MathUtil.PiOverTwo);
         }
 
-        private void KeyKontroller(object sender, EventArgs e)
+        private void KeyKontroller(float time, KeyboardState kState)
         {
-            var a = (UpdateArgs)e;
+
         }
 
-        private void Upadate(object sender, EventArgs e)
+        private void Upadate(float time)
         {
-            var a = (UpdateArgs)e;
-            model.Update(a.Time, true);
+            model.Update(time, true);
         }
-       
-       
-        private void Draw(object sender, EventArgs e)
-        {
-            var a = (UpdateArgs)e;
-            var g = (Game)sender;
 
+
+        private void Draw(float time)
+        {
             model.Draw();
 
             //Drawer2d.DrawBitmap(bitmap);
@@ -65,8 +62,8 @@ namespace FramevorkTest
 
         public void Dispose()
         {
-            Drawer2d?.Dispose();
-            bitmap?.Dispose();
+            //Drawer2d?.Dispose();
+            //bitmap?.Dispose();
             model?.Dispose();
         }
     }

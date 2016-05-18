@@ -66,9 +66,9 @@ namespace ConsoleApplication1
         private SamplerState linearSampler;
         Random random = new Random();
         float limiter = 0f;
-        float genTime = 0f; // time since Generator last run
-        private bool UseLightenBlend;
+        float genTime = 0f; // time since Generator last run       
         //Public member fields
+        public bool UseLightenBlend;
         public Dictionary<String, ComputeShader> computeShaders = new Dictionary<string, ComputeShader>();
         public int ThreadsX = 128; // default thread group width
         public int ThreadsY = 1;   // default thread group height 

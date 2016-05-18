@@ -28,7 +28,6 @@ namespace VictoremLibrary
         public SharpDX.Quaternion Quat;
         public Matrix scaling;
         public Matrix matrix;
-        public Matrix Offset;
     }
 
     [StructLayout(LayoutKind.Sequential)]

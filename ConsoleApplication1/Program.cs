@@ -9,6 +9,7 @@ namespace ConsoleApplication1
         {
             using (var form = StaticMetods.GetRenderForm("Victorem_P", "LogoVW.ico"))
             using (var game = new Game(form))
+            using (var presenter = new Presenter(game))
             {
                 game.Run();
             }

@@ -44,7 +44,7 @@ namespace ConsoleApplication1
         uint _padding0;
     }
 
-    class ParticleRenderer
+    class ParticleRenderer : IDisposable
     {
         #region Fields
 
@@ -64,18 +64,37 @@ namespace ConsoleApplication1
         private Buffer perFrame;
         private Buffer perComputeBuffer;
         private SamplerState linearSampler;
+        Random random = new Random();
+        float limiter = 0f;
+        float genTime = 0f; // time since Generator last run
+        private bool UseLightenBlend;
+        //Public member fields
         public Dictionary<String, ComputeShader> computeShaders = new Dictionary<string, ComputeShader>();
         public int ThreadsX = 128; // default thread group width
         public int ThreadsY = 1;   // default thread group height 
         public ParticleConstants Constants;
         public ParticleFrame Frame;
-        Random random = new Random();
         public int ParticlesPerBatch = 16;
-        float limiter = 0f;
-        float genTime = 0f; // time since Generator last run
         public const int GeneratorThreadsX = 16;
-        private bool UseLightenBlend;
         #endregion
+
+        public void Dispose()
+        {
+            Utilities.Dispose(ref indirectArgsBuffer);
+            particleBuffers.ForEach(x => Utilities.Dispose(ref x));
+            particleSRVs.ForEach(x => Utilities.Dispose(ref x));
+            particleUAVs.ForEach(x => Utilities.Dispose(ref x));
+            computeShaders.Values.ToList().ForEach(x => Utilities.Dispose(ref x));
+            Utilities.Dispose(ref vertexShader);
+            Utilities.Dispose(ref pixelShader);
+            Utilities.Dispose(ref blendState);
+            Utilities.Dispose(ref blendStateLight);
+            Utilities.Dispose(ref disableDepthWrite);
+            Utilities.Dispose(ref particleTextureSRV);
+            Utilities.Dispose(ref perFrame);
+            Utilities.Dispose(ref perComputeBuffer);
+            Utilities.Dispose(ref linearSampler);
+        }
 
         public ParticleRenderer(Game game)
         {
@@ -83,15 +102,27 @@ namespace ConsoleApplication1
             context = game.DeviceContext;
             this.Constants.DomainBoundsMin = new Vector3(-15, -15, 15);
             this.Constants.DomainBoundsMax = new Vector3(0, 0, 0);
+            CreateDeviceDependentResources();
         }
 
         void CreateDeviceDependentResources()
         {
             #region Compile Vertex/Pixel shaders
             // Compile and create the vertex shader
-            using (var vsBytecode = ShaderBytecode.CompileFromFile(@"Shaders\ParticleVS.hlsl", "VSMain", "vs_5_0"))
-
-            using (var psBytecode = ShaderBytecode.CompileFromFile(@"Shaders\ParticlePS.hlsl", "PSMain", "ps_5_0"))
+            using (var vsBytecode = ShaderBytecode.CompileFromFile("ParticleVS.hlsl",
+                "VSMain",
+                "vs_5_0",
+                ShaderFlags.None,
+                EffectFlags.None,
+                null,
+                new HLSLFileIncludeHandler(Environment.CurrentDirectory)))
+            using (var psBytecode = ShaderBytecode.CompileFromFile("ParticlePS.hlsl",
+                "PSMain",
+                "ps_5_0",
+                ShaderFlags.None,
+                EffectFlags.None,
+                null,
+                new HLSLFileIncludeHandler(Environment.CurrentDirectory)))
             {
                 vertexShader = new VertexShader(device, vsBytecode);
                 pixelShader = new PixelShader(device, psBytecode);
@@ -351,24 +382,24 @@ namespace ConsoleApplication1
                 // There is no input layout for this renderer
                 context.InputAssembler.InputLayout = null;
                 // The triangle strip input topology 
-                context.InputAssembler.PrimitiveTopology =      SharpDX.Direct3D.PrimitiveTopology.TriangleStrip;
+                context.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleStrip;
                 // Disable depth write
-                context.OutputMerger    .SetDepthStencilState(disableDepthWrite);
+                context.OutputMerger.SetDepthStencilState(disableDepthWrite);
                 // Set the additive blend state
-                if (!UseLightenBlend) 
-                context.OutputMerger.SetBlendState(blendState, null,          0xFFFFFFFF);
-                else    context.OutputMerger.SetBlendState(blendStateLight,          Color.White, 0xFFFFFFFF);
+                if (!UseLightenBlend)
+                    context.OutputMerger.SetBlendState(blendState, null, 0xFFFFFFFF);
+                else context.OutputMerger.SetBlendState(blendStateLight, Color.White, 0xFFFFFFFF);
                 // Assign consume particle buffer SRV to vertex shader
                 context.VertexShader.SetShaderResource(0, particleSRVs[1]);
                 context.VertexShader.Set(vertexShader);
                 // Set pixel shader resources
-                context.PixelShader.SetShaderResource(0,     particleTextureSRV);
+                context.PixelShader.SetShaderResource(0, particleTextureSRV);
                 context.PixelShader.SetSampler(0, linearSampler);
                 context.PixelShader.Set(pixelShader);
                 // Draw the number of quad instances stored in the
                 // indirectArgsBuffer. The vertex shader will rely upon 
                 // the SV_VertexID and SV_InstanceID input semantics
-                context.DrawInstancedIndirect(indirectArgsBuffer, 0); 
+                context.DrawInstancedIndirect(indirectArgsBuffer, 0);
                 #endregion
 
                 // Restore previous pipeline state  
@@ -383,5 +414,11 @@ namespace ConsoleApplication1
                 context.OutputMerger.SetDepthStencilState(oldDepth, oldStencil);
             }
         }
+
+        public void Render()
+        {
+            DoRender();
+        }
+
     }
 }

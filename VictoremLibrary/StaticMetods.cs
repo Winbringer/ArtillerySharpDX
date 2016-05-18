@@ -303,25 +303,24 @@ namespace VictoremLibrary
                 Dimension = UnorderedAccessViewDimension.Buffer,
                 Buffer = new UnorderedAccessViewDescription.BufferResource { FirstElement = 0 }
             };
-
             if ((buffer.Description.OptionFlags & ResourceOptionFlags.BufferAllowRawViews) == ResourceOptionFlags.BufferAllowRawViews)
             {
+                // A raw buffer requires R32_Typeless
                 uavDesc.Format = Format.R32_Typeless;
-                uavDesc.Buffer.Flags = UnorderedAccessViewBufferFlags.Raw;
+                uavDesc.Buffer.Flags = UnorderedAccessViewBufferFlags.Raw | flags;
                 uavDesc.Buffer.ElementCount = buffer.Description.SizeInBytes / 4;
             }
-
             else if ((buffer.Description.OptionFlags & ResourceOptionFlags.BufferStructured) == ResourceOptionFlags.BufferStructured)
             {
                 uavDesc.Format = Format.Unknown;
                 uavDesc.Buffer.Flags = flags;
                 uavDesc.Buffer.ElementCount = buffer.Description.SizeInBytes / buffer.Description.StructureByteStride;
             }
-
             else
             {
-                throw new ArgumentException("Buffer must be raw or  structured", "buffer");
+                throw new ArgumentException("Buffer must be raw or structured", "buffer");
             }
+
             return new UnorderedAccessView(device, buffer, uavDesc);
         }
 

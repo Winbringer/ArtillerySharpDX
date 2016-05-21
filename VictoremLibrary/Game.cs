@@ -54,7 +54,7 @@ namespace VictoremLibrary
         FilterCS _filter = null;
 
         //Свойства
-        public float ViewRatio { get; set; }
+        public float ViewRatio { get; private set; }
         public DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
         public SharpDX.Windows.RenderForm Form { get { return _renderForm; } }
         public SwapChain SwapChain { get { return _swapChain; } }

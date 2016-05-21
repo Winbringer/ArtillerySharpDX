@@ -1,4 +1,3 @@
-﻿
 cbuffer ParticleConstants : register(b0)
 {
     float3 DomainBoundsMin;

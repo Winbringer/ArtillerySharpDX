@@ -15,26 +15,39 @@ namespace ConsoleApplication1
         private ParticleRenderer particleSystem;
         private int totalParticles;
         private Stopwatch simTime;
+        private Matrix worldMatrix;
+        private Matrix viewMatrix;
+        private Matrix projectionMatrix;
 
         public Presenter(Game game)
         {
             game.OnDraw += Draw;
             game.OnUpdate += Upadate;
             game.OnKeyPressed += KeyKontroller;
+            game.Color = Color.Black;
+            // Initialize the matrix
+             worldMatrix = Matrix.Identity;
+             viewMatrix = Matrix.LookAtRH(new Vector3(0, 1, 60), Vector3.Zero, Vector3.UnitY);
+            viewMatrix.TranslationVector += new Vector3(0, -0.98f, 0);
+             projectionMatrix = Matrix.PerspectiveFovRH(MathUtil.PiOverFour, game.ViewRatio, 0.1f, 100f);
 
             particleSystem = new ParticleRenderer(game);
-            // Initialize renderer 
+            particleSystem.UseLightenBlend = false;
+            particleSystem.Object.WVP = worldMatrix * viewMatrix * projectionMatrix;
+            particleSystem.Object.WVP.Transpose();
+            particleSystem.Object.CP = Matrix.Transpose(Matrix.Invert(viewMatrix)).Column4;
+        
             totalParticles = 100000;
             particleSystem.Constants.DomainBoundsMax = new Vector3(20, 20, 20);
             particleSystem.Constants.DomainBoundsMin = new Vector3(-20, 0, -20);
             particleSystem.Constants.ForceDirection = -Vector3.UnitY;
-            // Gravity is normally ~9.8f, we want slower snowfall
             particleSystem.Constants.ForceStrength = 1.8f;
-            // Initialize particle resources
+            particleSystem.Constants.Radius = 0.1f;       
             particleSystem.InitializeParticles(totalParticles, 13f);
-            // Initialize simulation timer 
+        
             simTime = new Stopwatch();
             simTime.Start();
+           
         }
 
         private void KeyKontroller(float time, KeyboardState kState)

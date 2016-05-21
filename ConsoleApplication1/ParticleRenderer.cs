@@ -14,6 +14,11 @@ using SharpDX.Mathematics.Interop;
 
 namespace ConsoleApplication1
 {
+    public struct PerObject
+    {
+        public Matrix WVP;
+        public Vector4 CP;
+    }
     // Structure for particle
     public struct Particle
     {
@@ -61,8 +66,8 @@ namespace ConsoleApplication1
         private BlendState blendStateLight;
         private DepthStencilState disableDepthWrite;
         private ShaderResourceView particleTextureSRV;
-        private Buffer perFrame;
-        private Buffer perComputeBuffer;
+        public Buffer perFrame;
+        public Buffer perComputeBuffer;
         private SamplerState linearSampler;
         Random random = new Random();
         float limiter = 0f;
@@ -74,8 +79,10 @@ namespace ConsoleApplication1
         public int ThreadsY = 1;   // default thread group height 
         public ParticleConstants Constants;
         public ParticleFrame Frame;
+        public PerObject Object;
         public int ParticlesPerBatch = 16;
         public const int GeneratorThreadsX = 16;
+        private Buffer perObject;
         #endregion
 
         public void Dispose()
@@ -94,6 +101,7 @@ namespace ConsoleApplication1
             Utilities.Dispose(ref perFrame);
             Utilities.Dispose(ref perComputeBuffer);
             Utilities.Dispose(ref linearSampler);
+            Utilities.Dispose(ref perObject);
         }
 
         public ParticleRenderer(Game game)
@@ -176,6 +184,13 @@ namespace ConsoleApplication1
             // Create the particle frame buffer 
             perFrame = new Buffer(device,
                 Utilities.SizeOf<ParticleFrame>(),
+                ResourceUsage.Default,
+                BindFlags.ConstantBuffer,
+                CpuAccessFlags.None,
+                ResourceOptionFlags.None,
+                0);
+            perObject = new Buffer(device,
+                Utilities.SizeOf<PerObject>(),
                 ResourceUsage.Default,
                 BindFlags.ConstantBuffer,
                 CpuAccessFlags.None,
@@ -358,7 +373,7 @@ namespace ConsoleApplication1
                 new SharpDX.Direct3D.ShaderMacro("THREADSX",             ThreadsX),
                 new SharpDX.Direct3D.ShaderMacro("THREADSY",             ThreadsY),
             };
-            using (var bytecode = ShaderBytecode.CompileFromFile(csFile, csFunction, "cs_5_0", ShaderFlags.None, EffectFlags.None, defines))
+            using (var bytecode = ShaderBytecode.CompileFromFile(csFile, csFunction, "cs_5_0", ShaderFlags.None, EffectFlags.None, defines, new HLSLFileIncludeHandler(Environment.CurrentDirectory)))
             {
                 computeShaders[csFunction] = new ComputeShader(device, bytecode);
             }
@@ -396,6 +411,7 @@ namespace ConsoleApplication1
                 context.PixelShader.SetShaderResource(0, particleTextureSRV);
                 context.PixelShader.SetSampler(0, linearSampler);
                 context.PixelShader.Set(pixelShader);
+                SetConstants();
                 // Draw the number of quad instances stored in the
                 // indirectArgsBuffer. The vertex shader will rely upon 
                 // the SV_VertexID and SV_InstanceID input semantics
@@ -415,6 +431,17 @@ namespace ConsoleApplication1
             }
         }
 
+        void SetConstants()
+        {
+            context.UpdateSubresource(ref Object, perObject);
+            context.VertexShader.SetConstantBuffer(0, perComputeBuffer);
+            context.VertexShader.SetConstantBuffer(1, perFrame);
+            context.VertexShader.SetConstantBuffer(2, perObject);
+            context.PixelShader.SetConstantBuffer(0, perComputeBuffer);
+            context.PixelShader.SetConstantBuffer(1, perFrame);
+
+
+        }
         public void Render()
         {
             DoRender();

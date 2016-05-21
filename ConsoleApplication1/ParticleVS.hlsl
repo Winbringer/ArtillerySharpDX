@@ -2,7 +2,7 @@
 // Access to the particle buffer 
 StructuredBuffer<Particle> particles : register(t0);
 
-cbuffer PerObject : register(b0)
+cbuffer PerObject : register(b2)
 {
     // WorldViewProjection matrix
     float4x4 WorldViewProjection;

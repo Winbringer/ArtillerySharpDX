@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SharpDX.DirectInput;
+using SharpDX;
 
 namespace VictoremLibrary
 {
     public abstract class LogicBase : IDisposable
     {
         protected Game game;
+        protected Matrix worldMatrix;
+        protected Matrix viewMatrix;
+        protected Matrix projectionMatrix;
+
         public LogicBase(Game game)
         {
             this.game = game;

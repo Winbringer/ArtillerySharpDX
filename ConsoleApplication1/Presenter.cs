@@ -27,7 +27,7 @@ namespace ConsoleApplication1
             game.Color = Color.Black;
             // Initialize the matrix
              worldMatrix = Matrix.Identity;
-             viewMatrix = Matrix.LookAtRH(new Vector3(0, 1, 60), Vector3.Zero, Vector3.UnitY);
+             viewMatrix = Matrix.LookAtRH(new Vector3(0, 1, 50 ), Vector3.Zero, Vector3.UnitY);
             viewMatrix.TranslationVector += new Vector3(0, -0.98f, 0);
              projectionMatrix = Matrix.PerspectiveFovRH(MathUtil.PiOverFour, game.ViewRatio, 0.1f, 100f);
 

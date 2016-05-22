@@ -13,6 +13,8 @@ namespace ConsoleApplication2
         public Matrix World;
         public Matrix View;
         public Matrix Proj;
+        public float Size;
+        Vector3 _padding0;
         public void Trans()
         {
             World.Transpose();
@@ -28,12 +30,22 @@ namespace ConsoleApplication2
         public Vector3 Velocity;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Constants
+    {
+        public int GroupDim;
+        public uint MaxParticles;
+        public float DeltaTime;
+        float padding0;
+        public Vector3 Atractor;
+        float padding1;
+    }
     class Logic : LogicBase
     {
         const int PARTICLES_COUNT = 1000000;
         private Buffer _perFrame;
-        private Effect _effect;
         private Buffer _particlesBuffer;
+        Buffer _csConstants;
         private ShaderResourceView _SRV;
         private UnorderedAccessView _UAV;
         private SamplerState _particleSampler;
@@ -42,12 +54,22 @@ namespace ConsoleApplication2
         private BlendState _blendState;
         private int _groupSizeX;
         private int _groupSizeY;
-        private Effect _solver;
+        VertexShader _vs;
+        GeometryShader _gs;
+        PixelShader _ps;
+        ComputeShader _cs;
+        private Constants _c;
 
         public Matrix World { get { return worldMatrix; } set { worldMatrix = value; } }
 
         public Logic(Game game) : base(game)
         {
+
+            int numGroups = (PARTICLES_COUNT % 768 != 0) ? ((PARTICLES_COUNT / 768) + 1) : (PARTICLES_COUNT / 768);
+            double secondRoot = System.Math.Pow((double)numGroups, (double)(1.0 / 2.0));
+            secondRoot = System.Math.Ceiling(secondRoot);
+            _groupSizeX = _groupSizeY = (int)secondRoot;
+
             game.Color = Color.Black;
             System.Random random = new System.Random();
 
@@ -73,6 +95,7 @@ namespace ConsoleApplication2
             game.DeviceContext.UpdateSubresource(initialParticles, _particlesBuffer);
 
             #region Blend and Depth States
+
             var blendDesc = new BlendStateDescription()
             {
                 IndependentBlendEnable = false,
@@ -113,12 +136,13 @@ namespace ConsoleApplication2
             #endregion
 
             worldMatrix = Matrix.Identity;
-            viewMatrix = Matrix.LookAtLH(new Vector3(100,100, 100), Vector3.Zero, Vector3.Up);
+            viewMatrix = Matrix.LookAtLH(new Vector3(100, 100, 100), Vector3.Zero, Vector3.Up);
             projectionMatrix = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 1000);
             Matrixes m = new Matrixes();
             m.World = worldMatrix;
             m.View = viewMatrix;
             m.Proj = projectionMatrix;
+            m.Size = 0.1f;
             m.Trans();
 
             _perFrame = new Buffer(game.DeviceContext.Device,
@@ -130,11 +154,30 @@ namespace ConsoleApplication2
               0);
             game.DeviceContext.UpdateSubresource(ref m, _perFrame);
 
-            using (var effectByteCode = ShaderBytecode.CompileFromFile("Particle.fx", "fx_5_0", ShaderFlags.None, EffectFlags.None))
-                _effect = new Effect(game.DeviceContext.Device, effectByteCode);
+            _c = new Constants();
+            _c.GroupDim = _groupSizeX;
+            _c.MaxParticles = PARTICLES_COUNT;
 
-            using (var effectByteCode = ShaderBytecode.CompileFromFile("Solver.fx", "fx_5_0", ShaderFlags.None, EffectFlags.None))
-                _solver = new Effect(game.DeviceContext.Device, effectByteCode);
+            _csConstants = new Buffer(game.DeviceContext.Device,
+              Utilities.SizeOf<Constants>(),
+              ResourceUsage.Default,
+              BindFlags.ConstantBuffer,
+              CpuAccessFlags.None,
+              ResourceOptionFlags.None,
+              0);
+
+            ShaderFlags shaderFlags = ShaderFlags.None;
+#if DEBUG
+            shaderFlags = ShaderFlags.Debug;
+#endif
+            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\VS.hlsl","VS", "vs_5_0", shaderFlags))
+                _vs = new VertexShader(game.DeviceContext.Device, shaderByteCode);
+            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\GS.hlsl","GS", "gs_5_0", shaderFlags))
+                _gs = new GeometryShader(game.DeviceContext.Device, shaderByteCode);
+            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\PS.hlsl","PS", "ps_5_0", shaderFlags))
+                _ps = new PixelShader(game.DeviceContext.Device, shaderByteCode);
+            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\CS.hlsl","CS", "cs_5_0", shaderFlags))
+                _cs = new ComputeShader(game.DeviceContext.Device, shaderByteCode);
 
             _SRV = new ShaderResourceView(game.DeviceContext.Device, _particlesBuffer);
 
@@ -143,9 +186,11 @@ namespace ConsoleApplication2
                 Dimension = UnorderedAccessViewDimension.Buffer,
                 Buffer = new UnorderedAccessViewDescription.BufferResource { FirstElement = 0 }
             };
+
             uavDesc.Format = Format.Unknown;
             uavDesc.Buffer.Flags = UnorderedAccessViewBufferFlags.None;
             uavDesc.Buffer.ElementCount = _particlesBuffer.Description.SizeInBytes / _particlesBuffer.Description.StructureByteStride;
+
             _UAV = new UnorderedAccessView(game.DeviceContext.Device, _particlesBuffer, uavDesc);
 
             SamplerStateDescription samplerDecription = SamplerStateDescription.Default();
@@ -156,28 +201,14 @@ namespace ConsoleApplication2
             };
 
             _particleSampler = new SamplerState(game.DeviceContext.Device, samplerDecription);
+
             _texture = StaticMetods.LoadTextureFromFile(game.DeviceContext, "Particle.png");
 
-
-            int numGroups = (PARTICLES_COUNT % 768 != 0) ? ((PARTICLES_COUNT / 768) + 1) : (PARTICLES_COUNT / 768);
-            double secondRoot = System.Math.Pow((double)numGroups, (double)(1.0 / 2.0));
-            secondRoot = System.Math.Ceiling(secondRoot);
-            _groupSizeX = _groupSizeY = (int)secondRoot;
-
             game.DeviceContext.OutputMerger.DepthStencilState = _DState;
-
-            _effect.GetConstantBufferByName("Params").AsConstantBuffer().SetConstantBuffer(_perFrame);
-            _effect.GetVariableByName("ParticleSampler").AsSampler().SetSampler(0, _particleSampler);
-            _effect.GetVariableByName("ParticleTexture").AsShaderResource().SetResource(_texture);
-            _effect.GetVariableByName("Size").AsScalar().Set(0.1f);
-            _effect.GetVariableByName("Particles").AsShaderResource().SetResource(_SRV);
-            _solver.GetVariableByName("GroupDim").AsScalar().Set(_groupSizeX);
-            _solver.GetVariableByName("MaxParticles").AsScalar().Set(PARTICLES_COUNT);            
         }
 
         public override void Dispose()
         {
-            Utilities.Dispose(ref _effect);
             Utilities.Dispose(ref _perFrame);
             Utilities.Dispose(ref _particlesBuffer);
             Utilities.Dispose(ref _SRV);
@@ -186,15 +217,25 @@ namespace ConsoleApplication2
             Utilities.Dispose(ref _texture);
             Utilities.Dispose(ref _blendState);
             Utilities.Dispose(ref _DState);
-            Utilities.Dispose(ref _solver);
-
+            Utilities.Dispose(ref _vs);
+            Utilities.Dispose(ref _ps);
+            Utilities.Dispose(ref _gs);
+            Utilities.Dispose(ref _cs);
+            Utilities.Dispose(ref _csConstants);
         }
 
         protected override void Draw(float time)
         {
-            _effect.GetTechniqueByIndex(0).GetPassByIndex(0).Apply(game.DeviceContext);
+            game.DeviceContext.VertexShader.Set(_vs);
+            game.DeviceContext.VertexShader.SetConstantBuffer(0, _perFrame);
+            game.DeviceContext.VertexShader.SetShaderResource(0, _SRV);
+            game.DeviceContext.PixelShader.Set(_ps);
+            game.DeviceContext.PixelShader.SetShaderResource(0, _texture);
+            game.DeviceContext.PixelShader.SetSampler(0, _particleSampler);
+            game.DeviceContext.GeometryShader.Set(_gs);
+            game.DeviceContext.GeometryShader.SetConstantBuffer(0, _perFrame);
             game.DeviceContext.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.PointList;
-            game.DeviceContext.OutputMerger.BlendState = _blendState;           
+            game.DeviceContext.OutputMerger.BlendState = _blendState;
             game.DeviceContext.Draw(PARTICLES_COUNT, 0);
         }
 
@@ -206,10 +247,13 @@ namespace ConsoleApplication2
         {
             float angle = (float)time / 2000;
             Vector3 attractor = new Vector3((float)System.Math.Cos(angle), (float)System.Math.Cos(angle) * (float)System.Math.Sin(angle), (float)System.Math.Sin(angle));
-            _solver.GetVariableByName("Attractor").AsVector().Set(attractor*2);
-            _solver.GetVariableByName("DeltaTime").AsScalar().Set(time/1000);
-            _solver.GetVariableByName("Particles").AsUnorderedAccessView().Set(_UAV);
-            _solver.GetTechniqueByIndex(0).GetPassByIndex(0).Apply(game.DeviceContext);
+            _c.DeltaTime = time / 1000;
+            _c.Atractor = attractor * 2;
+
+            game.DeviceContext.UpdateSubresource(ref _c, _csConstants);
+            game.DeviceContext.ComputeShader.Set(_cs);
+            game.DeviceContext.ComputeShader.SetConstantBuffer(0, _csConstants);
+            game.DeviceContext.ComputeShader.SetUnorderedAccessView(0, _UAV);
             game.DeviceContext.Dispatch(_groupSizeX, _groupSizeY, 1);
             game.DeviceContext.ComputeShader.SetUnorderedAccessView(0, null);
         }

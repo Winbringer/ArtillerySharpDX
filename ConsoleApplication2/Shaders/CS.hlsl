@@ -1,18 +1,22 @@
-﻿struct Particle
+﻿#define THREAD_GROUP_X 32
+#define THREAD_GROUP_Y 24
+#define THREAD_GROUP_TOTAL 768
+
+struct Particle
 {
     float3 Position;
     float3 Velocity;
 };
 
-int GroupDim;
-uint MaxParticles;
-float DeltaTime;
-float3 Attractor;
-RWStructuredBuffer<Particle> Particles : register(u0);
+cbuffer constants : register(b0)
+{
+    int GroupDim;
+    uint MaxParticles;
+    float DeltaTime;
+    float3 Attractor;
+};
 
-#define THREAD_GROUP_X 32
-#define THREAD_GROUP_Y 24
-#define THREAD_GROUP_TOTAL 768
+RWStructuredBuffer<Particle> Particles : register(u0);
 
 float3 _calculate(float3 anchor, float3 position)
 {
@@ -24,7 +28,7 @@ float3 _calculate(float3 anchor, float3 position)
 }
 
 [numthreads(THREAD_GROUP_X, THREAD_GROUP_Y, 1)]
-void DefaultCS(uint3 groupID : SV_GroupID, uint groupIndex : SV_GroupIndex)
+void CS(uint3 groupID : SV_GroupID, uint groupIndex : SV_GroupIndex)
 {
     uint index = groupID.x * THREAD_GROUP_TOTAL + groupID.y * GroupDim * THREAD_GROUP_TOTAL + groupIndex;
 	
@@ -36,23 +40,10 @@ void DefaultCS(uint3 groupID : SV_GroupID, uint groupIndex : SV_GroupIndex)
 
     float3 position = particle.Position;
     float3 velocity = particle.Velocity;
-    velocity += _calculate(Attractor, position)*10;
-    velocity += _calculate(-Attractor, position)*10;
+    velocity += _calculate(Attractor, position) * 10;
+    velocity += _calculate(-Attractor, position) * 10;
     particle.Position = position + velocity * DeltaTime;
     particle.Velocity = velocity;
    
     Particles[index] = particle;
-}
-
-technique11 ParticleSolver
-{
-    pass DefaultPass
-    {
-        SetComputeShader(CompileShader(cs_5_0, DefaultCS()));
-        SetGeometryShader(0);
-        SetHullShader(0);
-        SetDomainShader(0);
-        SetVertexShader(0);
-        SetPixelShader(0);
-    }
 }

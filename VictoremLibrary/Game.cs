@@ -20,22 +20,20 @@ namespace VictoremLibrary
     /// </summary>
     public class Game : IDisposable
     {
-        public delegate void KeyPressHandler(float time, KeyboardState kState);
-        public delegate void UpdateHandler(float time);
         /// <summary>
         /// Происходит при нажатии клавиатуры. Тип данных передоваемых в переменную e - UpdateArgs.
         /// </summary>
-        public event KeyPressHandler OnKeyPressed = null;
+        public event Action<float, KeyboardState> OnKeyPressed = null;
         /// <summary>
         /// Вызываеться при обновлении логики игры.Тип данных передоваемых в переменную  e - UpdateArgs.
         /// </summary>
-        public event UpdateHandler OnUpdate = null;
+        public event Action<float> OnUpdate = null;
         /// <summary>
         /// Вызываеться при рендеринге игры
         /// </summary>
-        public event UpdateHandler OnDraw = null;
+        public event Action<float> OnDraw = null;
 
-        SharpDX.DXGI.Factory _factory;
+        Factory _factory;
         //Форма куда будем вставлять наше представление renderTargetView.
         private RenderForm _renderForm = null;
         //Объектное представление нашей видеокарты

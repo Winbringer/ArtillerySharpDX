@@ -107,6 +107,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="CS.hlsl" />
+    <Content Include="GS.hlsl" />
     <Content Include="LogoVW.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -116,6 +118,7 @@
     <Content Include="Particle.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="PS.hlsl" />
     <Content Include="sharpdx_direct3d11_1_effects_x64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -125,6 +128,7 @@
     <Content Include="Solver.fx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="VS.hlsl" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -40,8 +40,8 @@ void CS(uint3 groupID : SV_GroupID, uint groupIndex : SV_GroupIndex)
 
     float3 position = particle.Position;
     float3 velocity = particle.Velocity;
-    velocity += _calculate(Attractor, position) * 10;
-    velocity += _calculate(-Attractor, position) * 10;
+    velocity += _calculate(Attractor, position) ;
+    velocity += _calculate(-Attractor, position);
     particle.Position = position + velocity * DeltaTime;
     particle.Velocity = velocity;
    

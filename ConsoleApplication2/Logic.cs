@@ -40,6 +40,7 @@ namespace ConsoleApplication2
         public Vector3 Atractor;
         float padding1;
     }
+
     class Logic : LogicBase
     {
         const int PARTICLES_COUNT = 1000000;
@@ -59,6 +60,7 @@ namespace ConsoleApplication2
         PixelShader _ps;
         ComputeShader _cs;
         private Constants _c;
+        private Matrixes m;
 
         public Matrix World { get { return worldMatrix; } set { worldMatrix = value; } }
 
@@ -136,9 +138,9 @@ namespace ConsoleApplication2
             #endregion
 
             worldMatrix = Matrix.Identity;
-            viewMatrix = Matrix.LookAtLH(new Vector3(100, 100, 100), Vector3.Zero, Vector3.Up);
+            viewMatrix = Matrix.LookAtLH(new Vector3(0, 0, 100), Vector3.Zero, Vector3.Up);
             projectionMatrix = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, game.ViewRatio, 1f, 1000);
-            Matrixes m = new Matrixes();
+            m = new Matrixes();
             m.World = worldMatrix;
             m.View = viewMatrix;
             m.Proj = projectionMatrix;
@@ -170,13 +172,13 @@ namespace ConsoleApplication2
 #if DEBUG
             shaderFlags = ShaderFlags.Debug;
 #endif
-            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\VS.hlsl","VS", "vs_5_0", shaderFlags))
+            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\VS.hlsl", "VS", "vs_5_0", shaderFlags))
                 _vs = new VertexShader(game.DeviceContext.Device, shaderByteCode);
-            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\GS.hlsl","GS", "gs_5_0", shaderFlags))
+            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\GS.hlsl", "GS", "gs_5_0", shaderFlags))
                 _gs = new GeometryShader(game.DeviceContext.Device, shaderByteCode);
-            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\PS.hlsl","PS", "ps_5_0", shaderFlags))
+            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\PS.hlsl", "PS", "ps_5_0", shaderFlags))
                 _ps = new PixelShader(game.DeviceContext.Device, shaderByteCode);
-            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\CS.hlsl","CS", "cs_5_0", shaderFlags))
+            using (var shaderByteCode = ShaderBytecode.CompileFromFile(@"Shaders\CS.hlsl", "CS", "cs_5_0", shaderFlags))
                 _cs = new ComputeShader(game.DeviceContext.Device, shaderByteCode);
 
             _SRV = new ShaderResourceView(game.DeviceContext.Device, _particlesBuffer);
@@ -202,7 +204,7 @@ namespace ConsoleApplication2
 
             _particleSampler = new SamplerState(game.DeviceContext.Device, samplerDecription);
 
-            _texture = StaticMetods.LoadTextureFromFile(game.DeviceContext, "Particle.png");
+            _texture = StaticMetods.LoadTextureFromFile(game.DeviceContext, "smoke5.png");
 
             game.DeviceContext.OutputMerger.DepthStencilState = _DState;
         }
@@ -241,13 +243,33 @@ namespace ConsoleApplication2
 
         protected override void KeyKontroller(float time, SharpDX.DirectInput.KeyboardState kState)
         {
+            float speed = 0.001f;
+            var rotation = Matrix.Identity;
+            var scale = Matrix.Identity;
+            if (kState.IsPressed(SharpDX.DirectInput.Key.D))
+                rotation = Matrix.RotationY(speed * time);
+            if (kState.IsPressed(SharpDX.DirectInput.Key.A))
+                rotation = Matrix.RotationY(-speed * time);
+            if (kState.IsPressed(SharpDX.DirectInput.Key.W))
+                rotation = Matrix.RotationX(speed * time);
+            if (kState.IsPressed(SharpDX.DirectInput.Key.S))
+                rotation = Matrix.RotationX(-speed * time);
+
+            if (kState.IsPressed(SharpDX.DirectInput.Key.Up))
+                scale = Matrix.Scaling(System.Math.Max(0.1f, 1 - speed * time));
+            if (kState.IsPressed(SharpDX.DirectInput.Key.Down))
+                scale = Matrix.Scaling(1 + speed * time);
+
+            worldMatrix = worldMatrix * scale * rotation;
+            m.World = worldMatrix;
+            game.DeviceContext.UpdateSubresource(ref m, _perFrame);
         }
 
         protected override void Upadate(float time)
         {
             float angle = (float)time / 2000;
             Vector3 attractor = new Vector3((float)System.Math.Cos(angle), (float)System.Math.Cos(angle) * (float)System.Math.Sin(angle), (float)System.Math.Sin(angle));
-            _c.DeltaTime = time / 1000;
+            _c.DeltaTime = time/1000 ;
             _c.Atractor = attractor * 2;
 
             game.DeviceContext.UpdateSubresource(ref _c, _csConstants);

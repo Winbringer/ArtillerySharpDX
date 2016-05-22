@@ -11,6 +11,6 @@ float4 PS(PixelInput input) : SV_Target0
 {
     
     float4 Color = ParticleTexture.Sample(ParticleSampler, input.UV);
-    Color.b = 0;
+   // Color.b = 0;
     return Color;
 }

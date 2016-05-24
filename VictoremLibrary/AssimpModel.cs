@@ -12,7 +12,7 @@ using SharpDX.DXGI;
 
 namespace VictoremLibrary
 {
-  public  struct JointBone
+    public struct JointBone
     {
         public string ParentName;
         public string Name;
@@ -107,6 +107,7 @@ namespace VictoremLibrary
             for (int i = 0; i < joints.Count; i++)
             {
                 var j = joints.ElementAt(i);
+
                 if (j.Value.PName != null)
                 {
                     Joint b = j.Value;
@@ -116,6 +117,7 @@ namespace VictoremLibrary
                     b.matrix = b.scaling * Matrix.AffineTransformation(1, b.Quat, b.Pos);
                     joints[b.Name] = b;
                 }
+
                 if (string.IsNullOrEmpty(j.Value.PName))
                 {
                     Joint b = j.Value;
@@ -238,7 +240,7 @@ namespace VictoremLibrary
         /// <param name="File">Файлы модели</param>
         public AssimpModel(DeviceContext dc, string Folder, string File)
         {
-            String fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), Folder + File);
+            string fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), Folder + File);
 
             using (AssimpContext importer = new AssimpContext())
             {
@@ -265,7 +267,7 @@ namespace VictoremLibrary
                 }
 
             }
-        }       
+        }
         /// <summary>
         /// Возврашает массив Костей для скелетной анимации.
         /// </summary>
@@ -306,7 +308,7 @@ namespace VictoremLibrary
             {
                 jb.Remove(item);
             }
-            var n = jb.Where(ji =>ji.Value.ParentName!=null && ji.Value.ParentName.Contains("<")).Select(jt => jt.Key).ToArray();
+            var n = jb.Where(ji => ji.Value.ParentName != null && ji.Value.ParentName.Contains("<")).Select(jt => jt.Key).ToArray();
             foreach (var i in n)
             {
                 var jbone = jb[i];

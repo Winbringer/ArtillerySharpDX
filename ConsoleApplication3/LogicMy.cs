@@ -54,6 +54,10 @@ namespace ConsoleApplication3
         public override void Dispose()
         {
             _meshes.ForEach(x => x.Dispose());
+            for (int i = 0; i < contextList.Length; ++i)
+            {
+                Utilities.Dispose(ref contextList[i]);
+            }
         }
 
         protected override void Draw(float time)
@@ -64,14 +68,14 @@ namespace ConsoleApplication3
             for (var i = 0; i < contextList.Length; i++)
             {
                 var contextIndex = i;
-               
+
 
                 renderTasks[i] = Task.Run(() =>
-                {  
+                {
                     var renderContext = contextList[contextIndex];
                     // TODO: regular render logic goes here                   
                     _meshes[contextIndex].Draw(renderContext);
-     
+
                     if (contextList[contextIndex].TypeInfo == DeviceContextType.Deferred)
                     {
                         //Создаем  команды
@@ -108,7 +112,7 @@ namespace ConsoleApplication3
                 renderTasks[i] = Task.Run(() =>
                 {
                     _meshes[contextIndex].Update(time, true);
-                   
+
                 });
             }
             Task.WaitAll(renderTasks);

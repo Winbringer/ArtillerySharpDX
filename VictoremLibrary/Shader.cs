@@ -90,58 +90,84 @@ namespace VictoremLibrary
         /// <param name="sDesc">Самплеры для текстур</param>
         /// <param name="sResource">Текстуры шейдера</param>
         /// <param name="constBuffer">Буффер констант шейдера</param>
-        public void Begin(SamplerState[] sDesc = null, ShaderResourceView[] sResource = null, Buffer[] constBuffer = null)
+        public void Begin(DeviceContext context,SamplerState[] sDesc = null, ShaderResourceView[] sResource = null, Buffer[] constBuffer = null)
         {
-            _dx11DeviceContext.VertexShader.Set(_vertexShader);
-            _dx11DeviceContext.PixelShader.Set(_pixelShader);
-            _dx11DeviceContext.GeometryShader.Set(_GShader);
-            _dx11DeviceContext.HullShader.Set(_HShader);
-            _dx11DeviceContext.DomainShader.Set(_DShader);
+            context.VertexShader.Set(_vertexShader);
+            context.PixelShader.Set(_pixelShader);
+            context.GeometryShader.Set(_GShader);
+            context.HullShader.Set(_HShader);
+            context.DomainShader.Set(_DShader);
 
-            _dx11DeviceContext.InputAssembler.InputLayout = _inputLayout;
+            context.InputAssembler.InputLayout = _inputLayout;
 
             if (sDesc != null)
                 for (int i = 0; i < sDesc.Length; ++i)
                 {
-                    _dx11DeviceContext.VertexShader.SetSampler(i, sDesc[i]);
-                    _dx11DeviceContext.PixelShader.SetSampler(i, sDesc[i]);
-                    _dx11DeviceContext.GeometryShader.SetSampler(i, sDesc[i]);
-                    _dx11DeviceContext.HullShader.SetSampler(i, sDesc[i]);
-                    _dx11DeviceContext.DomainShader.SetSampler(i, sDesc[i]);
+                    context.VertexShader.SetSampler(i, sDesc[i]);
+                    context.PixelShader.SetSampler(i, sDesc[i]);
+                    context.GeometryShader.SetSampler(i, sDesc[i]);
+                    context.HullShader.SetSampler(i, sDesc[i]);
+                    context.DomainShader.SetSampler(i, sDesc[i]);
                 }
 
             if (constBuffer != null)
                 for (int i = 0; i < constBuffer.Length; ++i)
                 {
-                    _dx11DeviceContext.VertexShader.SetConstantBuffer(i, constBuffer[i]);
-                    _dx11DeviceContext.PixelShader.SetConstantBuffer(i, constBuffer[i]);
-                    _dx11DeviceContext.GeometryShader.SetConstantBuffer(i, constBuffer[i]);
-                    _dx11DeviceContext.DomainShader.SetConstantBuffer(i, constBuffer[i]);
-                    _dx11DeviceContext.HullShader.SetConstantBuffer(i, constBuffer[i]);
+                   context.VertexShader.SetConstantBuffer(i, constBuffer[i]);
+                   context.PixelShader.SetConstantBuffer(i, constBuffer[i]);
+                   context.GeometryShader.SetConstantBuffer(i, constBuffer[i]);
+                   context.DomainShader.SetConstantBuffer(i, constBuffer[i]);
+                    context.HullShader.SetConstantBuffer(i, constBuffer[i]);
                 }
             if (sResource != null)
                 for (int i = 0; i < sResource.Length; ++i)
                 {
-                    _dx11DeviceContext.VertexShader.SetShaderResources(0, sResource);
-                    _dx11DeviceContext.PixelShader.SetShaderResources(0, sResource);
-                    _dx11DeviceContext.GeometryShader.SetShaderResources(0, sResource);
-                    _dx11DeviceContext.DomainShader.SetShaderResources(0, sResource);
-                    _dx11DeviceContext.HullShader.SetShaderResources(0, sResource);
+                   context.VertexShader.SetShaderResources(0, sResource);
+                   context.PixelShader.SetShaderResources(0, sResource);
+                   context.GeometryShader.SetShaderResources(0, sResource);
+                   context.DomainShader.SetShaderResources(0, sResource);
+                    context.HullShader.SetShaderResources(0, sResource);
                 }
         }
 
         /// <summary>
         /// Отключает шейдер.
         /// </summary>
-        public void End()
+        public void End(DeviceContext context)
         {
-            _dx11DeviceContext.VertexShader.Set(null);
-            _dx11DeviceContext.PixelShader.Set(null);
-            _dx11DeviceContext.GeometryShader.Set(null);
-            _dx11DeviceContext.HullShader.Set(null);
-            _dx11DeviceContext.DomainShader.Set(null);
+           context.VertexShader.Set(null);
+           context.PixelShader.Set(null);
+           context.GeometryShader.Set(null);
+           context.HullShader.Set(null);
+            context.DomainShader.Set(null);
         }
 
+        /// <summary>
+        /// Создает буффер констант для шейдера
+        /// </summary>
+        /// <typeparam name="T">Тип данных передаваемый в шейдер</typeparam>
+        /// <returns>Буффер который можно заполнить данными для шейдера</returns>
+        public Buffer CreateConstantBuffer<T>() where T : struct
+        {
+            return new Buffer(_dx11DeviceContext.Device,
+                Utilities.SizeOf<T>(),
+                ResourceUsage.Default,
+                BindFlags.ConstantBuffer,
+                CpuAccessFlags.None,
+                ResourceOptionFlags.None,
+                0);
+        }
+
+        public Buffer CreateStructuredBuffer<T>(int structureCount) where T : struct
+        {
+            return new Buffer(_dx11DeviceContext.Device,
+               Utilities.SizeOf<T>() * structureCount,
+               ResourceUsage.Default,
+               BindFlags.ShaderResource | BindFlags.UnorderedAccess,
+               CpuAccessFlags.None,
+               ResourceOptionFlags.BufferStructured,
+               Utilities.SizeOf<T>());
+        }
         /// <summary>
         /// Освобождает ресурсы
         /// </summary>

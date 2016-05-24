@@ -114,18 +114,24 @@ namespace VictoremLibrary
 
         }
 
-        public void Draw()
+        public void Draw(DeviceContext context)
         {
             _constData.World = _world;
             _constData.WVP = _world * _view * _proj;
             _constData.Transpose();
-            _game.DeviceContext.UpdateSubresource(ref _constData, _constBuffer0);
-            _game.DeviceContext.UpdateSubresource(_bones.Bones, _constBuffer1);
+            context.UpdateSubresource(ref _constData, _constBuffer0);
+            context.UpdateSubresource(_bones.Bones, _constBuffer1);
             foreach (var item in _model.Meshes3D)
             {
-                _shader.Begin(new[] { _samler }, new[] { item.Texture }, new[] { _constBuffer0, _constBuffer1 });
-                _game.Drawer.DrawIndexed(item.VertexBinding, item.IndexBuffer, item.IndexCount);
-                _shader.End();
+                _shader.Begin(context,new[] { _samler }, new[] { item.Texture }, new[] { _constBuffer0, _constBuffer1 });
+
+                context.InputAssembler.PrimitiveTopology =SharpDX.Direct3D.PrimitiveTopology.TriangleList;
+                context.InputAssembler.SetVertexBuffers(0, item.VertexBinding);
+                context.InputAssembler.SetIndexBuffer(item.IndexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);
+                context.OutputMerger.SetBlendState(null, null);           
+                context.DrawIndexed(item.IndexCount, 0, 0);
+
+                _shader.End(context);
             }
         }
 

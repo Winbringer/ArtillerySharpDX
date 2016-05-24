@@ -1,12 +1,6 @@
 ﻿using SharpDX;
-using SharpDX.D3DCompiler;
-using SharpDX.Direct3D11;
 using System;
-using Buffer = SharpDX.Direct3D11.Buffer;
 using VictoremLibrary;
-using SharpDX.Direct2D1;
-using SharpDX.DXGI;
-using System.Runtime.InteropServices;
 using SharpDX.DirectInput;
 
 namespace FramevorkTest
@@ -19,9 +13,10 @@ namespace FramevorkTest
         //Bitmap bitmap;
 
         private Assimp3DModel model;
-
+        Game game;
         public Presenter(Game game)
         {
+            this.game = game;
             game.OnDraw += Draw;
             game.OnUpdate += Upadate;
             game.OnKeyPressed += KeyKontroller;
@@ -53,7 +48,7 @@ namespace FramevorkTest
 
         private void Draw(float time)
         {
-            model.Draw();
+            model.Draw(game.DeviceContext);
 
             //Drawer2d.DrawBitmap(bitmap);
             //Drawer2d.DrawText("ПОЕХАЛИ!");

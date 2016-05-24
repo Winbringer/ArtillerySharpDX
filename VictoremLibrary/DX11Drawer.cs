@@ -15,12 +15,15 @@ namespace VictoremLibrary
         #region Поля       
         private DeviceContext _dx11DeviceContext;
         //Параметры отображения
-        private RasterizerState _rasterizerState = null;
-        private BlendState _blendState = null;
-        private DepthStencilState _DState = null;
+       RasterizerState _rasterizerState = null;
+       BlendState _blendState = null;
+       DepthStencilState _DState = null;
         #endregion
 
         #region Свойства
+        public RasterizerState RasterizerStat { get { return _rasterizerState; } }
+        public BlendState BlendState { get { return _blendState; } }
+        public DepthStencilState DepthState { get { return _DState; } }
         public RawColor4? BlendFactor { get; set; } = null;
         public DepthStencilStateDescription DepthStencilDescripshion { set { Utilities.Dispose(ref _DState); _DState = new DepthStencilState(_dx11DeviceContext.Device, value); _dx11DeviceContext.OutputMerger.DepthStencilState = _DState; } }
         public RasterizerStateDescription RasterizerDescription { set { Utilities.Dispose(ref _rasterizerState); _rasterizerState = new RasterizerState(_dx11DeviceContext.Device, value); _dx11DeviceContext.Rasterizer.State = _rasterizerState; } }

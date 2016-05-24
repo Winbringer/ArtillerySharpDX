@@ -306,7 +306,7 @@ namespace VictoremLibrary
             {
                 jb.Remove(item);
             }
-            var n = jb.Where(ji => ji.Value.ParentName.Contains("<")).Select(jt => jt.Key).ToArray();
+            var n = jb.Where(ji =>ji.Value.ParentName!=null && ji.Value.ParentName.Contains("<")).Select(jt => jt.Key).ToArray();
             foreach (var i in n)
             {
                 var jbone = jb[i];

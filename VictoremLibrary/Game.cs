@@ -42,8 +42,8 @@ namespace VictoremLibrary
         //Цепочка замены заднего и отображаемого буфера
         private SwapChain _swapChain = null;
         //Представление куда мы выводим картинку.
-        private RenderTargetView _renderView = null;
-        private DepthStencilView _depthView = null;
+        RenderTargetView _renderView = null;
+        DepthStencilView _depthView = null;
         //Управление через клавиатуру
         DirectInput _directInput;
         Keyboard _keyboard;
@@ -59,6 +59,8 @@ namespace VictoremLibrary
         public int Width { get { return _renderForm.ClientSize.Width; } }
         public int Height { get { return _renderForm.ClientSize.Height; } }
         public Color Color { get; set; }
+        public RenderTargetView RenderView { get { return _renderView; } }
+        public DepthStencilView DepthView { get { return _depthView; } }
         /// <summary>
         /// Выводит 3Д объекты на экран
         /// </summary>
@@ -163,6 +165,7 @@ namespace VictoremLibrary
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderView);
             _texWriter = new TextWirter(this.SwapChain.GetBackBuffer<Texture2D>(0), _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
         }
+
         float Time = 0;
         private void Update(double time)
         {

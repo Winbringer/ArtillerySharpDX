@@ -43,7 +43,7 @@ namespace ConsoleApplication2
 
     class Logic : LogicBase
     {
-        const int PARTICLES_COUNT = 1000000;
+        const int PARTICLES_COUNT = 10000;
         private Buffer _perFrame;
         private Buffer _particlesBuffer;
         Buffer _csConstants;
@@ -144,7 +144,7 @@ namespace ConsoleApplication2
             m.World = worldMatrix;
             m.View = viewMatrix;
             m.Proj = projectionMatrix;
-            m.Size = 0.1f;
+            m.Size = 1f;
             m.Trans();
 
             _perFrame = new Buffer(game.DeviceContext.Device,

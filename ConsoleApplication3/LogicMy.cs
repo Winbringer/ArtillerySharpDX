@@ -21,25 +21,19 @@ namespace ConsoleApplication3
             //   var m = new ModelSDX("Wm\\", "Character.fbx");
 
             _meshes = new List<Assimp3DModel>();
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"));// { _world = Matrix.RotationX(MathUtil.Pi/2)});
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"));// { _world = Matrix.RotationX(MathUtil.Pi/2) });
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"));// { _world = Matrix.RotationX(MathUtil.Pi/2) });
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"));// { _world = Matrix.RotationX(MathUtil.Pi/2)});
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10)});
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10) });
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10) });
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10) });
 
             contextList = new DeviceContext[threadCount];
-            if (threadCount == 1)
-
-            {    // Use the immediate context if only 1 thread  
-                contextList[0] = game.DeviceContext;
-            }
-            else
-            {
+           
                 for (var i = 0; i < threadCount; i++)
                 {
                     contextList[i] = new DeviceContext(game.DeviceContext.Device);
                     InitializeContext(contextList[i]);
                 }
-            }
+           
 
         }
 

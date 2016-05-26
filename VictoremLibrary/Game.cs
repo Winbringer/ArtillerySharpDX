@@ -4,6 +4,7 @@ using SharpDX.DirectInput;
 using SharpDX.DXGI;
 using SharpDX.Windows;
 using System;
+using System.Diagnostics;
 
 namespace VictoremLibrary
 {  /// <summary>
@@ -50,7 +51,7 @@ namespace VictoremLibrary
         DX11Drawer _drawer = null;
         TextWirter _texWriter = null;
         FilterCS _filter = null;
-
+        Stopwatch _stopWatch = new Stopwatch();
         //Свойства
         public float ViewRatio { get; private set; }
         public DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
@@ -94,6 +95,7 @@ namespace VictoremLibrary
             _keyboard.Acquire();
             _drawer = new DX11Drawer(_dx11DeviceContext);
             _filter = new FilterCS(this);
+            _stopWatch.Reset();
         }
 
         /// <summary>
@@ -166,21 +168,20 @@ namespace VictoremLibrary
             _texWriter = new TextWirter(this.SwapChain.GetBackBuffer<Texture2D>(0), _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
         }
 
-        float Time = 0;
-        private void Update(double time)
+       
+        private void Update(float time)
         {
-            Time = (float)time;
             var m = _keyboard.GetCurrentState();
             if (m.PressedKeys.Count > 0)
-                OnKeyPressed?.Invoke(Time, m);
-            OnUpdate?.Invoke(Time);
+                OnKeyPressed?.Invoke(time, m);
+            OnUpdate?.Invoke(time);
         }
 
-        private void Draw()
+        private void Draw(float time)
         {
             _dx11DeviceContext.ClearRenderTargetView(_renderView, Color);
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil, 1.0f, 0);
-            OnDraw?.Invoke(Time);
+            OnDraw?.Invoke(time);
             _swapChain.Present(0, PresentFlags.None);
         }
 
@@ -192,16 +193,20 @@ namespace VictoremLibrary
             RenderLoop.Run(_renderForm, RenderCallback);
         }
 
-        double nextFrameTime = Environment.TickCount;
+        double totalTime = 0;
         private void RenderCallback()
         {
-            double lag = Environment.TickCount - nextFrameTime;
-            if (lag > 30)
+            var elapsed = _stopWatch.ElapsedMilliseconds;
+            totalTime += elapsed;
+            _stopWatch.Reset();
+            _stopWatch.Start();
+
+            if (totalTime > 30)
             {
-                nextFrameTime = Environment.TickCount;
-                Update(lag);
+                Update((float)totalTime);
+                totalTime = 0;
             }
-            Draw();
+            Draw(elapsed);
         }
 
         public void Dispose()

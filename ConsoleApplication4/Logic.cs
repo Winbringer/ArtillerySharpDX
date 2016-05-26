@@ -9,9 +9,10 @@ namespace ConsoleApplication4
         Assimp3DModel mesh;
         public Logic(Game game) : base(game)
         {
-            mesh = new Assimp3DModel(game, "soldier.X", "Wm\\");
-            mesh._world = Matrix.Scaling(5f) * mesh._world;
+            mesh = new Assimp3DModel(game, "Character.fbx", "Wm\\");
+           mesh._world = Matrix.Scaling(10f) * mesh._world;
         }
+
         public override void Dispose()
         {
             mesh?.Dispose();
@@ -30,7 +31,7 @@ namespace ConsoleApplication4
 
         protected override void Upadate(float time)
         {
-            mesh.Update(time,true,4);
+            mesh.Update(time,true,0);
         }
     }
 }

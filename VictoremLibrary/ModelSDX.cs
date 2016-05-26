@@ -11,20 +11,18 @@ using System.Runtime.InteropServices;
 
 namespace VictoremLibrary
 {
-    internal struct Frame
+    struct Frame
     {
-        public float time;
         public Assimp.Quaternion rot;
         public Vector3D pos;
         public Vector3D scal;
     }
 
-    internal struct Bone
+    struct Bone
     {
         public string Name;
         public string Parent;
         public Matrix Transform;
-        public Matrix OriginalTransform;
         public Matrix GlobalTransform;
         public Matrix Offset;
     }
@@ -43,20 +41,22 @@ namespace VictoremLibrary
 
     class AnimationSDX
     {
-        public float FramePerSecond { get; private set; } = 25;
-        public float FrameTime { get; private set; } = 25;
-        public int CurrentFrame { get; set; } = 0;
+        public float FramePerSecond { get; } = 25;
+        public float FrameDuration { get; } = 0;
+        public float CurrentFrame { get; set; } = 0;
+        public int DurationInTicks { get; } = 0;
         public Dictionary<string, Frame[]> Frames { get { return frames; } }
         Dictionary<string, Frame[]> frames = new Dictionary<string, Frame[]>();
 
         public AnimationSDX(Assimp.Animation animation)
         {
-            FramePerSecond = (float)(animation.TicksPerSecond <= 0 ? 25 : animation.TicksPerSecond);
-            FrameTime = 1000 / FramePerSecond;
+            FramePerSecond = (float)(animation.TicksPerSecond > 24 ? animation.TicksPerSecond : 25);
+            FrameDuration = 1000 / FramePerSecond;
             foreach (var n in animation.NodeAnimationChannels)
             {
                 frames.Add(n.NodeName, GetFrames(n).ToArray());
             }
+            DurationInTicks = frames.Values.Max(x => x.Length);
         }
 
         IEnumerable<Frame> GetFrames(NodeAnimationChannel nch)
@@ -64,7 +64,6 @@ namespace VictoremLibrary
             var m = new[] { nch.PositionKeyCount, nch.RotationKeyCount, nch.ScalingKeyCount }.Max();
             for (int i = 0; i < m; i++)
             {
-                double time = 0;
                 var pos = new Vector3D();
                 var scale = new Vector3D(1);
                 var rot = new Assimp.Quaternion(1, 0, 0, 0);
@@ -73,7 +72,7 @@ namespace VictoremLibrary
                     if (i < nch.PositionKeyCount)
                     {
                         pos = nch.PositionKeys[i].Value;
-                        time = nch.PositionKeys[i].Time;
+
                     }
                     else
                     {
@@ -85,7 +84,6 @@ namespace VictoremLibrary
                     if (i < nch.RotationKeyCount)
                     {
                         rot = nch.RotationKeys[i].Value;
-                        time = nch.RotationKeys[i].Time;
                     }
                     else
                     {
@@ -97,7 +95,6 @@ namespace VictoremLibrary
                     if (i < nch.ScalingKeyCount)
                     {
                         scale = nch.ScalingKeys[i].Value;
-                        time = nch.ScalingKeys[i].Time;
                     }
                     else
                     {
@@ -109,8 +106,7 @@ namespace VictoremLibrary
                 {
                     pos = pos,
                     rot = rot,
-                    scal = scale,
-                    time = (float)time
+                    scal = scale
                 };
             }
             yield break;
@@ -169,18 +165,22 @@ namespace VictoremLibrary
 
     public class ModelSDX : IDisposable
     {
+        #region Fields
         List<AnimationSDX> _animations = new List<AnimationSDX>();
         List<Bone> _bones;
         Mesh3D[] _3dMeshes;
+        private List<NodeAnimationChannel> _nodeAnim;
+        #endregion
 
+        #region Propertis 
         public int AnimationsCount { get { return _animations.Count; } }
         public Mesh3D[] Meshes3D { get { return _3dMeshes; } }
         public bool HasAnimation { get; private set; } = false;
+        #endregion
 
         public ModelSDX(Device device, string Folder, string File)
         {
             string fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), Folder + File);
-
             using (AssimpContext importer = new AssimpContext())
             {
                 NormalSmoothingAngleConfig config = new NormalSmoothingAngleConfig(66.0f);
@@ -194,7 +194,18 @@ namespace VictoremLibrary
                 if (Model.HasAnimations && Model.Animations.Any(x => x.HasNodeAnimations))
                 {
                     HasAnimation = true;
+                    _nodeAnim = Model.Animations.SelectMany(x => x.NodeAnimationChannels).ToList();
                     _bones = GetBones(Model).ToList();
+                    for (int i = 0; i < _bones.Count; i++)
+                    {
+                        if (!_bones.Any(x => x.Name.Equals(_bones[i].Parent)))
+                        {
+                            var b = _bones[i];
+                            b.Parent = null;
+                            _bones[i] = b;
+                        }
+
+                    }
                     BildBone(ref _bones);
                     foreach (var anim in Model.Animations)
                     {
@@ -207,40 +218,47 @@ namespace VictoremLibrary
             }
         }
 
-        public void Dispose()
-        {
-            for (int i = 0; i < _3dMeshes.Length; i++)
-            {
-                _3dMeshes?[i]?.Dispose();
-            }
-        }
-        int fnn = 0;
+        #region Metods
 
         public Matrix[] Animate(float time, int animation)
         {
-            //if (!HasAnimation) return _node;
-            //var frame = time / _animations[animation].FrameTime;
-            //var f1 = Math.Floor(frame);
-            //var interpol = frame - f1;
-            //_animations[animation].CurrentFrame += (int)f1;
-            //var fnn = _animations[animation].CurrentFrame;
-            fnn++;
+            if (!HasAnimation || _animations.Count == 0) throw new ArgumentOutOfRangeException("У этой модели нет анимации");
+
+            if (animation >= AnimationsCount) throw new ArgumentOutOfRangeException($"Номер анимации за приделами максимального, максимальный номер : {AnimationsCount - 1}");
+
+            if (_animations[animation].CurrentFrame > 90000f) _animations[animation].CurrentFrame -= 90000f;
+
+            if (_animations[animation].CurrentFrame < 0) _animations[animation].CurrentFrame = 0;
+
+            _animations[animation].CurrentFrame += time / _animations[animation].FrameDuration;
+
+            var frame = _animations[animation].CurrentFrame;
+
+            float factor = frame - (float)Math.Floor(frame);
+
+            int frInt = (int)Math.Floor(frame);
+
             for (int i = 0; i < _bones.Count; i++)
             {
-                var fn = (int)fnn;
                 var b = _bones[i];
+
                 if (!_animations[animation].Frames.ContainsKey(b.Name))
                     continue;
 
                 var a = _animations[animation].Frames[b.Name];
-                while (fn >= a.Length)
+
+                int frame0 = frInt;
+
+                while (frame0 >= a.Length)
                 {
-                    fn -= a.Length;
+                    frame0 -= a.Length;
                 }
-                if (fn >= a.Length) fn = 0;
-                var fn2 = fn + 1;
-                if (fn2 >= a.Length) fn2 = 0;
-                var fr = a[fn];// LerpFrame(a[fn], a[fn2], (float)interpol);
+
+                int frame1 = frame0 + 1;
+
+                if (frame1 >= a.Length) frame1 = 0;
+
+                var fr = LerpFrame(a[frame0], a[frame1], factor);
 
                 b.Transform = GetMatrix(fr.scal, fr.pos, fr.rot);
                 _bones[i] = b;
@@ -300,6 +318,7 @@ namespace VictoremLibrary
             }
         }
 
+
         #region Загрузка данных из Ассимп модели
 
         IEnumerable<AssimpVertex> GetVertex(Assimp.Mesh m)
@@ -332,6 +351,7 @@ namespace VictoremLibrary
                 }).ToList();
             return b.ToArray();
         }
+
         Vector4 GetBoneID(dynamic[] my)
         {
             Vector4 ret = new Vector4();
@@ -389,20 +409,19 @@ namespace VictoremLibrary
             List<Node> l = new List<Node>();
             GetChidlren(scene.RootNode, ref l);
             foreach (var item in l)
-            {
-                Matrix t = item.Transform.ToMatrix();
+            {               
                 var of = m.SingleOrDefault(x => x.Name.Equals(item.Name));
                 yield return new Bone()
                 {
                     Name = string.IsNullOrWhiteSpace(item.Name) ? "foo_" + i++ : item.Name,
-                    Transform = t,
+                    Transform = item.Transform.ToMatrix(),
                     Parent = item.Parent?.Name,
-                    OriginalTransform = t,
                     Offset = of?.OffsetMatrix.ToMatrix() ?? new Matrix()
                 };
             }
             yield break;
         }
+
 
         void GetChidlren(Node node, ref List<Node> l)
         {
@@ -413,6 +432,15 @@ namespace VictoremLibrary
             }
         }
 
+        #endregion
+
+        public void Dispose()
+        {
+            for (int i = 0; i < _3dMeshes.Length; i++)
+            {
+                _3dMeshes?[i]?.Dispose();
+            }
+        }
         #endregion
     }
 

@@ -18,12 +18,13 @@ namespace ConsoleApplication3
 
         public LogicMy(Game game) : base(game)
         {
-            _meshes = new List<Assimp3DModel>();
-            _meshes.Add(new Assimp3DModel(game, "Female.md5mesh", "Wm\\") { _world = Matrix.RotationX(MathUtil.PiOverFour) });
-            _meshes.Add(new Assimp3DModel(game, "Female.md5mesh", "Wm\\") { _world = Matrix.RotationY(MathUtil.PiOverFour) });
-            _meshes.Add(new Assimp3DModel(game, "Female.md5mesh", "Wm\\") { _world = Matrix.RotationZ(MathUtil.PiOverFour) });
-            _meshes.Add(new Assimp3DModel(game, "Female.md5mesh", "Wm\\") { _world = Matrix.RotationX(-MathUtil.PiOverFour) });
+            //   var m = new ModelSDX("Wm\\", "Character.fbx");
 
+            _meshes = new List<Assimp3DModel>();
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"));// { _world = Matrix.RotationX(MathUtil.Pi/2)});
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"));// { _world = Matrix.RotationX(MathUtil.Pi/2) });
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"));// { _world = Matrix.RotationX(MathUtil.Pi/2) });
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"));// { _world = Matrix.RotationX(MathUtil.Pi/2)});
 
             contextList = new DeviceContext[threadCount];
             if (threadCount == 1)
@@ -111,7 +112,7 @@ namespace ConsoleApplication3
                 var contextIndex = i;
                 renderTasks[i] = Task.Run(() =>
                 {
-                    _meshes[contextIndex].Update(time, true);
+                    _meshes[contextIndex].Update(time,true,1);
 
                 });
             }

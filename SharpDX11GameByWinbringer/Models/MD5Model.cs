@@ -62,7 +62,6 @@ namespace SharpDX11GameByWinbringer.Models
         public Vector3 position;
         public Vector3 normal;
         public Vector2 textureUV;
-        public Vector4 Tangent;
         public int startWeight;
         public int numWeights;
         public int ID;

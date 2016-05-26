@@ -8,6 +8,7 @@ cbuffer data : register(b0)
     uint hasBones;
     uint hasDif;
     float4x4 world;
+    float4 dif;
 };
 
 cbuffer data2 : register(b1)
@@ -63,7 +64,7 @@ PS_IN VS(VS_IN input)
 
 float4 PS(PS_IN input) : SV_Target0
 {
-    float4 color = float4(1, 1, 1, 1);
+    float4 color = dif;
     if (hasDif)
         color = textureMap.Sample(textureSampler, input.uv);
     float3 amb = color.rgb * 0.3;

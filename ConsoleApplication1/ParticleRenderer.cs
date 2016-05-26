@@ -45,7 +45,6 @@ namespace ConsoleApplication1
         public float Time;
         public float FrameTime;
         public uint RandomSeed;
-        // use CopyStructureCount for last component  
         uint _padding0;
     }
 

@@ -9,8 +9,8 @@ namespace ConsoleApplication4
         Assimp3DModel mesh;
         public Logic(Game game) : base(game)
         {
-            mesh = new Assimp3DModel(game, "Character.fbx", "Wm\\");
-           mesh._world = Matrix.Scaling(10f) * mesh._world;
+            mesh = new Assimp3DModel(game, "cartoon_village.fbx", "Wm\\");
+        mesh._world = mesh._world* Matrix.Scaling(5f) *Matrix.RotationX(MathUtil.PiOverTwo);
         }
 
         public override void Dispose()

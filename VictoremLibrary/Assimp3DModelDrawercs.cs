@@ -97,7 +97,7 @@ namespace VictoremLibrary
                 new InputElement("NORMAL", 0, Format.R32G32B32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData, 0),
             };
         #endregion
-        
+
         Shader _shader;
         ModelSDX _model;
         Game _game;
@@ -144,6 +144,11 @@ namespace VictoremLibrary
             {
                 _constData.HasAnimaton = 1;
                 _bones.init(_model.Animate(time, numAnimation));
+            }
+            else if(_model.HasAnimation)
+            {
+                _constData.HasAnimaton = 1;
+                _bones.init(_model.BaseBones);
             }
 
         }

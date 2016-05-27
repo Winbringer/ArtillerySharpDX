@@ -41,8 +41,8 @@ namespace VictoremLibrary
 
     class AnimationSDX
     {
-        public float FramePerSecond { get; } = 25;
-        public float FrameDuration { get; } = 0;
+        public float FramePerSecond { get; private set; } = 25;
+        public float FrameDuration { get; private set; } = 0;
         public float CurrentFrame { get; set; } = 0;
         public int DurationInTicks { get; } = 0;
         public Dictionary<string, Frame[]> Frames { get { return frames; } }
@@ -57,6 +57,12 @@ namespace VictoremLibrary
                 frames.Add(n.NodeName, GetFrames(n).ToArray());
             }
             DurationInTicks = frames.Values.Max(x => x.Length);
+        }
+
+        public void SetFramesPerSecontRate(int framePerSecond)
+        {
+            FramePerSecond = framePerSecond;
+            FrameDuration = 1000 / FramePerSecond;
         }
 
         IEnumerable<Frame> GetFrames(NodeAnimationChannel nch)
@@ -169,13 +175,14 @@ namespace VictoremLibrary
         List<AnimationSDX> _animations = new List<AnimationSDX>();
         List<Bone> _bones;
         Mesh3D[] _3dMeshes;
-        private List<NodeAnimationChannel> _nodeAnim;
+        private Matrix[] _baseTransform;
         #endregion
 
         #region Propertis 
         public int AnimationsCount { get { return _animations.Count; } }
         public Mesh3D[] Meshes3D { get { return _3dMeshes; } }
         public bool HasAnimation { get; private set; } = false;
+        public Matrix[] BaseBones { get { return _baseTransform; } }
         #endregion
 
         public ModelSDX(Device device, string Folder, string File)
@@ -194,7 +201,7 @@ namespace VictoremLibrary
                 if (Model.HasAnimations && Model.Animations.Any(x => x.HasNodeAnimations))
                 {
                     HasAnimation = true;
-                    _nodeAnim = Model.Animations.SelectMany(x => x.NodeAnimationChannels).ToList();
+
                     _bones = GetBones(Model).ToList();
                     for (int i = 0; i < _bones.Count; i++)
                     {
@@ -207,11 +214,14 @@ namespace VictoremLibrary
 
                     }
                     BildBone(ref _bones);
+
+                    _baseTransform = GetNodeTransforms().ToArray();
                     foreach (var anim in Model.Animations)
                     {
                         _animations.Add(new AnimationSDX(anim));
                     }
                 }
+
                 var _meshes = GetMeshes(Model).ToArray();
                 _3dMeshes = Create3DMeshes(_meshes, device, Folder).ToArray();
                 Model.Clear();
@@ -409,7 +419,7 @@ namespace VictoremLibrary
             List<Node> l = new List<Node>();
             GetChidlren(scene.RootNode, ref l);
             foreach (var item in l)
-            {               
+            {
                 var of = m.SingleOrDefault(x => x.Name.Equals(item.Name));
                 yield return new Bone()
                 {

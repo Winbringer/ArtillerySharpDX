@@ -20,7 +20,8 @@ namespace VictoremLibrary
         private PixelShader _pixelShader = null;
         private VertexShader _vertexShader = null;
         private InputLayout _inputLayout = null;
-
+        SamplerState _samler;
+        public SamplerState DefaultSampler { get { return _samler; } }
         /// <summary>
         /// Конструктор класса
         /// </summary>
@@ -32,6 +33,16 @@ namespace VictoremLibrary
         public Shader(DeviceContext dC, string shadersFile, SharpDX.Direct3D11.InputElement[] inputElements, bool hasGeom = false, bool hasTes = false)
         {
             _dx11DeviceContext = dC;
+            var sD = SamplerStateDescription.Default();
+            sD.AddressU = TextureAddressMode.Wrap;
+            sD.AddressV = TextureAddressMode.Wrap;
+            sD.AddressW = TextureAddressMode.Wrap;
+            sD.MaximumAnisotropy = 16;
+            sD.MaximumLod = float.MaxValue;
+            sD.MinimumLod = 0;
+            sD.Filter = Filter.MinMagMipLinear;
+            _samler = new SamplerState(_dx11DeviceContext.Device, sD);
+
             ShaderFlags shaderFlags = ShaderFlags.None;
 #if DEBUG
             shaderFlags = ShaderFlags.Debug;
@@ -158,8 +169,9 @@ namespace VictoremLibrary
                 0);
         }
 
-        public Buffer CreateStructuredBuffer<T>(int structureCount) where T : struct
+        public Buffer CreateStructuredBuffer<T>(int structureCount=1) where T : struct
         {
+            if (structureCount < 1) throw new ArgumentException("Структур должно быть не мее одной");
             return new Buffer(_dx11DeviceContext.Device,
                Utilities.SizeOf<T>() * structureCount,
                ResourceUsage.Default,
@@ -168,6 +180,7 @@ namespace VictoremLibrary
                ResourceOptionFlags.BufferStructured,
                Utilities.SizeOf<T>());
         }
+
         /// <summary>
         /// Освобождает ресурсы
         /// </summary>

@@ -485,7 +485,7 @@ namespace VictoremLibrary
             }
 
             // Check for DX10 extension
-           bool bDXT10Header = false;
+            bool bDXT10Header = false;
             if (((header.ddspf.flags & DDS_FOURCC) > 0) && (MAKEFOURCC('D', 'X', '1', '0') == header.ddspf.fourCC))
             {
                 // Must be long enough for both headers and magic value
@@ -1146,6 +1146,15 @@ namespace VictoremLibrary
         }
 
         internal static Vector3 ToVector3(this Assimp.Vector3D vec)
+        {
+            Vector3 v;
+            v.X = vec.X;
+            v.Y = vec.Y;
+            v.Z = vec.Z;
+            return v;
+        }
+
+        internal static Vector3 ToVector3(this Vector4 vec)
         {
             Vector3 v;
             v.X = vec.X;

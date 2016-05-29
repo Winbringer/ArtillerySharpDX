@@ -17,10 +17,6 @@ namespace VictoremLibrary
         Vector2 padding0;
         public Matrix World;
         public Color4 Dif;
-        public uint isRef;
-        Vector3 pd1;
-        public float RefAm;
-        public Vector3 CamPos;
         public AnimConst(Matrix w, Matrix v, Matrix p, uint HasAnim, uint HasTex)
         {
 
@@ -30,10 +26,6 @@ namespace VictoremLibrary
             World = w;
             padding0 = new Vector2();
             Dif = Color4.White;
-            isRef = 0;
-            RefAm = 0.4f;
-            CamPos = new Vector3();
-            pd1 = new Vector3();
         }
 
         public void Transpose()
@@ -124,7 +116,7 @@ namespace VictoremLibrary
             _bones = new BonesConst();
             _game = game;
             _model = new ModelSDX(game.DeviceContext.Device, Folder, modelFile);
-            _shader = new Shader(game.DeviceContext, "Shaders\\Assimp.hlsl", SkinnedPosNormalTexTanBi, true);
+            _shader = new Shader(game.DeviceContext, "Shaders\\Assimp.hlsl", SkinnedPosNormalTexTanBi);
 
             var sD = SamplerStateDescription.Default();
             sD.AddressU = TextureAddressMode.Wrap;
@@ -143,7 +135,6 @@ namespace VictoremLibrary
 
             _constBuffer0 = new SharpDX.Direct3D11.Buffer(_game.DeviceContext.Device, Utilities.SizeOf<AnimConst>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
             _constBuffer1 = new SharpDX.Direct3D11.Buffer(_game.DeviceContext.Device, BonesConst.Size(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
-            var _constBuffer2 = new SharpDX.Direct3D11.Buffer(_game.DeviceContext.Device, Utilities.SizeOf<Matrix>() * 6, ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
         }
 
         public void Update(float time, bool animate = false, int numAnimation = 0)
@@ -154,7 +145,7 @@ namespace VictoremLibrary
                 _constData.HasAnimaton = 1;
                 _bones.init(_model.Animate(time, numAnimation));
             }
-            else if (_model.HasAnimation)
+            else if(_model.HasAnimation)
             {
                 _constData.HasAnimaton = 1;
                 _bones.init(_model.BaseBones);
@@ -167,14 +158,13 @@ namespace VictoremLibrary
             _constData.World = _world;
             _constData.WVP = _world * _view * _proj;
             _constData.Transpose();
-            _constData.CamPos =Matrix.Transpose(Matrix.Invert( _view)).Column4.ToVector3();
+
             context.UpdateSubresource(_bones.Bones, _constBuffer1);
             foreach (var item in _model.Meshes3D)
             {
                 _constData.Dif = item.Diff;
                 _constData.HasDiffuseTexture = item.Texture != null ? 1u : 0;
                 context.UpdateSubresource(ref _constData, _constBuffer0);
-
                 _shader.Begin(context, new[] { _samler }, new[] { item.Texture }, new[] { _constBuffer0, _constBuffer1 });
 
                 context.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;

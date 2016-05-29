@@ -21,7 +21,7 @@ namespace ConsoleApplication3
             //   var m = new ModelSDX("Wm\\", "Character.fbx");
 
             _meshes = new List<Assimp3DModel>();
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\") { _world = Matrix.Scaling(10) });
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10)});
             _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10) });
             _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10) });
             _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10) });

@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 
 namespace VictoremLibrary
 {
-    struct Frame
+  public  struct Frame
     {
         public Assimp.Quaternion rot;
         public Vector3D pos;
@@ -39,12 +39,13 @@ namespace VictoremLibrary
         public Vector4 BoneWheight;
     }
 
-    class AnimationSDX
+   public class AnimationSDX
     {
         public float FramePerSecond { get; private set; } = 25;
         public float FrameDuration { get; private set; } = 0;
         public float CurrentFrame { get; set; } = 0;
         public int DurationInTicks { get; } = 0;
+        public float DurationInMiliseconds { get; } = 0;
         public Dictionary<string, Frame[]> Frames { get { return frames; } }
         Dictionary<string, Frame[]> frames = new Dictionary<string, Frame[]>();
 
@@ -57,6 +58,7 @@ namespace VictoremLibrary
                 frames.Add(n.NodeName, GetFrames(n).ToArray());
             }
             DurationInTicks = frames.Values.Max(x => x.Length);
+            DurationInMiliseconds = DurationInTicks * FrameDuration;
         }
 
         public void SetFramesPerSecontRate(int framePerSecond)
@@ -179,6 +181,7 @@ namespace VictoremLibrary
         #endregion
 
         #region Propertis 
+        public List<AnimationSDX> Animations { get { return _animations; } }
         public int AnimationsCount { get { return _animations.Count; } }
         public Mesh3D[] Meshes3D { get { return _3dMeshes; } }
         public bool HasAnimation { get; private set; } = false;

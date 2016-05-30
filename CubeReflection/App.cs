@@ -12,6 +12,12 @@ using Buffer = SharpDX.Direct3D11.Buffer;
 
 namespace CubeReflection
 {
+    public struct CubeFaceCamera
+    {
+        public Matrix View;
+        public Matrix Projection;
+    }
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PerFrame
     {
@@ -105,7 +111,7 @@ namespace CubeReflection
             using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "GS0", "gs_5_0", shaderFlags))
                 _GS0 = new GeometryShader(_dx11Device, vertexShaderByteCode);
             _layout = new InputLayout(_dx11Device, _inputSignature, inputElements);
-
+            _viewPort= new Viewport(0, 0, Width, Height);
 
             _directInput = new DirectInput();
             _keyboard = new Keyboard(_directInput);
@@ -202,16 +208,20 @@ namespace CubeReflection
 
         private void Draw(float time)
         {
-            DrawMesh(Matrix.Identity, Matrix.Identity, _renderView, _depthView);
+            DrawMesh(Matrix.Identity, Matrix.Identity, _renderView, _depthView, _viewPort);
             _swapChain.Present(0, PresentFlags.None);
         }
-        void DrawMesh(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv)
+        void DrawMesh(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, Viewport vp)
         {
+            _dx11DeviceContext.InputAssembler.InputLayout = _layout;
             _dx11DeviceContext.OutputMerger.SetRenderTargets(dv, rv);
+            _dx11DeviceContext.Rasterizer.SetViewport(vp);
             _dx11DeviceContext.ClearRenderTargetView(rv, Color);
             _dx11DeviceContext.ClearDepthStencilView(dv,
                 DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil,
                 1.0f, 0);
+
+
         }
         /// <summary>
         /// Запускает бесконечный цикл игры
@@ -234,6 +244,7 @@ namespace CubeReflection
         private PixelShader _PS1;
         private GeometryShader _GS0;
         private InputLayout _layout;
+        private Viewport _viewPort;
 
         private void RenderCallback()
         {

@@ -313,6 +313,34 @@ namespace CubeReflection
 
         }
 
+        public void SetViewPoint(Vector3 camera)
+        {
+            var targets = new[] {
+                camera + Vector3.UnitX, // +X    
+            camera - Vector3.UnitX, // -X    
+            camera + Vector3.UnitY, // +Y 
+            camera - Vector3.UnitY, // -Y 
+            camera + Vector3.UnitZ, // +Z  
+            camera - Vector3.UnitZ  // -Z 
+        };
+
+            var upVectors = new[] {
+            Vector3.UnitY, // +X   
+            Vector3.UnitY, // -X 
+            -Vector3.UnitZ,// +Y  
+            +Vector3.UnitZ,// -Y 
+            Vector3.UnitY, // +Z   
+            Vector3.UnitY, // -Z 
+        };
+
+            for (int i = 0; i < 6; i++)
+            {
+                Cameras[i].View = Matrix.LookAtLH(camera, targets[i], upVectors[i]);
+                Cameras[i].Projection = Matrix.PerspectiveFovLH(MathUtil.Pi * 0.5f, 1.0f, 0.1f, 100.0f);
+            }
+
+        }
+
         private void Update(float time)
         {
             var m = _keyboard.GetCurrentState();
@@ -320,11 +348,11 @@ namespace CubeReflection
 
         private void Draw(float time)
         {
-            DrawMesh(V, P, _renderView, _depthView, _viewPort);
+            DrawMesh(V, P, _renderView, _depthView, _viewPort, _model0);
             _swapChain.Present(0, PresentFlags.None);
         }
 
-        void DrawMesh(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, Viewport vp)
+        void DrawMesh(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, Viewport vp, ModelSDX model)
         {
             _dx11DeviceContext.InputAssembler.InputLayout = _layout;
             _dx11DeviceContext.OutputMerger.SetRenderTargets(dv, rv);
@@ -359,7 +387,7 @@ namespace CubeReflection
             _dx11DeviceContext.DomainShader.Set(null);
             _dx11DeviceContext.ComputeShader.Set(null);
 
-            foreach (var m in _model0.Meshes3D)
+            foreach (var m in model.Meshes3D)
             {
                 _pm.HasTexture = m?.Texture == null ? 0u : 1u;
                 _dx11DeviceContext.UpdateSubresource(ref _pm, _c1);
@@ -374,7 +402,7 @@ namespace CubeReflection
 
         }
 
-        void DrawRfCube(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, Viewport vp)
+        void DrawRfCube(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, Viewport vp, ModelSDX model)
         {
             _dx11DeviceContext.InputAssembler.InputLayout = _layout;
             _dx11DeviceContext.OutputMerger.SetRenderTargets(dv, rv);

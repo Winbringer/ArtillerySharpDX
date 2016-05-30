@@ -58,7 +58,7 @@ namespace CubeReflection
         public RenderTargetView RenderView { get { return _renderView; } }
         public DepthStencilView DepthView { get { return _depthView; } }
         InputElement[] inputElements ={
-                new InputElement("POSITION", 0, Format.R32G32B32_Float, 0, 0, InputClassification.PerVertexData, 0),
+                new InputElement("SV_Position", 0, Format.R32G32B32_Float, 0, 0, InputClassification.PerVertexData, 0),
                 new InputElement("NORMAL", 0, Format.R32G32B32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData, 0),
                 new InputElement("TEXCOORD", 0, Format.R32G32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData, 0),
             };
@@ -94,7 +94,6 @@ namespace CubeReflection
             using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "VS0", "vs_5_0", shaderFlags))
             {
                 _inputSignature = ShaderSignature.GetInputSignature(vertexShaderByteCode);
-               // _layout = new InputLayout(_dx11Device, _inputSignature, inputElements);
                 _VS0 = new VertexShader(_dx11Device, vertexShaderByteCode);
             }
             using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "VS1", "vs_5_0", shaderFlags))
@@ -105,8 +104,8 @@ namespace CubeReflection
                 _PS1 = new PixelShader(_dx11Device, vertexShaderByteCode);
             using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "GS0", "gs_5_0", shaderFlags))
                 _GS0 = new GeometryShader(_dx11Device, vertexShaderByteCode);
+            _layout = new InputLayout(_dx11Device, _inputSignature, inputElements);
 
-            
 
             _directInput = new DirectInput();
             _keyboard = new Keyboard(_directInput);

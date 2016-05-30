@@ -100,8 +100,7 @@ namespace ConsoleApplication4
             using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "VS0", "vs_5_0", shaderFlags))
             {
                 _inputSignature = ShaderSignature.GetInputSignature(vertexShaderByteCode);
-                _VS0 = new VertexShader(_dx11Device, vertexShaderByteCode);
-             //   _layout = new InputLayout(_dx11Device, _inputSignature, inputElements);
+                _VS0 = new VertexShader(_dx11Device, vertexShaderByteCode);             
             }
             using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "VS1", "vs_5_0", shaderFlags))
                 _VS1 = new VertexShader(_dx11Device, vertexShaderByteCode);
@@ -111,6 +110,7 @@ namespace ConsoleApplication4
                 _PS1 = new PixelShader(_dx11Device, vertexShaderByteCode);
             using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "GS0", "gs_5_0", shaderFlags))
                 _GS0 = new GeometryShader(_dx11Device, vertexShaderByteCode);
+            _layout = new InputLayout(_dx11Device, _inputSignature, inputElements);
         }
 
         public SharpDX.Direct3D11.Buffer CreateConstantBuffer(int size)

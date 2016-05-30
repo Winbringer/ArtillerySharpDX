@@ -89,15 +89,16 @@ void GS0(triangle GeometryShaderInput input[3], uint instanceId : SV_GSInstanceI
     // Assign the render target instance
     // i.e. 0 = +X face, 1 = -X face and so on
     output.RTIndex = instanceId;
+    uint3 idx = uint3(0, 2, 1);
     [unroll]
     for (int v = 0; v < 3; v++)
     {
         // Apply cube face view/projection
-        output.Position = mul(input[v].Position, viewProj);
+        output.Position = mul(input[idx[v]].Position, viewProj);
         // Copy other vertex properties as is
-        output.WorldPosition = input[v].WorldPosition;
-        output.WorldNormal = input[v].WorldNormal;
-        output.TextureUV = input[v].TextureUV;
+        output.WorldPosition = input[idx[v]].WorldPosition;
+        output.WorldNormal = input[idx[v]].WorldNormal;
+        output.TextureUV = input[idx[v]].TextureUV;
 
         // Append to the stream
         stream.Append(output);

@@ -121,8 +121,13 @@ namespace CubeReflection
 
 
 
-            _model0 = new ModelSDX(_dx11Device, "Wm\\", "Female.md5mesh");
-            _model1 = new ModelSDX(_dx11Device, "Wm\\", "Female.md5mesh");
+            _model0 = new ModelSDX(_dx11Device, "Wm\\", "earth.obj");
+            _model1 = new ModelSDX(_dx11Device, "Wm\\", "earth.obj");
+
+            _model0.World = Matrix.Translation(0, -65, 0);
+            _model1.World = Matrix.Translation(0, 65, 0);
+
+            //  World = Matrix.RotationX(MathUtil.PiOverTwo);
 
             _c0 = CreateConstantBuffer(Utilities.SizeOf<PerFrame>());
             _c1 = CreateConstantBuffer(Utilities.SizeOf<PerMaterial>());
@@ -140,8 +145,8 @@ namespace CubeReflection
             _keyboard.Acquire();
             _stopWatch.Reset();
 
-            V = Matrix.LookAtLH(new Vector3(0, 30, -40), Vector3.Zero, Vector3.UnitY);
-            P = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, ViewRatio, 1, 1000);
+            V = Matrix.LookAtRH(new Vector3(0, 0, 200), Vector3.Zero, Vector3.UnitY);
+            P = Matrix.PerspectiveFovRH(MathUtil.PiOverFour, ViewRatio, 1, 1000);
 
             CrateCubeMapResourses();
         }
@@ -312,28 +317,29 @@ namespace CubeReflection
 
         public void SetViewPoint(Vector3 camera)
         {
+            // The LookAt targets for view matrices 
             var targets = new[] {
-                camera + Vector3.UnitX, // +X    
-            camera - Vector3.UnitX, // -X    
-            camera + Vector3.UnitY, // +Y 
-            camera - Vector3.UnitY, // -Y 
-            camera + Vector3.UnitZ, // +Z  
-            camera - Vector3.UnitZ  // -Z 
-        };
-
+                camera + Vector3.UnitX, // +X   
+                camera - Vector3.UnitX, // -X  
+                camera + Vector3.UnitY, // +Y  
+                camera - Vector3.UnitY, // -Y  
+                camera + Vector3.UnitZ, // +Z  
+                camera - Vector3.UnitZ  // -Z  
+            };
+            // The "up" vector for view matrices  
             var upVectors = new[] {
-            Vector3.UnitY, // +X   
-            Vector3.UnitY, // -X 
-            -Vector3.UnitZ,// +Y  
-            +Vector3.UnitZ,// -Y 
-            Vector3.UnitY, // +Z   
-            Vector3.UnitY, // -Z 
-        };
+                    Vector3.UnitY, // +X   
+                    Vector3.UnitY, // -X  
+                    -Vector3.UnitZ,// +Y  
+                    +Vector3.UnitZ,// -Y 
+                    Vector3.UnitY, // +Z  
+                    Vector3.UnitY, // -Z  
+                };
 
             for (int i = 0; i < 6; i++)
             {
-                Cameras[i].View = Matrix.LookAtLH(camera, targets[i], upVectors[i]);
-                Cameras[i].Projection = Matrix.PerspectiveFovLH(MathUtil.Pi * 0.5f, 1.0f, 0.1f, 100.0f);
+                Cameras[i].View = Matrix.LookAtRH(camera, targets[i], upVectors[i])*Matrix.Scaling(-1, 1, 1); 
+                Cameras[i].Projection = Matrix.PerspectiveFovRH(MathUtil.PiOverTwo, 1.0f, 1f, 1000.0f);
             }
 
         }
@@ -345,8 +351,6 @@ namespace CubeReflection
 
         private void Draw(float time)
         {
-            var w0 = World * Matrix.RotationX(MathUtil.PiOverTwo) * Matrix.Translation(-2, -2, -2);
-            var w1 = World * Matrix.RotationX(MathUtil.PiOverTwo) * Matrix.Translation(2, 2, 2);
 
             _dx11DeviceContext.ClearRenderTargetView(_renderView, Color);
             _dx11DeviceContext.ClearDepthStencilView(_depthView,
@@ -355,18 +359,18 @@ namespace CubeReflection
                 1.0f,
                 0);
 
-            SetViewPoint(Vector3.Transform(_model0.Center, w0).ToVector3());
-            DrawRfCube(w1, Cameras[0].View, Cameras[0].Projection, EnvMapRTV, EnvMapDSV, Viewport, _model1);
-            DrawMesh(w0, V, P, _renderView, _depthView, _viewPort, _model0, 1);
+            SetViewPoint(Vector3.Transform(_model0.Center, _model0.World * World).ToVector3());
+            DrawRfCube(Cameras[0].View, Cameras[0].Projection, EnvMapRTV, EnvMapDSV, Viewport, _model1);
+            DrawMesh(V, P, _renderView, _depthView, _viewPort, _model0);
 
-            SetViewPoint(Vector3.Transform(_model0.Center, w1).ToVector3());
-            DrawRfCube(w0, Cameras[0].View, Cameras[0].Projection, EnvMapRTV, EnvMapDSV, Viewport, _model0);
-            DrawMesh(w1, V, P, _renderView, _depthView, _viewPort, _model1, 1);
+            SetViewPoint(Vector3.Transform(_model1.Center, _model1.World * World).ToVector3());
+            DrawRfCube(Cameras[0].View, Cameras[0].Projection, EnvMapRTV, EnvMapDSV, Viewport, _model0);
+            DrawMesh(V, P, _renderView, _depthView, _viewPort, _model1);
 
             _swapChain.Present(0, PresentFlags.None);
         }
 
-        void DrawMesh(Matrix w, Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, Viewport vp, ModelSDX model, uint r)
+        void DrawMesh(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, Viewport vp, ModelSDX model)
         {
             _dx11DeviceContext.InputAssembler.InputLayout = _layout;
             _dx11DeviceContext.OutputMerger.SetRenderTargets(dv, rv);
@@ -376,8 +380,9 @@ namespace CubeReflection
 
             SetStates();
 
-            _pf.World = w;
-            _pf.WVP = w * v * p;
+            _pf.World = World * model.World;
+            _pf.WVP = World * model.World * v * p;
+            _pf.CameraPosition = Matrix.Transpose(Matrix.Invert(v)).Column4.ToVector3();
             _pf.Trn();
             _dx11DeviceContext.UpdateSubresource(ref _pf, _c0);
 
@@ -395,8 +400,8 @@ namespace CubeReflection
             foreach (var m in model.Meshes3D)
             {
                 _pm.HasTexture = m?.Texture == null ? 0u : 1u;
-                _pm.IsReflective = r;
-                _pm.ReflectionAmount = 0.4f;
+                _pm.IsReflective = 1;
+                _pm.ReflectionAmount = 0.6f;
                 _dx11DeviceContext.UpdateSubresource(ref _pm, _c1);
                 _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _c1);
                 _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _c1);
@@ -411,7 +416,7 @@ namespace CubeReflection
 
         }
 
-        void DrawRfCube(Matrix w, Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, ViewportF vp, ModelSDX model)
+        void DrawRfCube(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, ViewportF vp, params ModelSDX[] models)
         {
 
             _dx11DeviceContext.ClearRenderTargetView(rv, Color);
@@ -432,39 +437,38 @@ namespace CubeReflection
             _dx11DeviceContext.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
 
             SetStates();
-            _pf.World = w;
-            _pf.WVP = w * v * p;
             _pf.CameraPosition = Matrix.Transpose(Matrix.Invert(v)).Column4.ToVector3();
-            _pf.Trn();
-            _dx11DeviceContext.UpdateSubresource(ref _pf, _c0);
-
             _dx11DeviceContext.PixelShader.Set(_PS0);
             _dx11DeviceContext.VertexShader.Set(_VS0);
             _dx11DeviceContext.GeometryShader.Set(_GS0);
-
-            _dx11DeviceContext.VertexShader.SetConstantBuffer(0, _c0);
-            _dx11DeviceContext.PixelShader.SetConstantBuffer(0, _c0);
-            _dx11DeviceContext.GeometryShader.SetConstantBuffer(0, _c0);
-
             _dx11DeviceContext.HullShader.Set(null);
             _dx11DeviceContext.DomainShader.Set(null);
             _dx11DeviceContext.ComputeShader.Set(null);
-
-            foreach (var m in model.Meshes3D)
+            foreach (var model in models)
             {
-                _pm.HasTexture = m?.Texture == null ? 0u : 1u;
-                _pm.IsReflective = 0;
-                _pm.ReflectionAmount = 0.4f;
-                _dx11DeviceContext.UpdateSubresource(ref _pm, _c1);
-                _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _c1);
-                _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _c1);
-                _dx11DeviceContext.PixelShader.SetShaderResource(0, m.Texture);
 
-                //_dx11DeviceContext.PixelShader.SetShaderResource(1, EnvMapSRV);
-                _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, m.VertexBinding);
-                _dx11DeviceContext.InputAssembler.SetIndexBuffer(m.IndexBuffer, Format.R32_UInt, 0);
-                _dx11DeviceContext.DrawIndexed(m.IndexCount, 0, 0);
-                // _dx11DeviceContext.PixelShader.SetShaderResource(1, null);
+
+                _pf.World = World * model.World;
+                _pf.WVP = World * model.World * v * p;
+                _pf.Trn();
+                _dx11DeviceContext.UpdateSubresource(ref _pf, _c0);
+                _dx11DeviceContext.VertexShader.SetConstantBuffer(0, _c0);
+                _dx11DeviceContext.PixelShader.SetConstantBuffer(0, _c0);
+                _dx11DeviceContext.GeometryShader.SetConstantBuffer(0, _c0);
+
+                foreach (var m in model.Meshes3D)
+                {
+                    _pm.HasTexture = m?.Texture == null ? 0u : 1u;
+                    _pm.IsReflective = 0;
+                    _dx11DeviceContext.UpdateSubresource(ref _pm, _c1);
+                    _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _c1);
+                    _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _c1);
+                    _dx11DeviceContext.PixelShader.SetShaderResource(0, m.Texture);
+
+                    _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, m.VertexBinding);
+                    _dx11DeviceContext.InputAssembler.SetIndexBuffer(m.IndexBuffer, Format.R32_UInt, 0);
+                    _dx11DeviceContext.DrawIndexed(m.IndexCount, 0, 0);
+                }
             }
             //*******************************************//
             _dx11DeviceContext.OutputMerger.ResetTargets();

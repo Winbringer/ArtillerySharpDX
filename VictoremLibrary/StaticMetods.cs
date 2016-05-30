@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 namespace VictoremLibrary
 {
     public static class StaticMetods
-    {
+    {        
 
         const int DDS_MAGIC = 0x20534444;// "DDS "
         const int DDS_FOURCC = 0x00000004;// DDPF_FOURCC
@@ -100,7 +100,7 @@ namespace VictoremLibrary
         /// <param name="Text">Текст в заголовке формы</param>
         /// <param name="IconFile">Файл в формает .ico для инконки в заголовке формы</param>
         /// <returns></returns>
-        public static SharpDX.Windows.RenderForm GetRenderForm(string Text, string iconFile)
+        public static SharpDX.Windows.RenderForm GetRenderForm(string Text, string iconFile=null)
         {
             if (!SharpDX.Direct3D11.Device.IsSupportedFeatureLevel(SharpDX.Direct3D.FeatureLevel.Level_11_0))
             {
@@ -117,7 +117,7 @@ namespace VictoremLibrary
                 StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen,
                 ClientSize = new System.Drawing.Size(System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width, System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height),
                 FormBorderStyle = System.Windows.Forms.FormBorderStyle.None,
-                Icon = new System.Drawing.Icon("LogoVW.ico")
+                Icon = iconFile != null ? new System.Drawing.Icon(iconFile) : new System.Drawing.Icon("LogoVW.ico")
             };
 
             _renderForm.Shown += (sender, e) => { _renderForm.Activate(); };
@@ -485,7 +485,7 @@ namespace VictoremLibrary
             }
 
             // Check for DX10 extension
-           bool bDXT10Header = false;
+            bool bDXT10Header = false;
             if (((header.ddspf.flags & DDS_FOURCC) > 0) && (MAKEFOURCC('D', 'X', '1', '0') == header.ddspf.fourCC))
             {
                 // Must be long enough for both headers and magic value
@@ -1146,6 +1146,15 @@ namespace VictoremLibrary
         }
 
         internal static Vector3 ToVector3(this Assimp.Vector3D vec)
+        {
+            Vector3 v;
+            v.X = vec.X;
+            v.Y = vec.Y;
+            v.Z = vec.Z;
+            return v;
+        }
+
+        public static Vector3 ToVector3(this Vector4 vec)
         {
             Vector3 v;
             v.X = vec.X;

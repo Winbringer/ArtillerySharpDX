@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 
 namespace VictoremLibrary
 {
-  public  struct Frame
+    public struct Frame
     {
         public Assimp.Quaternion rot;
         public Vector3D pos;
@@ -37,9 +37,10 @@ namespace VictoremLibrary
         public Vector3 biTangent;
         public Vector4 BoneID;
         public Vector4 BoneWheight;
+        public Color4 Color;
     }
 
-   public class AnimationSDX
+    public class AnimationSDX
     {
         public float FramePerSecond { get; private set; } = 25;
         public float FrameDuration { get; private set; } = 0;
@@ -131,6 +132,11 @@ namespace VictoremLibrary
         public string NormalMap { get; set; } = null;
         public string DiplacementMap { get; set; } = null;
         public string SpecularMap { get; set; } = null;
+        public string ReflectionMap { get; set; } = null;
+        public string LightMap { get; set; } = null;
+        public string EmissiveMap { get; set; } = null;
+        public string HeightMap { get; set; } = null;
+        public string OpacityMap { get; set; } = null;
     }
 
     public class Mesh3D : Component<AssimpVertex>
@@ -186,6 +192,7 @@ namespace VictoremLibrary
         public Mesh3D[] Meshes3D { get { return _3dMeshes; } }
         public bool HasAnimation { get; private set; } = false;
         public Matrix[] BaseBones { get { return _baseTransform; } }
+        public Vector3 Center { get; private set; }
         #endregion
 
         public ModelSDX(Device device, string Folder, string File)
@@ -224,7 +231,11 @@ namespace VictoremLibrary
                         _animations.Add(new AnimationSDX(anim));
                     }
                 }
-
+                var verts = Model.Meshes.SelectMany(x => x.Vertices).ToArray();
+                var X = verts.Sum(x => x.X)/verts.Length;
+                var Y = verts.Sum(x => x.Y) / verts.Length;
+                var Z = verts.Sum(x => x.Z) / verts.Length;
+                Center = new Vector3(X, Y, Z);
                 var _meshes = GetMeshes(Model).ToArray();
                 _3dMeshes = Create3DMeshes(_meshes, device, Folder).ToArray();
                 Model.Clear();
@@ -348,7 +359,8 @@ namespace VictoremLibrary
                     biTangent = m.HasTangentBasis ? m.BiTangents[i].ToVector3() : new Vector3(),
                     normal = m.HasNormals ? m.Normals[i].ToVector3() : new Vector3(),
                     BoneID = HasAnimation && m.HasBones ? GetBoneID(bw) : new Vector4(),
-                    BoneWheight = HasAnimation && m.HasBones ? GetWheight(bw) : new Vector4()
+                    BoneWheight = HasAnimation && m.HasBones ? GetWheight(bw) : new Vector4(),
+                    Color = m.HasVertexColors(0) ? m.VertexColorChannels[0][i].ToColor4() : new Color4()
                 };
             }
             yield break;
@@ -409,7 +421,12 @@ namespace VictoremLibrary
                     SpecularMap = model.Materials[mesh.MaterialIndex].TextureSpecular.FilePath,
                     DiplacementMap = model.Materials[mesh.MaterialIndex].TextureDisplacement.FilePath,
                     HasBones = mesh.HasBones,
-                    Dif = model.Materials[mesh.MaterialIndex].ColorDiffuse.ToColor4()
+                    Dif = model.Materials[mesh.MaterialIndex].ColorDiffuse.ToColor4(),
+                    ReflectionMap = model.Materials[mesh.MaterialIndex].TextureReflection.FilePath,
+                    LightMap = model.Materials[mesh.MaterialIndex].TextureLightMap.FilePath,
+                    EmissiveMap = model.Materials[mesh.MaterialIndex].TextureEmissive.FilePath,
+                    HeightMap = model.Materials[mesh.MaterialIndex].TextureHeight.FilePath,
+                    OpacityMap = model.Materials[mesh.MaterialIndex].TextureOpacity.FilePath
                 };
             }
             yield break;

@@ -21,10 +21,10 @@ namespace ConsoleApplication3
             //   var m = new ModelSDX("Wm\\", "Character.fbx");
 
             _meshes = new List<Assimp3DModel>();
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10)});
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10) });
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10) });
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10) });
+            _meshes.Add(new Assimp3DModel(game, "Female.obj", "Wm\\"){ _world = Matrix.Scaling(1)});
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10)*Matrix.Translation(10,0,0) });
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10)* Matrix.Translation(0, 0, 10) });
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10) * Matrix.Translation(-10, 0, 0) });
 
             contextList = new DeviceContext[threadCount];
            
@@ -67,9 +67,9 @@ namespace ConsoleApplication3
 
                 renderTasks[i] = Task.Run(() =>
                 {
-                    var renderContext = contextList[contextIndex];
+                   // var renderContext = contextList[contextIndex];
                     // TODO: regular render logic goes here                   
-                    _meshes[contextIndex].Draw(renderContext);
+                    _meshes[contextIndex].Draw(contextList[contextIndex]);
 
                     if (contextList[contextIndex].TypeInfo == DeviceContextType.Deferred)
                     {

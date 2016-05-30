@@ -118,15 +118,19 @@ namespace VictoremLibrary
             _model = new ModelSDX(game.DeviceContext.Device, Folder, modelFile);
             _shader = new Shader(game.DeviceContext, "Shaders\\Assimp.hlsl", SkinnedPosNormalTexTanBi);
 
-            var sD = SamplerStateDescription.Default();
-            sD.AddressU = TextureAddressMode.Wrap;
-            sD.AddressV = TextureAddressMode.Wrap;
-            sD.AddressW = TextureAddressMode.Wrap;
-            sD.MaximumAnisotropy = 16;
-            sD.MaximumLod = float.MaxValue;
-            sD.MinimumLod = 0;
-            sD.Filter = Filter.MinMagMipLinear;
-            _samler = new SamplerState(game.DeviceContext.Device, sD);
+            _samler = new SamplerState(game.DeviceContext.Device, new SamplerStateDescription()
+            {
+                AddressU = TextureAddressMode.Wrap,
+                AddressV = TextureAddressMode.Wrap,
+                AddressW = TextureAddressMode.Wrap,
+                BorderColor = new Color4(0, 0, 0, 0),
+                ComparisonFunction = Comparison.Never,
+                Filter = Filter.Anisotropic,
+                MaximumAnisotropy = 16,
+                MaximumLod = float.MaxValue,
+                MinimumLod = 0,
+                MipLodBias = 0.0f
+            });
             _constData.HasAnimaton = _model.HasAnimation ? 1u : 0;
             _constData.HasDiffuseTexture = _model.Meshes3D[0].Texture != null ? 1u : 0;
             _constData.World = _world;
@@ -145,7 +149,7 @@ namespace VictoremLibrary
                 _constData.HasAnimaton = 1;
                 _bones.init(_model.Animate(time, numAnimation));
             }
-            else if(_model.HasAnimation)
+            else if (_model.HasAnimation)
             {
                 _constData.HasAnimaton = 1;
                 _bones.init(_model.BaseBones);

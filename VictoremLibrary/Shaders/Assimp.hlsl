@@ -1,5 +1,6 @@
 ﻿Texture2D textureMap : register(t0);
 SamplerState textureSampler : register(s0);
+TextureCube Reflection : register(t1);
 
 
 cbuffer data : register(b0)
@@ -9,6 +10,9 @@ cbuffer data : register(b0)
     uint hasDif;
     float4x4 world;
     float4 dif;
+    bool IsReflective;
+    float ReflectionAmount;
+    float3 CameraPosition;
 };
 
 cbuffer data2 : register(b1)
@@ -35,6 +39,7 @@ struct PS_IN
     float2 uv : TEXCOORD;
     float3 tangent : TANGENT;
     float3 biTangent : BINORMAL;
+    float3 WorldPosition : WORLDPOS;
 };
 
 void SkinVertex(float4 weights, float4 bones, inout float4 position, inout float3 normal, inout float3 tangent, inout float3 biTangent)
@@ -55,19 +60,29 @@ PS_IN VS(VS_IN input)
     if (hasBones)
         SkinVertex(input.wheights, input.boneID, position, input.normal, input.tangent, input.biTangent);
     vertex.position = mul(position, WVP);
-    vertex.normal = mul(input.normal, (float3x3) world);   
+    vertex.normal = mul(input.normal, (float3x3) world);
     vertex.tangent = mul(input.tangent, (float3x3) world);
     vertex.biTangent = mul(input.biTangent, (float3x3) world);
     vertex.uv = input.uv;
+    position = mul(position, world);
+    vertex.WorldPosition = position.xyz;
     return vertex;
 }
 
 float4 PS(PS_IN input) : SV_Target0
 {
+    
+    float3 toEye = normalize(CameraPosition - input.WorldPosition);
     float4 color = dif;
     if (hasDif)
         color = textureMap.Sample(textureSampler, input.uv);
     float3 amb = color.rgb * 0.3;
-    float3 dif = color.rgb * saturate(dot(normalize(input.normal),normalize( ToL))) * 0.8;
-    return float4(dif + amb, color.w);
+    float3 dif = color.rgb * saturate(dot(normalize(input.normal), normalize(ToL))) * 0.8;
+    float3 DA = amb + dif;
+    if (IsReflective)
+    {
+        float3 reflection = reflect(-toEye, normalize(input.normal));
+        DA = lerp(DA, Reflection.Sample(textureSampler, reflection).rgb, ReflectionAmount);
+    }
+    return float4(DA, color.w);
 }

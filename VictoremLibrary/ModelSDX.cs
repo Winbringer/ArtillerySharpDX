@@ -168,12 +168,12 @@ namespace VictoremLibrary
             InitBuffers(device);
             if (!string.IsNullOrEmpty(mesh.Texture))
                 _textures = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.Texture)));
-            if (!string.IsNullOrEmpty(mesh.NormalMap))
-                _normalMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.NormalMap)));
-            if (!string.IsNullOrEmpty(mesh.SpecularMap))
-                _specularMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.SpecularMap)));
-            if (!string.IsNullOrEmpty(mesh.DiplacementMap))
-                _displacementMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.DiplacementMap)));
+            //if (!string.IsNullOrEmpty(mesh.NormalMap))
+            //    _normalMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.NormalMap)));
+            //if (!string.IsNullOrEmpty(mesh.SpecularMap))
+            //    _specularMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.SpecularMap)));
+            //if (!string.IsNullOrEmpty(mesh.DiplacementMap))
+            //    _displacementMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.DiplacementMap)));
         }
 
         public override void Dispose()

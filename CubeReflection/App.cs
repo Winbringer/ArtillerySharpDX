@@ -121,11 +121,11 @@ namespace CubeReflection
 
 
 
-            _model0 = new ModelSDX(_dx11Device, "Wm\\", "earth.obj");
+            _model0 = new ModelSDX(_dx11Device, "Wm\\", "Female.md5mesh");
             _model1 = new ModelSDX(_dx11Device, "Wm\\", "earth.obj");
 
-            _model0.World = Matrix.Translation(0, -65, 0);
-            _model1.World = Matrix.Translation(0, 65, 0);
+            _model0.World = Matrix.Translation(-5, -10, -5);
+            _model1.World = Matrix.Scaling(0.2f) * Matrix.Translation(5, 10, 5);
 
             //  World = Matrix.RotationX(MathUtil.PiOverTwo);
 
@@ -145,8 +145,8 @@ namespace CubeReflection
             _keyboard.Acquire();
             _stopWatch.Reset();
 
-            V = Matrix.LookAtRH(new Vector3(0, 0, 200), Vector3.Zero, Vector3.UnitY);
-            P = Matrix.PerspectiveFovRH(MathUtil.PiOverFour, ViewRatio, 1, 1000);
+            V = Matrix.LookAtLH(new Vector3(0, 10, -50), Vector3.Zero, Vector3.UnitY);
+            P = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, ViewRatio, 1, 1000);
 
             CrateCubeMapResourses();
         }
@@ -331,15 +331,15 @@ namespace CubeReflection
                     Vector3.UnitY, // +X   
                     Vector3.UnitY, // -X  
                     -Vector3.UnitZ,// +Y  
-                    +Vector3.UnitZ,// -Y 
+                    Vector3.UnitZ,// -Y 
                     Vector3.UnitY, // +Z  
                     Vector3.UnitY, // -Z  
                 };
 
             for (int i = 0; i < 6; i++)
             {
-                Cameras[i].View = Matrix.LookAtRH(camera, targets[i], upVectors[i])*Matrix.Scaling(-1, 1, 1); 
-                Cameras[i].Projection = Matrix.PerspectiveFovRH(MathUtil.PiOverTwo, 1.0f, 1f, 1000.0f);
+                Cameras[i].View = Matrix.LookAtLH(camera, targets[i], upVectors[i]) ; 
+                Cameras[i].Projection = Matrix.PerspectiveFovLH(MathUtil.PiOverTwo, 1.0f, 1f, 1000.0f);
             }
 
         }

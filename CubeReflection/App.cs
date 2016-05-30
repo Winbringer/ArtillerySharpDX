@@ -26,6 +26,12 @@ namespace CubeReflection
         public Matrix World;
         public Vector3 CameraPosition;
         float _padding0;
+      public  void Trn()
+        {
+            WVP.Transpose();
+            World.Transpose();
+
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -67,6 +73,10 @@ namespace CubeReflection
         private SamplerState _samler;
         private DepthStencilState _depth;
         private RasterizerState _rasterizer;
+        private PerFrame _pf;
+        private PerMaterial _pm;
+        Matrix World = Matrix.Identity;
+
         #endregion
 
         #region Propertis
@@ -225,6 +235,8 @@ namespace CubeReflection
                 _GS0 = new GeometryShader(_dx11Device, vertexShaderByteCode);
         }
 
+
+
         private void Update(float time)
         {
             var m = _keyboard.GetCurrentState();
@@ -243,9 +255,37 @@ namespace CubeReflection
             _dx11DeviceContext.Rasterizer.SetViewport(vp);
             _dx11DeviceContext.ClearRenderTargetView(rv, Color);
             _dx11DeviceContext.ClearDepthStencilView(dv,
-                DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil,
-                1.0f, 0);
+                DepthStencilClearFlags.Depth |
+                DepthStencilClearFlags.Stencil,
+                1.0f,
+                0);
+
             SetStates();
+            _pf.World = World;
+            _pf.WVP = World * v * p;
+            _pf.Trn();
+            _dx11DeviceContext.UpdateSubresource(ref _pf, _c0);
+
+            _dx11DeviceContext.PixelShader.Set(_PS1);
+            _dx11DeviceContext.VertexShader.Set(_VS1);
+            _dx11DeviceContext.VertexShader.SetConstantBuffer(0, _c0);
+            _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _c1);
+            _dx11DeviceContext.VertexShader.SetConstantBuffer(2, _c2);
+
+            _dx11DeviceContext.PixelShader.SetConstantBuffer(0, _c0);
+            _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _c1);
+            _dx11DeviceContext.PixelShader.SetConstantBuffer(2, _c2);
+
+            _dx11DeviceContext.GeometryShader.Set(null);
+            _dx11DeviceContext.HullShader.Set(null);
+            _dx11DeviceContext.DomainShader.Set(null);
+            _dx11DeviceContext.ComputeShader.Set(null);
+
+            foreach (var m in _model0.Meshes3D)
+            {
+                _dx11DeviceContext.PixelShader.SetShaderResource(0, m.Texture);
+            }
+
 
         }
 

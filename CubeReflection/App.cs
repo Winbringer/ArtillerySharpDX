@@ -1,4 +1,5 @@
 ﻿using SharpDX;
+using SharpDX.D3DCompiler;
 using SharpDX.Direct3D11;
 using SharpDX.DirectInput;
 using SharpDX.DXGI;
@@ -56,7 +57,11 @@ namespace CubeReflection
         public Color Color { get; set; }
         public RenderTargetView RenderView { get { return _renderView; } }
         public DepthStencilView DepthView { get { return _depthView; } }
-
+        InputElement[] inputElements ={
+                new InputElement("POSITION", 0, Format.R32G32B32_Float, 0, 0, InputClassification.PerVertexData, 0),
+                new InputElement("NORMAL", 0, Format.R32G32B32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData, 0),
+                new InputElement("TEXCOORD", 0, Format.R32G32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData, 0),
+            };
 
         /// <summary>
         /// Конструктор класса
@@ -80,6 +85,28 @@ namespace CubeReflection
             _c0 = CreateConstantBuffer(Utilities.SizeOf<PerFrame>());
             _c1 = CreateConstantBuffer(Utilities.SizeOf<PerMaterial>());
             _c2 = CreateConstantBuffer(Utilities.SizeOf<Matrix>() * 6);
+
+            ShaderFlags shaderFlags = ShaderFlags.None;
+#if DEBUG
+            shaderFlags = ShaderFlags.Debug;
+#endif
+            var shadersFile = "CubeMap.hlsl";
+            using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "VS0", "vs_5_0", shaderFlags))
+            {
+                _inputSignature = ShaderSignature.GetInputSignature(vertexShaderByteCode);
+               // _layout = new InputLayout(_dx11Device, _inputSignature, inputElements);
+                _VS0 = new VertexShader(_dx11Device, vertexShaderByteCode);
+            }
+            using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "VS1", "vs_5_0", shaderFlags))
+                _VS1 = new VertexShader(_dx11Device, vertexShaderByteCode);
+            using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "PS0", "ps_5_0", shaderFlags))
+                _PS0 = new PixelShader(_dx11Device, vertexShaderByteCode);
+            using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "PS1", "ps_5_0", shaderFlags))
+                _PS1 = new PixelShader(_dx11Device, vertexShaderByteCode);
+            using (var vertexShaderByteCode = ShaderBytecode.CompileFromFile(shadersFile, "GS0", "gs_5_0", shaderFlags))
+                _GS0 = new GeometryShader(_dx11Device, vertexShaderByteCode);
+
+            
 
             _directInput = new DirectInput();
             _keyboard = new Keyboard(_directInput);
@@ -201,6 +228,14 @@ namespace CubeReflection
         Buffer _c0;
         Buffer _c1;
         Buffer _c2;
+        private ShaderSignature _inputSignature;
+        private VertexShader _VS0;
+        private VertexShader _VS1;
+        private PixelShader _PS0;
+        private PixelShader _PS1;
+        private GeometryShader _GS0;
+        private InputLayout _layout;
+
         private void RenderCallback()
         {
             var elapsed = _stopWatch.ElapsedMilliseconds;
@@ -227,6 +262,14 @@ namespace CubeReflection
             Utilities.Dispose(ref _c0);
             Utilities.Dispose(ref _c1);
             Utilities.Dispose(ref _c2);
+            Utilities.Dispose(ref _layout);
+            Utilities.Dispose(ref _inputSignature);
+            Utilities.Dispose(ref _VS0);
+            Utilities.Dispose(ref _VS1);
+            Utilities.Dispose(ref _PS0);
+            Utilities.Dispose(ref _PS1);
+            Utilities.Dispose(ref _GS0);
+
             _model0?.Dispose();
             _model1?.Dispose();
 

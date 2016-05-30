@@ -76,7 +76,8 @@ namespace CubeReflection
         private PerFrame _pf;
         private PerMaterial _pm;
         Matrix World = Matrix.Identity;
-
+        Matrix V;
+        Matrix P;
         #endregion
 
         #region Propertis
@@ -130,6 +131,9 @@ namespace CubeReflection
             _keyboard.Properties.BufferSize = 128;
             _keyboard.Acquire();
             _stopWatch.Reset();
+
+            V = Matrix.LookAtLH(new Vector3(0, 0, -50), Vector3.Zero, Vector3.UnitY);
+            P = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, ViewRatio, 1, 1000);
         }
 
         #region Metods
@@ -244,7 +248,7 @@ namespace CubeReflection
 
         private void Draw(float time)
         {
-            DrawMesh(Matrix.Identity, Matrix.Identity, _renderView, _depthView, _viewPort);
+            DrawMesh(V, P, _renderView, _depthView, _viewPort);
             _swapChain.Present(0, PresentFlags.None);
         }
 

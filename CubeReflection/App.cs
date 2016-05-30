@@ -26,7 +26,7 @@ namespace CubeReflection
         public Matrix World;
         public Vector3 CameraPosition;
         float _padding0;
-      public  void Trn()
+        public void Trn()
         {
             WVP.Transpose();
             World.Transpose();
@@ -269,11 +269,10 @@ namespace CubeReflection
             _dx11DeviceContext.PixelShader.Set(_PS1);
             _dx11DeviceContext.VertexShader.Set(_VS1);
             _dx11DeviceContext.VertexShader.SetConstantBuffer(0, _c0);
-            _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _c1);
             _dx11DeviceContext.VertexShader.SetConstantBuffer(2, _c2);
 
             _dx11DeviceContext.PixelShader.SetConstantBuffer(0, _c0);
-            _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _c1);
+
             _dx11DeviceContext.PixelShader.SetConstantBuffer(2, _c2);
 
             _dx11DeviceContext.GeometryShader.Set(null);
@@ -283,6 +282,10 @@ namespace CubeReflection
 
             foreach (var m in _model0.Meshes3D)
             {
+                _pm.HasTexture = m?.Texture == null ? 0u : 1u;
+                _dx11DeviceContext.UpdateSubresource(ref _pm, _c1);
+                _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _c1);
+                _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _c1);
                 _dx11DeviceContext.PixelShader.SetShaderResource(0, m.Texture);
             }
 

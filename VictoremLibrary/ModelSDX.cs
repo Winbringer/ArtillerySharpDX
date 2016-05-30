@@ -1,6 +1,7 @@
 ﻿using Assimp;
 using Assimp.Configs;
 using SharpDX;
+using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using System;
 using System.Collections.Generic;
@@ -137,6 +138,10 @@ namespace VictoremLibrary
         public string EmissiveMap { get; set; } = null;
         public string HeightMap { get; set; } = null;
         public string OpacityMap { get; set; } = null;
+        public bool Show { get; set; }
+        public bool HasReflection { get; set; }
+        public float ReflectionAmoutn { get; set; }
+        public PrimitiveTopology primitiveType { get; set; }
     }
 
     public class Mesh3D : Component<AssimpVertex>
@@ -150,6 +155,10 @@ namespace VictoremLibrary
         public ShaderResourceView SpecularMap { get { return _specularMap; } set { Utilities.Dispose(ref _specularMap); _specularMap = value; } }
         ShaderResourceView _displacementMap;
         public ShaderResourceView DisplacementMap { get { return _displacementMap; } set { Utilities.Dispose(ref _displacementMap); _displacementMap = value; } }
+        public bool Show { get; set; }
+        public bool HasReflection { get; set; }
+        public float ReflectionAmoutn { get; set; }
+        public PrimitiveTopology primitiveType { get; set; }
 
         public Mesh3D(SharpDX.Direct3D11.Device device, AssimpMesh mesh, string texturFolder)
         {
@@ -193,6 +202,7 @@ namespace VictoremLibrary
         public bool HasAnimation { get; private set; } = false;
         public Matrix[] BaseBones { get { return _baseTransform; } }
         public Vector3 Center { get; private set; }
+        public Matrix World { get; set; } = Matrix.Identity;
         #endregion
 
         public ModelSDX(Device device, string Folder, string File)
@@ -232,7 +242,7 @@ namespace VictoremLibrary
                     }
                 }
                 var verts = Model.Meshes.SelectMany(x => x.Vertices).ToArray();
-                var X = verts.Sum(x => x.X)/verts.Length;
+                var X = verts.Sum(x => x.X) / verts.Length;
                 var Y = verts.Sum(x => x.Y) / verts.Length;
                 var Z = verts.Sum(x => x.Z) / verts.Length;
                 Center = new Vector3(X, Y, Z);

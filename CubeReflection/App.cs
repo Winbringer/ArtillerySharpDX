@@ -78,6 +78,15 @@ namespace CubeReflection
         Matrix World = Matrix.Identity;
         Matrix V;
         Matrix P;
+
+        Texture2D EnvMap;
+        RenderTargetView EnvMapRTV;
+        DepthStencilView EnvMapDSV;
+        public ShaderResourceView EnvMapSRV;
+        Buffer PerEnvMapBuffer;
+        ViewportF Viewport;
+        public CubeFaceCamera[] Cameras = new CubeFaceCamera[6];
+        int Size = 256;
         #endregion
 
         #region Propertis
@@ -134,6 +143,8 @@ namespace CubeReflection
 
             V = Matrix.LookAtLH(new Vector3(0, 0, -50), Vector3.Zero, Vector3.UnitY);
             P = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, ViewRatio, 1, 1000);
+
+            CrateCubeMapResourses();
         }
 
         #region Metods
@@ -239,7 +250,68 @@ namespace CubeReflection
                 _GS0 = new GeometryShader(_dx11Device, vertexShaderByteCode);
         }
 
+        void CrateCubeMapResourses()
+        {
+            var textureDesc = new Texture2DDescription()
+            {
+                Format = Format.R8G8B8A8_UNorm,
+                Height = this.Size,
+                Width = this.Size,
+                ArraySize = 6,
+                BindFlags = BindFlags.ShaderResource | BindFlags.RenderTarget,
+                OptionFlags = ResourceOptionFlags.GenerateMipMaps | ResourceOptionFlags.TextureCube,
+                SampleDescription = new SampleDescription(1, 0),
+                MipLevels = 0,
+                Usage = ResourceUsage.Default,
+                CpuAccessFlags = CpuAccessFlags.None,
+            };
 
+            EnvMap = new Texture2D(_dx11Device, textureDesc);
+
+            var descSRV = new ShaderResourceViewDescription();
+            descSRV.Format = textureDesc.Format;
+            descSRV.Dimension = SharpDX.Direct3D.ShaderResourceViewDimension.TextureCube;
+            descSRV.TextureCube.MostDetailedMip = 0;
+            descSRV.TextureCube.MipLevels = -1;
+            EnvMapSRV = new ShaderResourceView(_dx11Device, EnvMap, descSRV);
+
+            var descRTV = new RenderTargetViewDescription();
+            descRTV.Format = textureDesc.Format;
+            descRTV.Dimension = RenderTargetViewDimension.Texture2DArray;
+            descRTV.Texture2DArray.MipSlice = 0;
+            descRTV.Texture2DArray.FirstArraySlice = 0;
+            descRTV.Texture2DArray.ArraySize = 6;
+            EnvMapRTV = new RenderTargetView(_dx11Device, EnvMap, descRTV);
+
+            using (var depth = new Texture2D(_dx11Device, new Texture2DDescription
+            {
+                Format = Format.D32_Float,
+                BindFlags = BindFlags.DepthStencil,
+                Height = Size,
+                Width = Size,
+                Usage = ResourceUsage.Default,
+                SampleDescription = new SampleDescription(1, 0),
+                CpuAccessFlags = CpuAccessFlags.None,
+                MipLevels = 1,
+                OptionFlags = ResourceOptionFlags.TextureCube,
+                ArraySize = 6
+            }))
+            {
+                var descDSV = new DepthStencilViewDescription();
+                descDSV.Format = depth.Description.Format;
+                descDSV.Dimension = DepthStencilViewDimension.Texture2DArray;
+                descDSV.Flags = DepthStencilViewFlags.None;
+                descDSV.Texture2DArray.MipSlice = 0;
+                descDSV.Texture2DArray.FirstArraySlice = 0;
+                descDSV.Texture2DArray.ArraySize = 6;
+                EnvMapDSV = new DepthStencilView(_dx11Device, depth, descDSV);
+            }
+
+            Viewport = new Viewport(0, 0, Size, Size);
+
+            PerEnvMapBuffer = new Buffer(_dx11Device, Utilities.SizeOf<Matrix>() * 6, ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+
+        }
 
         private void Update(float time)
         {
@@ -263,6 +335,8 @@ namespace CubeReflection
                 DepthStencilClearFlags.Stencil,
                 1.0f,
                 0);
+
+            _dx11DeviceContext.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
 
             SetStates();
 

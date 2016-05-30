@@ -261,6 +261,7 @@ namespace CubeReflection
                 0);
 
             SetStates();
+
             _pf.World = World;
             _pf.WVP = World * v * p;
             _pf.Trn();
@@ -287,6 +288,9 @@ namespace CubeReflection
                 _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _c1);
                 _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _c1);
                 _dx11DeviceContext.PixelShader.SetShaderResource(0, m.Texture);
+                _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, m.VertexBinding);
+                _dx11DeviceContext.InputAssembler.SetIndexBuffer(m.IndexBuffer, Format.R32_UInt, 0);
+                _dx11DeviceContext.DrawIndexed(m.IndexCount, 0, 0);
             }
 
 

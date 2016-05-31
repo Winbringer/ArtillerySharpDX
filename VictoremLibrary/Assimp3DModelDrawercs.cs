@@ -171,7 +171,7 @@ namespace VictoremLibrary
                 context.UpdateSubresource(ref _constData, _constBuffer0);
                 _shader.Begin(context, new[] { _samler }, new[] { item.Texture }, new[] { _constBuffer0, _constBuffer1 });
 
-                context.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
+                context.InputAssembler.PrimitiveTopology = item.primitiveType;
                 context.InputAssembler.SetVertexBuffers(0, item.VertexBinding);
                 context.InputAssembler.SetIndexBuffer(item.IndexBuffer, SharpDX.DXGI.Format.R32_UInt, 0);
                 context.OutputMerger.SetBlendState(null, null);

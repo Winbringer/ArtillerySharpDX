@@ -1,4 +1,5 @@
 ﻿using SharpDX;
+using SharpDX.Direct3D;
 using SharpDX.D3DCompiler;
 using SharpDX.Direct3D11;
 using SharpDX.DirectInput;
@@ -18,7 +19,7 @@ namespace CubeReflection
         public Matrix View;
         public Matrix Projection;
     }
-
+    
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PerFrame
     {
@@ -73,6 +74,7 @@ namespace CubeReflection
         private SamplerState _samler;
         private DepthStencilState _depth;
         private RasterizerState _rasterizer;
+        
         private PerFrame _pf;
         private PerMaterial _pm;
         Matrix World = Matrix.Identity;
@@ -86,6 +88,10 @@ namespace CubeReflection
         ViewportF Viewport;
         public CubeFaceCamera[] Cameras = new CubeFaceCamera[6];
         int Size = 256;
+
+        Texture2D EnvMap1;
+        ShaderResourceView EnvMapSRV1;
+        RenderTargetView EnvMapRTV1;
         #endregion
 
         #region Propertis
@@ -111,30 +117,27 @@ namespace CubeReflection
         /// <param name="renderForm">Форма в котору будем рисовать наши объекты</param>
         public App(RenderForm renderForm)
         {
-            Color = new Color(128, 128, 128);
-
+            Color = new Color(255, 0, 128);
             _renderForm = renderForm;
-
+           
             ViewRatio = (float)_renderForm.ClientSize.Width / _renderForm.ClientSize.Height;
 
             InitializeDeviceResources();
 
-
-
             _model0 = new ModelSDX(_dx11Device, "Wm\\", "Female.md5mesh");
             _model1 = new ModelSDX(_dx11Device, "Wm\\", "earth.obj");
 
-            _model0.World = Matrix.Translation(-5, -10, -5);
-            _model1.World = Matrix.Scaling(0.2f) * Matrix.Translation(5, 10, 5);
+            _model0.World = Matrix.Scaling(1f)* Matrix.Translation(-2, -10,-5);
+            _model1.World = Matrix.Scaling(0.1f) * Matrix.Translation(2, 0,0);
 
-            //  World = Matrix.RotationX(MathUtil.PiOverTwo);
+             World = Matrix.RotationX(MathUtil.PiOverTwo);
 
             _c0 = CreateConstantBuffer(Utilities.SizeOf<PerFrame>());
             _c1 = CreateConstantBuffer(Utilities.SizeOf<PerMaterial>());
             _c2 = CreateConstantBuffer(Utilities.SizeOf<Matrix>() * 6);
 
             CreateShaders();
-
+            
             _layout = new InputLayout(_dx11Device, _inputSignature, inputElements);
             _viewPort = new Viewport(0, 0, Width, Height);
 
@@ -145,7 +148,7 @@ namespace CubeReflection
             _keyboard.Acquire();
             _stopWatch.Reset();
 
-            V = Matrix.LookAtLH(new Vector3(0, 10, -50), Vector3.Zero, Vector3.UnitY);
+            V = Matrix.LookAtLH(new Vector3(0, 20, -40), Vector3.Zero, Vector3.UnitY);
             P = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, ViewRatio, 1, 1000);
 
             CrateCubeMapResourses();
@@ -163,9 +166,6 @@ namespace CubeReflection
                 0);
         }
 
-        /// <summary>
-        /// Инициализирует объекты связанные с графическим устройство - Девайс его контекст и Свапчейн
-        /// </summary>
         private void InitializeDeviceResources()
         {
             var creationFlags = DeviceCreationFlags.None;
@@ -269,15 +269,19 @@ namespace CubeReflection
                 Usage = ResourceUsage.Default,
                 CpuAccessFlags = CpuAccessFlags.None,
             };
-
+            
+             
             EnvMap = new Texture2D(_dx11Device, textureDesc);
-
+            EnvMap1 = new Texture2D(_dx11Device, textureDesc);
+           
             var descSRV = new ShaderResourceViewDescription();
             descSRV.Format = textureDesc.Format;
             descSRV.Dimension = SharpDX.Direct3D.ShaderResourceViewDimension.TextureCube;
             descSRV.TextureCube.MostDetailedMip = 0;
             descSRV.TextureCube.MipLevels = -1;
+
             EnvMapSRV = new ShaderResourceView(_dx11Device, EnvMap, descSRV);
+            EnvMapSRV1 = new ShaderResourceView(_dx11Device, EnvMap1, descSRV);
 
             var descRTV = new RenderTargetViewDescription();
             descRTV.Format = textureDesc.Format;
@@ -285,7 +289,9 @@ namespace CubeReflection
             descRTV.Texture2DArray.MipSlice = 0;
             descRTV.Texture2DArray.FirstArraySlice = 0;
             descRTV.Texture2DArray.ArraySize = 6;
+
             EnvMapRTV = new RenderTargetView(_dx11Device, EnvMap, descRTV);
+            EnvMapRTV1 = new RenderTargetView(_dx11Device, EnvMap1, descRTV);
 
             using (var depth = new Texture2D(_dx11Device, new Texture2DDescription
             {
@@ -308,6 +314,7 @@ namespace CubeReflection
                 descDSV.Texture2DArray.MipSlice = 0;
                 descDSV.Texture2DArray.FirstArraySlice = 0;
                 descDSV.Texture2DArray.ArraySize = 6;
+
                 EnvMapDSV = new DepthStencilView(_dx11Device, depth, descDSV);
             }
 
@@ -338,7 +345,7 @@ namespace CubeReflection
 
             for (int i = 0; i < 6; i++)
             {
-                Cameras[i].View = Matrix.LookAtLH(camera, targets[i], upVectors[i]) ; 
+                Cameras[i].View = Matrix.LookAtLH(camera, targets[i], upVectors[i]);
                 Cameras[i].Projection = Matrix.PerspectiveFovLH(MathUtil.PiOverTwo, 1.0f, 1f, 1000.0f);
             }
 
@@ -359,18 +366,22 @@ namespace CubeReflection
                 1.0f,
                 0);
 
-            SetViewPoint(Vector3.Transform(_model0.Center, _model0.World * World).ToVector3());
-            DrawRfCube(Cameras[0].View, Cameras[0].Projection, EnvMapRTV, EnvMapDSV, Viewport, _model1);
-            DrawMesh(V, P, _renderView, _depthView, _viewPort, _model0);
+            _pm.IsReflective = 1;
+            _pm.ReflectionAmount =1f;
 
+            SetViewPoint(Vector3.Transform(_model0.Center, _model0.World * World).ToVector3());
+            DrawRfCube(Cameras[0].View, Cameras[0].Projection, EnvMapRTV, EnvMapDSV, Viewport, _model1, EnvMapSRV1, EnvMapSRV);
             SetViewPoint(Vector3.Transform(_model1.Center, _model1.World * World).ToVector3());
-            DrawRfCube(Cameras[0].View, Cameras[0].Projection, EnvMapRTV, EnvMapDSV, Viewport, _model0);
-            DrawMesh(V, P, _renderView, _depthView, _viewPort, _model1);
+            DrawRfCube(Cameras[0].View, Cameras[0].Projection, EnvMapRTV1, EnvMapDSV, Viewport, _model0, EnvMapSRV, EnvMapSRV1);
+
+
+            DrawMesh(V, P, _renderView, _depthView, _viewPort, _model0, EnvMapSRV);
+            DrawMesh(V, P, _renderView, _depthView, _viewPort, _model1, EnvMapSRV1);
 
             _swapChain.Present(0, PresentFlags.None);
         }
 
-        void DrawMesh(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, Viewport vp, ModelSDX model)
+        void DrawMesh(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, Viewport vp, ModelSDX model, ShaderResourceView map)
         {
             _dx11DeviceContext.InputAssembler.InputLayout = _layout;
             _dx11DeviceContext.OutputMerger.SetRenderTargets(dv, rv);
@@ -400,13 +411,11 @@ namespace CubeReflection
             foreach (var m in model.Meshes3D)
             {
                 _pm.HasTexture = m?.Texture == null ? 0u : 1u;
-                _pm.IsReflective = 1;
-                _pm.ReflectionAmount = 0.6f;
                 _dx11DeviceContext.UpdateSubresource(ref _pm, _c1);
                 _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _c1);
                 _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _c1);
                 _dx11DeviceContext.PixelShader.SetShaderResource(0, m.Texture);
-                _dx11DeviceContext.PixelShader.SetShaderResource(1, EnvMapSRV);
+                _dx11DeviceContext.PixelShader.SetShaderResource(1, map);
                 _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, m.VertexBinding);
                 _dx11DeviceContext.InputAssembler.SetIndexBuffer(m.IndexBuffer, Format.R32_UInt, 0);
                 _dx11DeviceContext.DrawIndexed(m.IndexCount, 0, 0);
@@ -416,10 +425,10 @@ namespace CubeReflection
 
         }
 
-        void DrawRfCube(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, ViewportF vp, params ModelSDX[] models)
+        void DrawRfCube(Matrix v, Matrix p, RenderTargetView rv, DepthStencilView dv, ViewportF vp, ModelSDX model, ShaderResourceView map, ShaderResourceView target)
         {
 
-            _dx11DeviceContext.ClearRenderTargetView(rv, Color);
+            _dx11DeviceContext.ClearRenderTargetView(rv, Color.Black);
             _dx11DeviceContext.ClearDepthStencilView(dv,
                 DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil,
                 1.0f, 0);
@@ -437,6 +446,7 @@ namespace CubeReflection
             _dx11DeviceContext.InputAssembler.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
 
             SetStates();
+
             _pf.CameraPosition = Matrix.Transpose(Matrix.Invert(v)).Column4.ToVector3();
             _dx11DeviceContext.PixelShader.Set(_PS0);
             _dx11DeviceContext.VertexShader.Set(_VS0);
@@ -444,35 +454,34 @@ namespace CubeReflection
             _dx11DeviceContext.HullShader.Set(null);
             _dx11DeviceContext.DomainShader.Set(null);
             _dx11DeviceContext.ComputeShader.Set(null);
-            foreach (var model in models)
+
+
+
+            _pf.World = World * model.World;
+            _pf.WVP = World * model.World * v * p;
+            _pf.Trn();
+            _dx11DeviceContext.UpdateSubresource(ref _pf, _c0);
+            _dx11DeviceContext.VertexShader.SetConstantBuffer(0, _c0);
+            _dx11DeviceContext.PixelShader.SetConstantBuffer(0, _c0);
+            _dx11DeviceContext.GeometryShader.SetConstantBuffer(0, _c0);
+
+            foreach (var m in model.Meshes3D)
             {
-
-
-                _pf.World = World * model.World;
-                _pf.WVP = World * model.World * v * p;
-                _pf.Trn();
-                _dx11DeviceContext.UpdateSubresource(ref _pf, _c0);
-                _dx11DeviceContext.VertexShader.SetConstantBuffer(0, _c0);
-                _dx11DeviceContext.PixelShader.SetConstantBuffer(0, _c0);
-                _dx11DeviceContext.GeometryShader.SetConstantBuffer(0, _c0);
-
-                foreach (var m in model.Meshes3D)
-                {
-                    _pm.HasTexture = m?.Texture == null ? 0u : 1u;
-                    _pm.IsReflective = 0;
-                    _dx11DeviceContext.UpdateSubresource(ref _pm, _c1);
-                    _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _c1);
-                    _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _c1);
-                    _dx11DeviceContext.PixelShader.SetShaderResource(0, m.Texture);
-
-                    _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, m.VertexBinding);
-                    _dx11DeviceContext.InputAssembler.SetIndexBuffer(m.IndexBuffer, Format.R32_UInt, 0);
-                    _dx11DeviceContext.DrawIndexed(m.IndexCount, 0, 0);
-                }
+                _pm.HasTexture = m?.Texture == null ? 0u : 1u;
+                _dx11DeviceContext.UpdateSubresource(ref _pm, _c1);
+                _dx11DeviceContext.PixelShader.SetConstantBuffer(1, _c1);
+                _dx11DeviceContext.VertexShader.SetConstantBuffer(1, _c1);
+                _dx11DeviceContext.PixelShader.SetShaderResource(0, m.Texture);
+                _dx11DeviceContext.PixelShader.SetShaderResource(1, map);
+                _dx11DeviceContext.InputAssembler.SetVertexBuffers(0, m.VertexBinding);
+                _dx11DeviceContext.InputAssembler.SetIndexBuffer(m.IndexBuffer, Format.R32_UInt, 0);
+                _dx11DeviceContext.DrawIndexed(m.IndexCount, 0, 0);
+                _dx11DeviceContext.PixelShader.SetShaderResource(1, null);
             }
+
             //*******************************************//
             _dx11DeviceContext.OutputMerger.ResetTargets();
-            _dx11DeviceContext.GenerateMips(EnvMapSRV);
+            _dx11DeviceContext.GenerateMips(target);
 
         }
 
@@ -561,6 +570,10 @@ namespace CubeReflection
             Utilities.Dispose(ref EnvMapDSV);
             Utilities.Dispose(ref EnvMapRTV);
             Utilities.Dispose(ref EnvMapSRV);
+
+            Utilities.Dispose(ref EnvMap1);
+            Utilities.Dispose(ref EnvMapRTV1);
+            Utilities.Dispose(ref EnvMapSRV1);
 
 
             _model0?.Dispose();

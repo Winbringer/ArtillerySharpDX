@@ -123,7 +123,7 @@ float4 PS0(GS_CubeMapOutput pixel) : SV_Target
     if (IsReflective)
     {
         float3 reflection = reflect(-toEye, normal);
-        color = lerp(color, Reflection.Sample(Sampler, reflection).rgb, ReflectionAmount);
+        color = color*0.6f + Reflection.Sample(Sampler, reflection).rgb * ReflectionAmount;
     }
 
     // Return result
@@ -157,7 +157,7 @@ float4 PS1(PixelShaderInput pixel) : SV_Target
     if (IsReflective)
     {
         float3 reflection = reflect(-toEye, normal);
-        color = lerp(color, Reflection.Sample(Sampler, reflection).rgb, ReflectionAmount);
+        color = color*0.6f+ Reflection.Sample(Sampler, reflection).rgb* ReflectionAmount;
     }
 
     // Return result

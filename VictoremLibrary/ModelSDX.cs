@@ -159,9 +159,18 @@ namespace VictoremLibrary
         public bool HasReflection { get; set; }
         public float ReflectionAmoutn { get; set; }
         public PrimitiveTopology primitiveType { get; set; }
+        public Texture2D EnvMap { get { return _EnvMap; } }
+        public RenderTargetView EnvMapRTV { get { return _EnvMapRTV; } }
+        public DepthStencilView EnvMapDSV { get { return _EnvMapDSV; } }
+        public ShaderResourceView EnvMapSRV { get { return _EnvMapSRV; } }
+        Texture2D _EnvMap;
+        RenderTargetView _EnvMapRTV;
+        DepthStencilView _EnvMapDSV;
+        ShaderResourceView _EnvMapSRV;
 
         public Mesh3D(SharpDX.Direct3D11.Device device, AssimpMesh mesh, string texturFolder)
         {
+            primitiveType = mesh.primitiveType;
             Diff = mesh.Dif;
             this._indeces = mesh.Indeces;
             this._veteces = mesh.Veteces;
@@ -215,8 +224,7 @@ namespace VictoremLibrary
                 var Model = importer
                     .ImportFile(fileName,
                     PostProcessPreset.ConvertToLeftHanded |
-                    PostProcessPreset.TargetRealTimeMaximumQuality |
-                    PostProcessSteps.OptimizeGraph);
+                    PostProcessPreset.TargetRealTimeMaximumQuality);
 
                 if (Model.HasAnimations && Model.Animations.Any(x => x.HasNodeAnimations))
                 {
@@ -240,6 +248,15 @@ namespace VictoremLibrary
                     {
                         _animations.Add(new AnimationSDX(anim));
                     }
+                }
+                else
+                {
+                    Model.Clear();
+                    Model = importer
+                   .ImportFile(fileName,
+                   PostProcessPreset.ConvertToLeftHanded |
+                   PostProcessPreset.TargetRealTimeMaximumQuality |
+                  PostProcessSteps.PreTransformVertices);
                 }
                 var verts = Model.Meshes.SelectMany(x => x.Vertices).ToArray();
                 var X = verts.Sum(x => x.X) / verts.Length;
@@ -425,18 +442,19 @@ namespace VictoremLibrary
                 yield return new AssimpMesh()
                 {
                     Indeces = mesh.GetIndices().Select(i => (uint)i).ToArray(),
-                    Texture = model.Materials[mesh.MaterialIndex].TextureDiffuse.FilePath,
                     Veteces = GetVertex(mesh).ToArray(),
-                    NormalMap = model.Materials[mesh.MaterialIndex].TextureNormal.FilePath,
-                    SpecularMap = model.Materials[mesh.MaterialIndex].TextureSpecular.FilePath,
-                    DiplacementMap = model.Materials[mesh.MaterialIndex].TextureDisplacement.FilePath,
                     HasBones = mesh.HasBones,
                     Dif = model.Materials[mesh.MaterialIndex].ColorDiffuse.ToColor4(),
-                    ReflectionMap = model.Materials[mesh.MaterialIndex].TextureReflection.FilePath,
-                    LightMap = model.Materials[mesh.MaterialIndex].TextureLightMap.FilePath,
-                    EmissiveMap = model.Materials[mesh.MaterialIndex].TextureEmissive.FilePath,
-                    HeightMap = model.Materials[mesh.MaterialIndex].TextureHeight.FilePath,
-                    OpacityMap = model.Materials[mesh.MaterialIndex].TextureOpacity.FilePath
+                    Texture = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureDiffuse.FilePath),
+                    NormalMap = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureNormal.FilePath),
+                    SpecularMap = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureSpecular.FilePath),
+                    DiplacementMap = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureDisplacement.FilePath),
+                    ReflectionMap = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureReflection.FilePath),
+                    LightMap = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureLightMap.FilePath),
+                    EmissiveMap = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureEmissive.FilePath),
+                    HeightMap = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureHeight.FilePath),
+                    OpacityMap = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureOpacity.FilePath),
+                    primitiveType = mesh.PrimitiveType == PrimitiveType.Triangle ? PrimitiveTopology.TriangleList : mesh.PrimitiveType == PrimitiveType.Line ? PrimitiveTopology.LineList : PrimitiveTopology.PointList
                 };
             }
             yield break;

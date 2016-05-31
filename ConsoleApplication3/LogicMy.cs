@@ -14,26 +14,29 @@ namespace ConsoleApplication3
     {
         private List<Assimp3DModel> _meshes;
         DeviceContext[] contextList;
-        int threadCount = 4;
+        int threadCount = 7;
 
         public LogicMy(Game game) : base(game)
         {
-            //   var m = new ModelSDX("Wm\\", "Character.fbx");
-
             _meshes = new List<Assimp3DModel>();
-            _meshes.Add(new Assimp3DModel(game, "Female.obj", "Wm\\"){ _world = Matrix.Scaling(1)});
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10)*Matrix.Translation(10,0,0) });
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10)* Matrix.Translation(0, 0, 10) });
-            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\"){ _world = Matrix.Scaling(10) * Matrix.Translation(-10, 0, 0) });
+
+            _meshes.Add(new Assimp3DModel(game, "Female.md5mesh", "Wm\\") { _world = Matrix.Scaling(0.5f) * Matrix.Translation(0, -20, 0) });
+            _meshes.Add(new Assimp3DModel(game, "Character.fbx", "Wm\\") { _world = Matrix.Scaling(10) * Matrix.Translation(10, 0, 0) });
+            _meshes.Add(new Assimp3DModel(game, "troll.DAE", "Wm\\") { _world = Matrix.Scaling(10) * Matrix.Translation(0, 0, 10) });
+            _meshes.Add(new Assimp3DModel(game, "Scene.fbx", "Wm\\") { _world = Matrix.Scaling(1) * Matrix.Translation(-10, 0, 0) });
+            _meshes.Add(new Assimp3DModel(game, "cartoon_village.fbx", "Wm\\") { _world = Matrix.Scaling(0.1f) * Matrix.Translation(0, 0, -10) });
+            _meshes.Add(new Assimp3DModel(game, "earth.obj", "Wm\\") { _world = Matrix.Scaling(0.1f)  });
+            _meshes.Add(new Assimp3DModel(game, "soldier.X", "Wm\\") { _world = Matrix.Scaling(1) * Matrix.Translation(0, 10,-10) });
+
 
             contextList = new DeviceContext[threadCount];
-           
-                for (var i = 0; i < threadCount; i++)
-                {
-                    contextList[i] = new DeviceContext(game.DeviceContext.Device);
-                    InitializeContext(contextList[i]);
-                }
-           
+
+            for (var i = 0; i < threadCount; i++)
+            {
+                contextList[i] = new DeviceContext(game.DeviceContext.Device);
+                InitializeContext(contextList[i]);
+            }
+
 
         }
 
@@ -67,7 +70,7 @@ namespace ConsoleApplication3
 
                 renderTasks[i] = Task.Run(() =>
                 {
-                   // var renderContext = contextList[contextIndex];
+                    // var renderContext = contextList[contextIndex];
                     // TODO: regular render logic goes here                   
                     _meshes[contextIndex].Draw(contextList[contextIndex]);
 
@@ -106,7 +109,7 @@ namespace ConsoleApplication3
                 var contextIndex = i;
                 renderTasks[i] = Task.Run(() =>
                 {
-                    _meshes[contextIndex].Update(time,true,1);
+                    _meshes[contextIndex].Update(time, true, 0);
 
                 });
             }

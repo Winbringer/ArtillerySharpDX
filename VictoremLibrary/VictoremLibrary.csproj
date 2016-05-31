@@ -98,6 +98,7 @@
     <Compile Include="ModelSDX.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Shader.cs" />
+    <Compile Include="States.cs" />
     <Compile Include="StaticMetods.cs" />
     <Compile Include="TextWriter.cs" />
   </ItemGroup>

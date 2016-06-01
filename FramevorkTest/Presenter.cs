@@ -31,8 +31,8 @@ namespace FramevorkTest
             //Drawer2d.SetTextColor(Color.Red);
             //Drawer2d.SetTextSize(36);
 
-            model = new Assimp3DModel(game, "Female.md5mesh", "3DModelsFiles\\Wm\\");
-            model._world = Matrix.RotationX(MathUtil.PiOverTwo);
+            model = new Assimp3DModel(game, "lara.obj", "Wm\\");
+            model._world = Matrix.Scaling(20);// Matrix.RotationX(MathUtil.PiOverTwo);
         }
 
         private void KeyKontroller(float time, KeyboardState kState)

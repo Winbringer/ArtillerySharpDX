@@ -224,7 +224,15 @@ namespace VictoremLibrary
                 var Model = importer
                     .ImportFile(fileName,
                     PostProcessPreset.ConvertToLeftHanded |
-                    PostProcessPreset.TargetRealTimeMaximumQuality);
+                    PostProcessSteps.CalculateTangentSpace |
+                    PostProcessSteps.FindInvalidData |
+                    PostProcessSteps.GenerateSmoothNormals |
+                    PostProcessSteps.GenerateUVCoords |
+                    PostProcessSteps.JoinIdenticalVertices |
+                    PostProcessSteps.LimitBoneWeights |
+                    PostProcessSteps.SortByPrimitiveType |
+                    PostProcessSteps.TransformUVCoords |
+                    PostProcessSteps.Triangulate);
 
                 if (Model.HasAnimations && Model.Animations.Any(x => x.HasNodeAnimations))
                 {
@@ -253,10 +261,18 @@ namespace VictoremLibrary
                 {
                     Model.Clear();
                     Model = importer
-                   .ImportFile(fileName,
-                   PostProcessPreset.ConvertToLeftHanded |
-                   PostProcessPreset.TargetRealTimeMaximumQuality |
-                  PostProcessSteps.PreTransformVertices);
+                    .ImportFile(fileName,
+                    PostProcessPreset.ConvertToLeftHanded |
+                    PostProcessSteps.CalculateTangentSpace |
+                    PostProcessSteps.FindInvalidData |
+                    PostProcessSteps.GenerateSmoothNormals |
+                    PostProcessSteps.GenerateUVCoords |
+                    PostProcessSteps.JoinIdenticalVertices |
+                    PostProcessSteps.LimitBoneWeights |
+                    PostProcessSteps.SortByPrimitiveType |
+                    PostProcessSteps.TransformUVCoords |
+                    PostProcessSteps.Triangulate |
+                    PostProcessSteps.PreTransformVertices);
                 }
                 var verts = Model.Meshes.SelectMany(x => x.Vertices).ToArray();
                 var X = verts.Sum(x => x.X) / verts.Length;
@@ -387,7 +403,7 @@ namespace VictoremLibrary
                     normal = m.HasNormals ? m.Normals[i].ToVector3() : new Vector3(),
                     BoneID = HasAnimation && m.HasBones ? GetBoneID(bw) : new Vector4(),
                     BoneWheight = HasAnimation && m.HasBones ? GetWheight(bw) : new Vector4(),
-                    Color = m.HasVertexColors(0) ? m.VertexColorChannels[0][i].ToColor4() : new Color4()
+                    Color = m.HasVertexColors(0) ? m.VertexColorChannels[0][i].ToColor4() : new Color4(0.5f, 0.5f, 0.5f, 1)
                 };
             }
             yield break;

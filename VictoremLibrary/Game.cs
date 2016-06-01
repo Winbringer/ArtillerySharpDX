@@ -96,6 +96,7 @@ namespace VictoremLibrary
             _drawer = new DX11Drawer(_dx11DeviceContext);
             _filter = new FilterCS(this);
             _stopWatch.Reset();
+            _stopWatch.Stop();
         }
 
         /// <summary>
@@ -168,7 +169,7 @@ namespace VictoremLibrary
             _texWriter = new TextWirter(this.SwapChain.GetBackBuffer<Texture2D>(0), _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
         }
 
-       
+
         private void Update(float time)
         {
             var m = _keyboard.GetCurrentState();
@@ -226,6 +227,7 @@ namespace VictoremLibrary
             _dx11Device?.Dispose();
             _drawer.Dispose();
             _texWriter.Dispose();
+            _stopWatch = null;
         }
 
     }

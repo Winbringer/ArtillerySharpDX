@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParticleTest", "ConsoleAppl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParticleTest2", "ConsoleApplication2\ParticleTest2.csproj", "{C426E5D6-6BB2-44F8-956E-979FEA6B6D26}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommanList", "ConsoleApplication3\CommanList.csproj", "{68234DC2-08F0-4B21-BF04-F89DCA78EDC6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandList", "ConsoleApplication3\CommandList.csproj", "{68234DC2-08F0-4B21-BF04-F89DCA78EDC6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CubeReflection", "CubeReflection\CubeReflection.csproj", "{DDFAC2A9-60D4-49F0-83C2-5BF4A6AFBD13}"
 EndProject

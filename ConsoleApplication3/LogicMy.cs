@@ -25,7 +25,7 @@ namespace ConsoleApplication3
             _meshes.Add(new Assimp3DModel(game, "troll.DAE", "Wm\\") { _world = Matrix.Scaling(10) * Matrix.Translation(0, 0, 10) });
             _meshes.Add(new Assimp3DModel(game, "Scene.fbx", "Wm\\") { _world = Matrix.Scaling(1) * Matrix.Translation(-10, 0, 0) });
             _meshes.Add(new Assimp3DModel(game, "cartoon_village.fbx", "Wm\\") { _world = Matrix.Scaling(0.1f) * Matrix.Translation(0, 0, -10) });
-            _meshes.Add(new Assimp3DModel(game, "earth.obj", "Wm\\") { _world = Matrix.Scaling(0.1f)  });
+            _meshes.Add(new Assimp3DModel(game, "lara.obj", "Wm\\") { _world = Matrix.Scaling(10f)  });
             _meshes.Add(new Assimp3DModel(game, "soldier.X", "Wm\\") { _world = Matrix.Scaling(1) * Matrix.Translation(0, 10,-10) });
 
 

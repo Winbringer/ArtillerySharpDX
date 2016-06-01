@@ -66,6 +66,14 @@ namespace VictoremLibrary
 
         #region Методы
 
+        public void ApplyAll(DeviceContext context, int sampleSlot = 0)
+        {
+            ApplyBlend(context);
+            ApplyDepth(context);
+            ApplyRasterizer(context);
+            ApplySampler(context, sampleSlot);
+        }
+
         public void ApplyBlend(DeviceContext context)
         {
             context.OutputMerger.SetBlendState(_blendState, BlendFactor);

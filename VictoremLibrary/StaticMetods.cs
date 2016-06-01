@@ -213,7 +213,7 @@ namespace VictoremLibrary
             var rect = new DataRectangle(s.DataPointer, bsource.Size.Width * 4);
 
             var t2D = new SharpDX.Direct3D11.Texture2D(device.Device, desc, rect);
-            return t2D;
+            return t2D; 
         }
 
         /// <summary>
@@ -224,12 +224,12 @@ namespace VictoremLibrary
         /// <returns> Текстуру готовую для использования в шейдере</returns>
         public static SharpDX.Direct3D11.ShaderResourceView LoadTextureFromFile(SharpDX.Direct3D11.DeviceContext device, string filename)
         {
-            string ext = System.IO.Path.GetExtension(filename);
-            if (ext.ToLower() == ".dds")
-            {
-                bool isCube;
-                return CreateTextureFromDDS(device.Device, device, System.IO.File.ReadAllBytes(filename), out isCube);
-            }
+            //string ext = System.IO.Path.GetExtension(filename);
+            //if (ext.ToLower() == ".dds")
+            //{
+            //    bool isCube;
+            //    return CreateTextureFromDDS(device.Device, device, System.IO.File.ReadAllBytes(filename), out isCube);
+            //}
             return new SharpDX.Direct3D11.ShaderResourceView(device.Device, CreateTex2DFromFile(device, filename));
         }
         static T ByteArrayToStructure<T>(byte[] bytes, int start, int count) where T : struct

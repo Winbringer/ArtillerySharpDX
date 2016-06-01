@@ -15,9 +15,9 @@ namespace VictoremLibrary
         #region Поля       
         private DeviceContext _dx11DeviceContext;
         //Параметры отображения
-       RasterizerState _rasterizerState = null;
-       BlendState _blendState = null;
-       DepthStencilState _DState = null;
+        RasterizerState _rasterizerState = null;
+        BlendState _blendState = null;
+        DepthStencilState _DState = null;
         #endregion
 
         #region Свойства
@@ -48,8 +48,8 @@ namespace VictoremLibrary
             var b = BlendStateDescription.Default();
             b.AlphaToCoverageEnable = new RawBool(true);
             BlendDescription = b;
-          
-            
+
+
         }
 
         #region Методы
@@ -113,13 +113,14 @@ namespace VictoremLibrary
 
         public VertexBufferBinding CreateVertexBuffer<V>(V[] vertex) where V : struct
         {
-            return new VertexBufferBinding( Buffer.Create<V>(_dx11DeviceContext.Device, BindFlags.VertexBuffer, vertex), Utilities.SizeOf<V>(),0);
+            return new VertexBufferBinding(Buffer.Create<V>(_dx11DeviceContext.Device, BindFlags.VertexBuffer, vertex), Utilities.SizeOf<V>(), 0);
         }
 
         public Buffer CreateConstantBuffer<V>(V constant) where V : struct
         {
             return new Buffer(_dx11DeviceContext.Device, Utilities.SizeOf<V>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
         }
+
         public void Dispose()
         {
             Utilities.Dispose(ref _rasterizerState);

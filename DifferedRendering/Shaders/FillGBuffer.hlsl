@@ -4,18 +4,15 @@ cbuffer PerObject : register(b0)
     float4x4 WorldViewProjection;
     float4x4 World;
     float4x4 View;
+    bool HasTexture;
+    bool HasNormalMap;
+    bool HasSpecMap;
 };
 
 static const float4 MaterialSpecular = float4(1, 1, 1, 1);
 static const float MaterialSpecularPower = 24;
 static const float4 MaterialEmissive = float4(0, 0, 0, 1);
 
-cbuffer PerMaterial : register(b2)
-{
-    bool HasTexture;
-    bool HasNormalMap;
-    bool HasSpecMap;
-};
 
 struct VertexShaderInput
 {
@@ -48,6 +45,7 @@ struct GBufferPixelIn
     float2 TextureUV : TEXCOORD0;
     float3 ViewNormal : TEXCOORD1;
     float4 ViewTangent : TANGENT;
+    float4 ViewBiTangent : BINORMAL;
 };
 
 struct GBufferOutput

@@ -179,8 +179,8 @@ namespace VictoremLibrary
             this._indeces = mesh.Indeces;
             this._veteces = mesh.Veteces;
             InitBuffers(device);
-          //  if (!string.IsNullOrEmpty(mesh.Texture))
-           //     _textures = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.Texture)));
+            if (!string.IsNullOrEmpty(mesh.Texture))
+                _textures = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.Texture)));
             //if (!string.IsNullOrEmpty(mesh.NormalMap))
             //    _normalMap = StaticMetods.LoadTextureFromFile(device.ImmediateContext, Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, texturFolder + mesh.NormalMap)));
             //if (!string.IsNullOrEmpty(mesh.SpecularMap))

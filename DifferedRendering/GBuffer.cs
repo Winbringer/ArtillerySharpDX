@@ -33,6 +33,7 @@ namespace DifferedRendering
             this.sampleDescription = sampleDesc;
             RTFormats = targetFormats;
             device = dv;
+            CreateDeviceDependentResources();
         }
         void CreateDeviceDependentResources()
         {

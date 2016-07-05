@@ -35,6 +35,7 @@ namespace DifferedRendering
         //Шейдеры
         VertexShader fillGBufferVS;
         PixelShader fillGBufferPS;
+        private Model model;
         //Свойства
         public float ViewRatio { get; private set; }
         public DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
@@ -60,6 +61,9 @@ namespace DifferedRendering
             ViewRatio = (float)_renderForm.Width / _renderForm.Height;
 
             InitializeDeviceResources();
+
+            model = new Model(_dx11Device, "sponza.obj", "textures\\", Width, Height);
+            model._world = Matrix.Scaling(1);
 
             _directInput = new DirectInput();
             _keyboard = new Keyboard(_directInput);
@@ -158,6 +162,7 @@ namespace DifferedRendering
         {
             var m = _keyboard.GetCurrentState();
             // if (m.PressedKeys.Count > 0)
+            model.Update(time, true);
         }
 
         private void Draw(float time)
@@ -178,6 +183,7 @@ namespace DifferedRendering
             //gbuffer.Unbind(_dx11DeviceContext);
             //_dx11DeviceContext.OutputMerger.SetRenderTargets(this._depthView, this._renderView);
             ////... use G-Buffer for screen - space rendering
+            model.Draw(_dx11DeviceContext);
             _swapChain.Present(0, PresentFlags.None);
         }
 
@@ -218,6 +224,7 @@ namespace DifferedRendering
             Utilities.Dispose(ref fillGBufferPS);
             Utilities.Dispose(ref fillGBufferVS);
             Utilities.Dispose(ref gbuffer);
+            model?.Dispose();
             Utilities.Dispose(ref _swapChain);
             Utilities.Dispose(ref _dx11Device);
             _swapChain?.Dispose();

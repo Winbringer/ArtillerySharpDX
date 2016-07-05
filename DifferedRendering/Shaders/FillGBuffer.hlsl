@@ -19,10 +19,11 @@ cbuffer PerMaterial : register(b2)
 
 struct VertexShaderInput
 {
-    float4 Position : SV_Position;
+    float4 Position : POSITION;
     float3 Normal : NORMAL;
     float2 TextureUV : TEXCOORD0;
-    float4 Tangent : TANGENT; // Tangent - for normal mapping
+    float4 Tangent : TANGENT; 
+    float4 BiTangent : BINORMAL;
 };
 
 

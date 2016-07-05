@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 namespace VictoremLibrary
 {
     public static class StaticMetods
-    {        
+    {
 
         const int DDS_MAGIC = 0x20534444;// "DDS "
         const int DDS_FOURCC = 0x00000004;// DDPF_FOURCC
@@ -100,7 +100,7 @@ namespace VictoremLibrary
         /// <param name="Text">Текст в заголовке формы</param>
         /// <param name="IconFile">Файл в формает .ico для инконки в заголовке формы</param>
         /// <returns></returns>
-        public static SharpDX.Windows.RenderForm GetRenderForm(string Text, string iconFile=null)
+        public static SharpDX.Windows.RenderForm GetRenderForm(string Text, string iconFile = null)
         {
             if (!SharpDX.Direct3D11.Device.IsSupportedFeatureLevel(SharpDX.Direct3D.FeatureLevel.Level_11_0))
             {
@@ -113,7 +113,7 @@ namespace VictoremLibrary
             var _renderForm = new SharpDX.Windows.RenderForm(Text)
             {
                 AllowUserResizing = false,
-                IsFullscreen = false,
+                IsFullscreen = true,
                 StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen,
                 ClientSize = new System.Drawing.Size(System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width, System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height),
                 FormBorderStyle = System.Windows.Forms.FormBorderStyle.None,
@@ -125,8 +125,7 @@ namespace VictoremLibrary
             return _renderForm;
         }
 
-        private static readonly ImagingFactory Imgfactory = new ImagingFactory();
-
+              
         public static Bitmap1 LoadBitmap(SharpDX.Direct3D11.DeviceContext device, string filename)
         {
             var props = new BitmapProperties1
@@ -146,6 +145,10 @@ namespace VictoremLibrary
         /// <returns>Набор пикселей</returns>
         public static BitmapSource LoadBitmapSource(SharpDX.Direct3D11.DeviceContext device, string filename)
         {
+            var pFormat = SharpDX.WIC.PixelFormat.Format32bppPRGBA;
+            string ext = System.IO.Path.GetExtension(filename);
+            if (ext.ToLower() == ".dds") pFormat = SharpDX.WIC.PixelFormat.Format32bppRGBA;
+            using(var Imgfactory = new ImagingFactory2())
             using (var d = new BitmapDecoder(
                  Imgfactory,
                  filename,
@@ -156,16 +159,16 @@ namespace VictoremLibrary
                 var fconv = new FormatConverter(Imgfactory);
                 fconv.Initialize(
                     frame,
-                    SharpDX.WIC.PixelFormat.Format32bppPRGBA,
+                    pFormat,
                     BitmapDitherType.None, null,
                     0.0, BitmapPaletteType.Custom);
-
                 return fconv;
             }
         }
 
         public static byte[] LoadBytesFormFile(SharpDX.Direct3D11.DeviceContext device, string filename)
         {
+            using (var Imgfactory = new ImagingFactory2())
             using (var d = new BitmapDecoder(
                  Imgfactory,
                  filename,
@@ -213,9 +216,12 @@ namespace VictoremLibrary
             var rect = new DataRectangle(s.DataPointer, bsource.Size.Width * 4);
 
             var t2D = new SharpDX.Direct3D11.Texture2D(device.Device, desc, rect);
-            return t2D; 
+            return t2D;
         }
-
+        public static SharpDX.Direct3D11.ShaderResourceView LoadTextureDDS(SharpDX.Direct3D11.DeviceContext device, string filename, out bool isCube)
+        {
+            return CreateTextureFromDDS(device.Device, device, System.IO.File.ReadAllBytes(filename), out isCube);
+        }
         /// <summary>
         /// Создает текстуру для шейдера
         /// </summary>
@@ -224,12 +230,6 @@ namespace VictoremLibrary
         /// <returns> Текстуру готовую для использования в шейдере</returns>
         public static SharpDX.Direct3D11.ShaderResourceView LoadTextureFromFile(SharpDX.Direct3D11.DeviceContext device, string filename)
         {
-            string ext = System.IO.Path.GetExtension(filename);
-            if (ext.ToLower() == ".dds")
-            {
-                bool isCube;
-                return CreateTextureFromDDS(device.Device, device, System.IO.File.ReadAllBytes(filename), out isCube);
-            }
             return new SharpDX.Direct3D11.ShaderResourceView(device.Device, CreateTex2DFromFile(device, filename));
         }
         static T ByteArrayToStructure<T>(byte[] bytes, int start, int count) where T : struct

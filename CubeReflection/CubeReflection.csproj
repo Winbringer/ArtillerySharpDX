@@ -167,7 +167,7 @@
     <Content Include="Wm\Character.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Wm\maps\earthmap.jpg">
+    <Content Include="Wm\earthmap.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Wm\Head_NM.BMP">
@@ -182,34 +182,34 @@
     <Content Include="Wm\soldier_nmap.dds">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Wm\troll2\Troltooth_arms_Diffuse_3.JPG">
+    <Content Include="Wm\Troltooth_arms_Diffuse_3.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Wm\troll2\Troltooth_arms_Diffuse_3N.dds">
+    <Content Include="Wm\Troltooth_arms_Diffuse_3N.dds">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Wm\troll2\Troltooth_Club_diffuse_1.JPG">
+    <Content Include="Wm\Troltooth_Club_diffuse_1.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Wm\troll2\Troltooth_Club_diffuse_1N.dds">
+    <Content Include="Wm\Troltooth_Club_diffuse_1N.dds">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Wm\troll2\troltooth_head_diffuse_5.JPG">
+    <Content Include="Wm\troltooth_head_diffuse_5.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Wm\troll2\troltooth_head_diffuse_5N.dds">
+    <Content Include="Wm\troltooth_head_diffuse_5N.dds">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Wm\troll2\Troltooth_Legs_diffuse_2.JPG">
+    <Content Include="Wm\Troltooth_Legs_diffuse_2.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Wm\troll2\Troltooth_Legs_diffuse_2N.dds">
+    <Content Include="Wm\Troltooth_Legs_diffuse_2N.dds">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Wm\troll2\troltooth_torso_diffuse_1.JPG">
+    <Content Include="Wm\troltooth_torso_diffuse_1.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Wm\troll2\troltooth_torso_diffuse_1N.dds">
+    <Content Include="Wm\troltooth_torso_diffuse_1N.dds">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

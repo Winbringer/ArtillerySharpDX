@@ -2,6 +2,11 @@
 using System;
 using VictoremLibrary;
 using SharpDX.DirectInput;
+using TeximpNet.Compression;
+using TeximpNet;
+using SharpDX.Direct3D11;
+using SharpDX.WIC;
+using System.Collections.Generic;
 
 namespace FramevorkTest
 {
@@ -11,12 +16,27 @@ namespace FramevorkTest
     {
         //TextWirter Drawer2d;
         //Bitmap bitmap;
-
+       
         private Assimp3DModel model;
         Game game;
         public Presenter(Game game)
         {
-            this.game = game;
+           // var dt = Pfim.Pfim.FromFile("Wm\\CubeMap.dds");
+           //var dd= Pfim.Dds.Create(new SharpDX.IO.NativeFileStream("Wm\\CubeMap.dds", SharpDX.IO.NativeFileMode.Open, SharpDX.IO.NativeFileAccess.Read));
+           
+           // var ddg = new CSharpImageLibrary.General.ImageEngineImage("Wm\\CubeMap.dds");
+            //var sf =Surface.LoadFromFile("Wm\\CubeMap.dds",5);
+            ////Since we're displaying this to a form, we're using the compressor to generate mipmaps but outputting the data into BGRA format.
+            //Compressor compressor = new Compressor();
+            //compressor.Input.GenerateMipmaps = true;
+            //compressor.Input.SetData(sf);
+            //compressor.Compression.Format = CompressionFormat.BGRA;
+            //compressor.Compression.SetBGRAPixelFormat(); //If want the output images in RGBA ordering, you get set the pixel layout differently
+
+            //List<CompressedImageData> mips = new List<CompressedImageData>();
+            //if (!compressor.Process(mips))
+            //    throw new ArgumentException("Unable to process image.");
+            
             game.OnDraw += Draw;
             game.OnUpdate += Upadate;
             game.OnKeyPressed += KeyKontroller;
@@ -30,7 +50,6 @@ namespace FramevorkTest
             //bitmap = StaticMetods.GetBitmapFromSRV(srcTextureSRV, Drawer2d.RenderTarget);
             //Drawer2d.SetTextColor(Color.Red);
             //Drawer2d.SetTextSize(36);
-
             model = new Assimp3DModel(game, "lara.obj", "Wm\\");
             model._world = Matrix.Scaling(20);// Matrix.RotationX(MathUtil.PiOverTwo);
         }

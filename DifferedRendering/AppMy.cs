@@ -10,11 +10,12 @@ using SharpDX.DXGI;
 using SharpDX.Windows;
 using System.Diagnostics;
 using VictoremLibrary;
+using SharpDX.D3DCompiler;
 
 namespace DifferedRendering
 {
-    class AppMy: IDisposable
-    {      
+    class AppMy : IDisposable
+    {
 
         Factory _factory;
         //Форма куда будем вставлять наше представление renderTargetView.
@@ -31,17 +32,20 @@ namespace DifferedRendering
         DirectInput _directInput;
         Keyboard _keyboard;
         Stopwatch _stopWatch = new Stopwatch();
+        //Шейдеры
+        VertexShader fillGBufferVS;
+        PixelShader fillGBufferPS;
         //Свойства
         public float ViewRatio { get; private set; }
         public DeviceContext DeviceContext { get { return _dx11DeviceContext; } }
         public SharpDX.Windows.RenderForm Form { get { return _renderForm; } }
         public SwapChain SwapChain { get { return _swapChain; } }
-        public int Width { get { return _renderForm.ClientSize.Width; } }
-        public int Height { get { return _renderForm.ClientSize.Height; } }
+        public int Width { get { return _renderForm.Width; } }
+        public int Height { get { return _renderForm.Height; } }
         public Color Color { get; set; }
         public RenderTargetView RenderView { get { return _renderView; } }
         public DepthStencilView DepthView { get { return _depthView; } }
-       
+
 
         /// <summary>
         /// Конструктор класса
@@ -53,7 +57,7 @@ namespace DifferedRendering
 
             _renderForm = renderForm;
 
-            ViewRatio = (float)_renderForm.ClientSize.Width / _renderForm.ClientSize.Height;
+            ViewRatio = (float)_renderForm.Width / _renderForm.Height;
 
             InitializeDeviceResources();
 
@@ -82,8 +86,8 @@ namespace DifferedRendering
                   new SwapChainDescription()
                   {
                       ModeDescription = new ModeDescription(
-                         _renderForm.ClientSize.Width,
-                         _renderForm.ClientSize.Height,
+                         _renderForm.Width,
+                         _renderForm.Height,
                           new Rational(60, 1),
                           Format.R8G8B8A8_UNorm),
                       SampleDescription = new SampleDescription(4, 0),
@@ -107,8 +111,8 @@ namespace DifferedRendering
                       Format = Format.D32_Float_S8X24_UInt,
                       ArraySize = 1,
                       MipLevels = 1,
-                      Width = _renderForm.ClientSize.Width,
-                      Height = _renderForm.ClientSize.Height,
+                      Width = _renderForm.Width,
+                      Height = _renderForm.Height,
                       SampleDescription = _swapChain.Description.SampleDescription,
                       Usage = ResourceUsage.Default,
                       BindFlags = BindFlags.DepthStencil,
@@ -129,23 +133,51 @@ namespace DifferedRendering
             //Создаем контекст нашего GPU
             _dx11DeviceContext = _dx11Device.ImmediateContext;
             //Устанавливаем размер конечной картинки            
-            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _renderForm.ClientSize.Width, _renderForm.ClientSize.Height);
+            _dx11DeviceContext.Rasterizer.SetViewport(0, 0, _renderForm.Width, _renderForm.Height);
             _dx11DeviceContext.OutputMerger.SetTargets(_depthView, _renderView);
-           
+
+
+            ShaderFlags flags = ShaderFlags.None;
+#if DEBUG
+            flags |= ShaderFlags.Debug | ShaderFlags.SkipOptimization;
+#endif
+            using (var bytecode = ShaderBytecode.CompileFromFile(@"Shaders\FillGBuffer.hlsl", "VSFillGBuffer", "vs_5_0", flags))
+                fillGBufferVS = new VertexShader(_dx11Device, bytecode);
+
+            using (var bytecode = ShaderBytecode.CompileFromFile(@"Shaders\FillGBuffer.hlsl", "PSFillGBuffer", "ps_5_0", flags))
+            {
+                fillGBufferPS = new PixelShader(_dx11Device, bytecode);
+            }
+
+            gbuffer = new GBuffer(this.Width, this.Height, new SampleDescription(1, 0), _dx11Device, Format.R8G8B8A8_UNorm, Format.R32_UInt, Format.R8G8B8A8_UNorm);
+
         }
 
 
         private void Update(float time)
         {
             var m = _keyboard.GetCurrentState();
-           // if (m.PressedKeys.Count > 0)
+            // if (m.PressedKeys.Count > 0)
         }
 
         private void Draw(float time)
         {
             _dx11DeviceContext.ClearRenderTargetView(_renderView, Color);
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil, 1.0f, 0);
-          
+            //_dx11DeviceContext.VertexShader.Set(fillGBufferVS);
+            //_dx11DeviceContext.PixelShader.Set(fillGBufferPS);
+            //gbuffer.Clear(_dx11DeviceContext, new Color(0, 0, 0, 0));
+            //gbuffer.Bind(_dx11DeviceContext);
+            ////meshes.ForEach((m) => {
+            ////   perObject.View = viewMatrix;
+            ////    perObject.InverseView = Matrix.Invert(viewMatrix);
+            ////    perObject.Projection = projectionMatrix;
+            ////    perObject.InverseProjection = Matrix.Invert(projectionMatrix);
+            ////    m.Render();
+            ////}
+            //gbuffer.Unbind(_dx11DeviceContext);
+            //_dx11DeviceContext.OutputMerger.SetRenderTargets(this._depthView, this._renderView);
+            ////... use G-Buffer for screen - space rendering
             _swapChain.Present(0, PresentFlags.None);
         }
 
@@ -158,6 +190,8 @@ namespace DifferedRendering
         }
 
         double totalTime = 0;
+        private GBuffer gbuffer;
+
         private void RenderCallback()
         {
             var elapsed = _stopWatch.ElapsedMilliseconds;
@@ -178,11 +212,14 @@ namespace DifferedRendering
             Utilities.Dispose(ref _keyboard);
             Utilities.Dispose(ref _directInput);
             Utilities.Dispose(ref _renderView);
-            Utilities.Dispose(ref _swapChain);
             Utilities.Dispose(ref _factory);
             Utilities.Dispose(ref _depthView);
-            Utilities.Dispose(ref _dx11Device);
             Utilities.Dispose(ref _dx11DeviceContext);
+            Utilities.Dispose(ref fillGBufferPS);
+            Utilities.Dispose(ref fillGBufferVS);
+            Utilities.Dispose(ref gbuffer);
+            Utilities.Dispose(ref _swapChain);
+            Utilities.Dispose(ref _dx11Device);
             _swapChain?.Dispose();
             _dx11Device?.Dispose();
         }

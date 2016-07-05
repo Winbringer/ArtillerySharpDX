@@ -26,7 +26,7 @@ struct VS_IN
 {
     float4 position : POSITION;
     float3 normal : NORMAL;
-    float2 uv : TEXCOORD;
+    float3 uv : TEXCOORD;
     float3 tangent : TANGENT;
     float3 biTangent : BINORMAL;
     float4 boneID : BLENDINDICES;
@@ -38,7 +38,7 @@ struct PS_IN
 {
     float4 position : SV_Position;
     float3 normal : NORMAL;
-    float2 uv : TEXCOORD;
+    float3 uv : TEXCOORD;
     float3 tangent : TANGENT;
     float3 biTangent : BINORMAL;
     float3 WorldPosition : WORLDPOS;
@@ -54,6 +54,25 @@ void SkinVertex(float4 weights, float4 bones, inout float4 position, inout float
     tangent = mul(tangent, (float3x3) skinTransform);
     biTangent = mul(biTangent, (float3x3) skinTransform);
     
+}
+
+float3 ApplyNormalMap(float3 normal, float3 tangent, float3 biTangent, float3 normalSample)
+{
+    // Remap normalSample to the range (-1,1)  
+    normalSample = (2.0 * normalSample) - 1.0;
+    float3 T = normalize(tangent);   
+    float3 B = normalize(biTangent);
+    float3 N = normalize(normal);
+    // Create TBN matrix to transform from tangent space  
+    float3x3 TBN = float3x3(T, B, N);
+    return normalize(mul(normalSample, TBN));
+};
+
+float3 CalculateDisplacement(float heightRed, float3 normal)
+{
+    normal = normalize(normal);
+    heightRed = (2 * heightRed) - 1;
+    return heightRed  * normal;
 }
 
 PS_IN VS(VS_IN input)
@@ -81,12 +100,12 @@ float4 PS(PS_IN input) : SV_Target0
     if (hasDif)
         color = textureMap.Sample(textureSampler, input.uv);
     float3 amb = color.rgb * 0.3;
-    float3 dif = color.rgb * saturate(dot(normalize(input.normal), normalize(ToL))) * 0.8;
+    float3 dif = color.rgb * saturate(dot(normalize(input.normal), normalize(ToL))) * 0.7;
     float3 DA = amb + dif;
     if (IsReflective)
     {
         float3 reflection = reflect(-toEye, normalize(input.normal));
         DA = lerp(DA, Reflection.Sample(textureSampler, reflection).rgb, ReflectionAmount);
     }
-    return float4(DA, color.w);
+    return float4(DA.r,DA.g,DA.b, color.w);
 }

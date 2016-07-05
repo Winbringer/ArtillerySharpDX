@@ -3,6 +3,7 @@ using Assimp.Configs;
 using SharpDX;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
+using SharpDX.DXGI;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -125,6 +126,7 @@ namespace VictoremLibrary
 
     public class AssimpMesh
     {
+        public Vector3 Center { get; set; }
         public Color4 Dif { get; set; }
         public bool HasBones { get; set; }
         public string Texture { get; set; } = null;
@@ -146,6 +148,7 @@ namespace VictoremLibrary
 
     public class Mesh3D : Component<AssimpVertex>
     {
+        public Vector3 Center { get; private set; }
         public Color4 Diff { get; set; }
         ShaderResourceView _textures;
         public ShaderResourceView Texture { get { return _textures; } set { Utilities.Dispose(ref _textures); _textures = value; } }
@@ -170,6 +173,7 @@ namespace VictoremLibrary
 
         public Mesh3D(SharpDX.Direct3D11.Device device, AssimpMesh mesh, string texturFolder)
         {
+            Center = mesh.Center;
             primitiveType = mesh.primitiveType;
             Diff = mesh.Dif;
             this._indeces = mesh.Indeces;
@@ -198,6 +202,16 @@ namespace VictoremLibrary
     public class ModelSDX : IDisposable
     {
         #region Fields
+        public readonly InputElement[] SkinnedPosNormalTexTanBiCol = {
+                new InputElement("POSITION", 0, Format.R32G32B32_Float, 0, 0, InputClassification.PerVertexData, 0),
+                new InputElement("NORMAL", 0, Format.R32G32B32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData, 0),
+                new InputElement("TEXCOORD", 0, Format.R32G32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData, 0),
+                new InputElement("TANGENT", 0, Format.R32G32B32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData,0 ),
+                 new InputElement("BINORMAL", 0, Format.R32G32B32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData,0 ),
+                  new InputElement("BLENDINDICES", 0, Format.R32G32B32A32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData, 0),
+                new InputElement("BLENDWEIGHT", 0, Format.R32G32B32A32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData, 0),
+                 new InputElement("COLOR", 0, Format.R32G32B32A32_Float, InputElement.AppendAligned, 0, InputClassification.PerVertexData, 0)
+            };
         List<AnimationSDX> _animations = new List<AnimationSDX>();
         List<Bone> _bones;
         Mesh3D[] _3dMeshes;
@@ -214,7 +228,7 @@ namespace VictoremLibrary
         public Matrix World { get; set; } = Matrix.Identity;
         #endregion
 
-        public ModelSDX(Device device, string Folder, string File)
+        public ModelSDX(SharpDX.Direct3D11.Device device, string Folder, string File)
         {
             string fileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), Folder + File);
             using (AssimpContext importer = new AssimpContext())
@@ -264,15 +278,15 @@ namespace VictoremLibrary
                     .ImportFile(fileName,
                     PostProcessPreset.ConvertToLeftHanded |
                     PostProcessSteps.CalculateTangentSpace |
-                    PostProcessSteps.FindInvalidData |
+                   PostProcessSteps.FindInvalidData |
                     PostProcessSteps.GenerateSmoothNormals |
-                    PostProcessSteps.GenerateUVCoords |
-                    PostProcessSteps.JoinIdenticalVertices |
-                    PostProcessSteps.LimitBoneWeights |
-                    PostProcessSteps.SortByPrimitiveType |
-                    PostProcessSteps.TransformUVCoords |
+                   PostProcessSteps.GenerateUVCoords |
+                   PostProcessSteps.JoinIdenticalVertices |
+                   PostProcessSteps.SortByPrimitiveType |
+                   PostProcessSteps.TransformUVCoords |
                     PostProcessSteps.Triangulate |
-                    PostProcessSteps.PreTransformVertices);
+                   PostProcessSteps.PreTransformVertices
+                 );
                 }
                 var verts = Model.Meshes.SelectMany(x => x.Vertices).ToArray();
                 var X = verts.Sum(x => x.X) / verts.Length;
@@ -441,7 +455,7 @@ namespace VictoremLibrary
             return ret;
         }
 
-        public IEnumerable<Mesh3D> Create3DMeshes(AssimpMesh[] m, Device d, string textureDir)
+        public IEnumerable<Mesh3D> Create3DMeshes(AssimpMesh[] m, SharpDX.Direct3D11.Device d, string textureDir)
         {
             foreach (var i in m)
             {
@@ -455,13 +469,21 @@ namespace VictoremLibrary
             var m = new List<AssimpMesh>();
             foreach (var mesh in model.Meshes)
             {
+                var verts = mesh.Vertices.ToArray();
+                var X = verts.Sum(x => x.X) / verts.Length;
+                var Y = verts.Sum(x => x.Y) / verts.Length;
+                var Z = verts.Sum(x => x.Z) / verts.Length;
+                var c = new Vector3(X, Y, Z);
+                TextureSlot t;
+                var s = model.Materials[mesh.MaterialIndex].GetMaterialTexture(TextureType.Diffuse, 0, out t) ? t.FilePath : null;
                 yield return new AssimpMesh()
                 {
                     Indeces = mesh.GetIndices().Select(i => (uint)i).ToArray(),
                     Veteces = GetVertex(mesh).ToArray(),
                     HasBones = mesh.HasBones,
+                    Center = c,
                     Dif = model.Materials[mesh.MaterialIndex].ColorDiffuse.ToColor4(),
-                    Texture = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureDiffuse.FilePath),
+                    Texture = Path.GetFileName(s),
                     NormalMap = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureNormal.FilePath),
                     SpecularMap = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureSpecular.FilePath),
                     DiplacementMap = Path.GetFileName(model.Materials[mesh.MaterialIndex].TextureDisplacement.FilePath),

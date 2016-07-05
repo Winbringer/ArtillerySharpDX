@@ -367,7 +367,7 @@ namespace CubeReflection
                 0);
 
             _pm.IsReflective = 1;
-            _pm.ReflectionAmount =1f;
+            _pm.ReflectionAmount =0.5f;
 
             SetViewPoint(Vector3.Transform(_model0.Center, _model0.World * World).ToVector3());
             DrawRfCube(Cameras[0].View, Cameras[0].Projection, EnvMapRTV, EnvMapDSV, Viewport, _model1, EnvMapSRV1, EnvMapSRV);

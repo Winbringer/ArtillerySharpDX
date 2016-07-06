@@ -19,7 +19,7 @@ PixelIn VSMain(VertexIn vertex)
     return result;
 }
 
-Texture2DMS<float4> TextureMS0 : register(t1);
+Texture2DMS<float4> TextureMS0 : register(t0);
 Texture2D<float4> Texture0 : register(t0);
 SamplerState Sampler : register(s0);
 

@@ -82,9 +82,11 @@ namespace DifferedRendering
             InitializeDeviceResources();
 
             model = new ModelSDX(_dx11Device, "textures\\", "sponza.obj");
-            model.World = Matrix.Scaling(0.1f);
+            model.World = Matrix.Identity;
             _constBuffer0 = new SharpDX.Direct3D11.Buffer(_dx11Device, Utilities.SizeOf<PerObject>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
-            _view = Matrix.LookAtLH(new Vector3(-50, 50, -50), Vector3.Zero, Vector3.Up);
+            _constBuffer1 = new SharpDX.Direct3D11.Buffer(_dx11Device, Utilities.SizeOf<Matrix>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+
+            _view = Matrix.LookAtLH(new Vector3(0, 0, -500), Vector3.Zero, Vector3.Up);
             _proj = Matrix.PerspectiveFovLH(MathUtil.PiOverFour, Width / (float)Height, 1f, 10000f);
 
             _sampler = new SamplerState(_dx11Device, new SamplerStateDescription()
@@ -125,7 +127,11 @@ namespace DifferedRendering
             {
                 fillGBufferPS = new PixelShader(_dx11Device, bytecode);
             }
+            using (var bytecode = ShaderBytecode.CompileFromFile(@"Shaders\GBufferD.hlsl", "PS_GBufferNormal", "ps_5_0", flags))
+                gBufferNormalPS = new PixelShader(_dx11Device, bytecode);
 
+            saQuad = new ScreenAlignedQuadRenderer(_dx11Device);
+            saQuad.Shader = gBufferNormalPS;
             gbuffer = new GBuffer(this.Width, this.Height, new SampleDescription(1, 0), _dx11Device, Format.R8G8B8A8_UNorm, Format.R32_UInt, Format.R8G8B8A8_UNorm);
 
 
@@ -209,14 +215,37 @@ namespace DifferedRendering
         private void Update(float time)
         {
             var m = _keyboard.GetCurrentState();
-            // if (m.PressedKeys.Count > 0)
-
+            if (m.PressedKeys.Count > 0)
+                SetViewMatrix(time, m);
         }
+        protected virtual void SetViewMatrix(float time, SharpDX.DirectInput.KeyboardState kState)
+        {
+            float speed = 0.001f;
+            var rotation = Matrix.Identity;
+            var translation = Matrix.Identity;
+            if (kState.IsPressed(SharpDX.DirectInput.Key.D))
+                rotation = Matrix.RotationY(-speed * time);
+            if (kState.IsPressed(SharpDX.DirectInput.Key.A))
+                rotation = Matrix.RotationY(speed * time);
+            if (kState.IsPressed(SharpDX.DirectInput.Key.W))
+                rotation = Matrix.RotationX(speed * time);
+            if (kState.IsPressed(SharpDX.DirectInput.Key.S))
+                rotation = Matrix.RotationX(-speed * time);
+            if (kState.IsPressed(SharpDX.DirectInput.Key.Left))
+                rotation = Matrix.RotationZ(speed * time);
+            if (kState.IsPressed(SharpDX.DirectInput.Key.Right))
+                rotation = Matrix.RotationZ(-speed * time);
 
+            if (kState.IsPressed(SharpDX.DirectInput.Key.Up))
+                translation = Matrix.Translation(0,0,-speed*time*100);
+            if (kState.IsPressed(SharpDX.DirectInput.Key.Down))
+                translation = Matrix.Translation(0, 0,speed * time*100);
+
+            _view = _view  * rotation*translation;
+        }
         private void Draw(float time)
         {
             _dx11DeviceContext.InputAssembler.InputLayout = _inputLayout;
-            _dx11DeviceContext.OutputMerger.SetRenderTargets(this._depthView, this._renderView);
             _dx11DeviceContext.ClearRenderTargetView(_renderView, Color);
             _dx11DeviceContext.ClearDepthStencilView(_depthView, DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil, 1.0f, 0);
 
@@ -231,7 +260,6 @@ namespace DifferedRendering
             _dx11DeviceContext.PixelShader.SetConstantBuffer(0, _constBuffer0);
             _dx11DeviceContext.VertexShader.SetSampler(0, _sampler);
             _dx11DeviceContext.PixelShader.SetSampler(0, _sampler);
-
             gbuffer.Clear(_dx11DeviceContext, new Color(0, 0, 0, 1));
             gbuffer.Bind(_dx11DeviceContext);
             foreach (var item in model.Meshes3D)
@@ -248,8 +276,17 @@ namespace DifferedRendering
 
             }
             gbuffer.Unbind(_dx11DeviceContext);
+            saQuad.ShaderResources = gbuffer.SRVs.ToArray().Concat(new[] { gbuffer.DSSRV }).ToArray();
             _dx11DeviceContext.OutputMerger.SetRenderTargets(this._depthView, this._renderView);
-            
+
+           
+            var invView =Matrix.Invert( _proj);
+            invView.Transpose();
+
+            _dx11DeviceContext.UpdateSubresource(ref invView, _constBuffer1);
+            _dx11DeviceContext.PixelShader.SetConstantBuffer(0, _constBuffer1);           
+            saQuad.Render();
+
             _swapChain.Present(0, PresentFlags.None);
         }
 
@@ -264,8 +301,11 @@ namespace DifferedRendering
         double totalTime = 0;
         private GBuffer gbuffer;
         private SharpDX.Direct3D11.Buffer _constBuffer0;
+        private SharpDX.Direct3D11.Buffer _constBuffer1;
         private SamplerState _sampler;
         private Shader _shader;
+        private PixelShader gBufferNormalPS;
+        private ScreenAlignedQuadRenderer saQuad;
 
         private void RenderCallback()
         {
@@ -294,8 +334,11 @@ namespace DifferedRendering
             Utilities.Dispose(ref fillGBufferVS);
             Utilities.Dispose(ref gbuffer);
             Utilities.Dispose(ref _constBuffer0);
+            Utilities.Dispose(ref _constBuffer1);
             Utilities.Dispose(ref _sampler);
             Utilities.Dispose(ref _inputLayout);
+            Utilities.Dispose(ref gBufferNormalPS);
+            saQuad?.Dispose();
             _shader?.Dispose();
             model?.Dispose();
             Utilities.Dispose(ref _swapChain);

@@ -24,7 +24,7 @@ namespace VictoremLibrary
         /// <summary>
         /// Конструктор класса
         /// </summary>
-        /// <param name="dC">Контекст Директ икс 12</param>
+        /// <param name="dC">Контекст Директ икс 11</param>
         /// <param name="shadersFile">Путь к файлу в которм описанный шейдеры. Назвалине функций шейредов должно быть VS, PS, GS, HS и DS соответственно.</param>
         ///<param name="inputElements">Входные элементы для Вертексного шейдера</param>
         /// <param name="hasGeom">Используеться ли Геометри шейдер GS</param>

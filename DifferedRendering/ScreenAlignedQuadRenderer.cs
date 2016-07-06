@@ -41,8 +41,8 @@ namespace DifferedRendering
                     {
                       new Vector3(-1.0f, -1.0f, 1.0f),
                       new Vector3(-1.0f, 1.0f, 1.0f),
-                      new Vector3(1.0f, -1.0f, 1.0f),
-                      new Vector3(1.0f, 1.0f, 1.0f),
+                      new Vector3(1.0f, -1.0f, 0.99f),
+                      new Vector3(1.0f, 1.0f,  0.99f),
                   });
                 vertexBinding = new VertexBufferBinding(vertexBuffer, Utilities.SizeOf<Vector3>(), 0);
             }
@@ -74,7 +74,11 @@ namespace DifferedRendering
                 bool isMultisampledSRV = false;
                 if (ShaderResources != null && ShaderResources.Length > 0 && !ShaderResources[0].IsDisposed)
                 {
-                    context.PixelShader.SetShaderResources(0, ShaderResources);
+                    for (int i = 0; i < ShaderResources.Length; i++)
+                    {
+                        context.PixelShader.SetShaderResource(i, ShaderResources[i]);
+                    }
+                    
 
                     if (ShaderResources[0].Description.Dimension == SharpDX.Direct3D.ShaderResourceViewDimension.Texture2DMultisampled)
                     {

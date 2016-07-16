@@ -123,6 +123,7 @@
     <Content Include="Shaders\GBufferD.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Shaders\Ligts.hlsl" />
     <Content Include="Shaders\SAQuad.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -6,8 +6,9 @@ using AlphaMode = SharpDX.Direct2D1.AlphaMode;
 using Factory = SharpDX.Direct2D1.Factory;
 using SharpDX.DirectWrite;
 using System.Diagnostics;
+using SharpDX.Direct3D11;
 
-namespace VictoremLibrary
+namespace UWP_ScPanel
 {
     /// <summary>
     /// Рисует текст и 2Д объекты на экран.
@@ -24,6 +25,9 @@ namespace VictoremLibrary
         int _heght;
         string TextFont;
         int TextSize;
+        private Texture2D texture2D;
+        private float v1;
+        private float v2;
 
         /// <summary>
         /// Обязательно вызвать Бегинд драв перед и Енд драв после рисования 2д примитивов.
@@ -45,13 +49,11 @@ namespace VictoremLibrary
             _Factory2D = new SharpDX.Direct2D1.Factory();
             using (var surface = BackBuffer.QueryInterface<Surface>())
             {
-                _RenderTarget2D = new RenderTarget(
-                    _Factory2D,
-                    surface,
-                    new RenderTargetProperties(
-                        new PixelFormat(
-                            Format.R8G8B8A8_UNorm,
-                            AlphaMode.Premultiplied)));
+                _RenderTarget2D = new RenderTarget(_Factory2D, surface,
+                                                  new RenderTargetProperties(
+                                                      new PixelFormat(
+                                                      Format.B8G8R8A8_UNorm,
+                                                      AlphaMode.Ignore)));
             }
             _RenderTarget2D.AntialiasMode = AntialiasMode.PerPrimitive;
             _FactoryDWrite = new SharpDX.DirectWrite.Factory();
@@ -61,6 +63,13 @@ namespace VictoremLibrary
             _RenderTarget2D.TextAntialiasMode = TextAntialiasMode.Cleartype;
             // Initialize a TextLayout
             // _TextLayout = new TextLayout(_FactoryDWrite, "SharpDX D2D1 - DWrite", _TextFormat, Width, Height);
+        }
+
+        public TextWirter(Texture2D texture2D, float v1, float v2)
+        {
+            this.texture2D = texture2D;
+            this.v1 = v1;
+            this.v2 = v2;
         }
 
         /// <summary>
@@ -150,7 +159,9 @@ namespace VictoremLibrary
             Utilities.Dispose(ref _FactoryDWrite);
             Utilities.Dispose(ref _RenderTarget2D);
             Utilities.Dispose(ref _SceneColorBrush);
+            Utilities.Dispose(ref _TextFormat);
             Utilities.Dispose(ref _TextLayout);
+            _TextLayout?.Dispose();
         }
     }
 }

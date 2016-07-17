@@ -81,9 +81,7 @@ float3 CalculateDisplacement(float2 UV, float3 normal)
 
 float3 ApplyNormalMap(float3 normal, float3 tangent, float3 bitangent, float3 normalSample)
 {
-    // Remap normalSample to the range (-1,1)  
     normalSample = (2.0 * normalSample) - 1.0;
-    // Create TBN matrix to transform from tangent space  
     float3x3 TBN = float3x3(tangent, bitangent, normal);
     return normalize(mul(normalSample, TBN));
 }

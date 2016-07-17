@@ -15,24 +15,21 @@ namespace UWP_ScPanel
     /// </summary>
     public sealed class TextWirter : System.IDisposable
     {
-        private Factory _Factory2D;
+        private SharpDX.Direct2D1.Factory1 _Factory2D;
         private SharpDX.DirectWrite.Factory _FactoryDWrite;
-        private RenderTarget _RenderTarget2D;
+        private SharpDX.Direct2D1.DeviceContext _RenderTarget2D;
         private SolidColorBrush _SceneColorBrush;
         private TextFormat _TextFormat;
         private TextLayout _TextLayout;
-        int _width;
-        int _heght;
         string TextFont;
         int TextSize;
-        private Texture2D texture2D;
-        private float v1;
-        private float v2;
+        private SharpDX.Direct2D1.Device d2dDevice;
+        private Bitmap1 d2dTarget;
 
         /// <summary>
         /// Обязательно вызвать Бегинд драв перед и Енд драв после рисования 2д примитивов.
         /// </summary>
-        public RenderTarget RenderTarget { get { return _RenderTarget2D; } }
+        public SharpDX.Direct2D1.DeviceContext RenderTarget { get { return _RenderTarget2D; } }
 
         /// <summary>
         /// Конструктор
@@ -40,38 +37,41 @@ namespace UWP_ScPanel
         /// <param name="BackBuffer">Буффер на который будем рисовать, наш холст</param>
         /// <param name="Width">Ширина области в которую будем рисовать</param>
         /// <param name="Height">Высота объласти в которую будем рисовать</param>
-        public TextWirter(SharpDX.Direct3D11.Texture2D BackBuffer, int Width, int Height)
+        public TextWirter(SharpDX.Direct3D11.Device2 device, SwapChain2 swapChain,Color color, float dpi = 96f, string font = "Calibri",int size=14)
         {
-            this.TextFont = "Calibri";
-            this.TextSize = 14;
-            _width = Width;
-            _heght = Height;
-            _Factory2D = new SharpDX.Direct2D1.Factory();
-            using (var surface = BackBuffer.QueryInterface<Surface>())
+#if DEBUG
+            var debug = SharpDX.Direct2D1.DebugLevel.Error;
+#else
+            var debug = SharpDX.Direct2D1.DebugLevel.None;
+#endif
+
+            _Factory2D = new SharpDX.Direct2D1.Factory1(SharpDX.Direct2D1.FactoryType.SingleThreaded, debug);
+            using (var dxgiDevice = device.QueryInterface<SharpDX.DXGI.Device>())
             {
-                _RenderTarget2D = new RenderTarget(_Factory2D, surface,
-                                                  new RenderTargetProperties(
-                                                      new PixelFormat(
-                                                      Format.B8G8R8A8_UNorm,
-                                                      AlphaMode.Ignore)));
+                d2dDevice = new SharpDX.Direct2D1.Device(_Factory2D, dxgiDevice);
             }
-            _RenderTarget2D.AntialiasMode = AntialiasMode.PerPrimitive;
+            _RenderTarget2D = new SharpDX.Direct2D1.DeviceContext(d2dDevice, SharpDX.Direct2D1.DeviceContextOptions.None);
+
+            BitmapProperties1 properties = new BitmapProperties1(
+                new PixelFormat(
+                    SharpDX.DXGI.Format.B8G8R8A8_UNorm,
+                    SharpDX.Direct2D1.AlphaMode.Premultiplied),
+                dpi,
+                dpi,
+                BitmapOptions.Target | BitmapOptions.CannotDraw);
+            Surface backBuffer = swapChain.GetBackBuffer<Surface>(0);
+            d2dTarget = new Bitmap1(_RenderTarget2D, backBuffer, properties);
+            this.TextFont =font ;
+            this.TextSize = size;
             _FactoryDWrite = new SharpDX.DirectWrite.Factory();
-            _SceneColorBrush = new SolidColorBrush(_RenderTarget2D, Color.White);
-            // Initialize a TextFormat
+            _SceneColorBrush = new SolidColorBrush(_RenderTarget2D,color);
             InitTextFormat();
             _RenderTarget2D.TextAntialiasMode = TextAntialiasMode.Cleartype;
-            // Initialize a TextLayout
-            // _TextLayout = new TextLayout(_FactoryDWrite, "SharpDX D2D1 - DWrite", _TextFormat, Width, Height);
         }
-
-        public TextWirter(Texture2D texture2D, float v1, float v2)
+        public void SetDPI(float dpiX, float dpiY)
         {
-            this.texture2D = texture2D;
-            this.v1 = v1;
-            this.v2 = v2;
+            _RenderTarget2D.DotsPerInch =new Size2F( dpiX, dpiY);
         }
-
         /// <summary>
         /// Устанавливает шрифт для текста.
         /// </summary>
@@ -125,15 +125,14 @@ namespace UWP_ScPanel
         /// <param name="height">Высота области в которую будет выводиться текст</param>
         public void DrawText(string text, float x = 0, float y = 0, float width = 400, float height = 300)
         {
+            _RenderTarget2D.Target = d2dTarget;
             _RenderTarget2D.BeginDraw();
             _RenderTarget2D.DrawText(
-                text, text.Length,
+                text,
                 _TextFormat,
                 new RectangleF(x, y, width, height),
                 _SceneColorBrush,
-                DrawTextOptions.None,
-                MeasuringMode.GdiClassic);
-            //  RenderTarget2D.DrawTextLayout(new Vector2(0, 0), TextLayout, SceneColorBrush, DrawTextOptions.None);
+                DrawTextOptions.Clip);
             _RenderTarget2D.EndDraw();
         }
 
@@ -157,10 +156,12 @@ namespace UWP_ScPanel
         {
             Utilities.Dispose(ref _Factory2D);
             Utilities.Dispose(ref _FactoryDWrite);
-            Utilities.Dispose(ref _RenderTarget2D);
             Utilities.Dispose(ref _SceneColorBrush);
             Utilities.Dispose(ref _TextFormat);
             Utilities.Dispose(ref _TextLayout);
+            Utilities.Dispose(ref d2dTarget);
+            Utilities.Dispose(ref _RenderTarget2D);
+            Utilities.Dispose(ref d2dDevice);
             _TextLayout?.Dispose();
         }
     }

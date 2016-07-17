@@ -58,7 +58,7 @@ namespace SharpDX11GameByWinbringer.Models
             _TextLayout = new TextLayout(_FactoryDWrite, "SharpDX D2D1 - DWrite", _TextFormat,Width, Height);
         }
 
-        public void DrawText(string text)
+        public void DrawText(string text, float x0=0, float y0=0, float x1=200, float y1=200)
         {
             _sw.Stop();
             string s = string.Format("FPS : {0:#####}", 1000.0f / _sw.Elapsed.TotalMilliseconds);
@@ -69,14 +69,31 @@ namespace SharpDX11GameByWinbringer.Models
             _RenderTarget2D.DrawText(
                 s, s.Length,
                 _TextFormat,
-                new RectangleF(50,50, 200, 200), 
+                new RectangleF(x0,y0, x1, y1), 
                 _SceneColorBrush,
                 DrawTextOptions.None,
                 MeasuringMode.GdiClassic);
           //  _RenderTarget2D.DrawTextLayout(new Vector2(300, 300), _TextLayout, _SceneColorBrush, DrawTextOptions.None);
             _RenderTarget2D.EndDraw();
         }
-               
+        public void Text(string s,float x0 = 0, float y0 = 0, float x1 = 200, float y1 = 200)
+        {
+            _RenderTarget2D.BeginDraw();
+            _RenderTarget2D.DrawText(
+                s, s.Length,
+                _TextFormat,
+                new RectangleF(x0, y0, x1, y1),
+                _SceneColorBrush,
+                DrawTextOptions.None,
+                MeasuringMode.GdiClassic);
+            _RenderTarget2D.EndDraw();
+        }
+        public void DrawLine(float x0, float y0, float x1, float y1)
+        {
+            _RenderTarget2D.BeginDraw();
+            _RenderTarget2D.DrawLine(new SharpDX.Mathematics.Interop.RawVector2(x0, y0), new SharpDX.Mathematics.Interop.RawVector2(x1, y1), _SceneColorBrush);
+            _RenderTarget2D.EndDraw();
+        }
         public void Dispose()
         {
             Utilities.Dispose(ref _Factory2D);
@@ -85,6 +102,7 @@ namespace SharpDX11GameByWinbringer.Models
             Utilities.Dispose(ref _SceneColorBrush);
             Utilities.Dispose(ref _TextFormat);
             Utilities.Dispose(ref _TextLayout);
+            _TextLayout?.Dispose();
         }
 
     }

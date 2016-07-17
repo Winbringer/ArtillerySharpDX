@@ -143,14 +143,20 @@ namespace VictoremLibrary
             _RenderTarget2D.DrawBitmap(bitmap, new SharpDX.Mathematics.Interop.RawRectangleF(x, y, x + bitmap.Size.Width * scale, y + bitmap.Size.Height * scale), opacity, interMode);
             _RenderTarget2D.EndDraw();
         }
-
+        public void DrawLine(float x0, float y0, float x1, float y1)
+        {
+            _RenderTarget2D.BeginDraw();
+            _RenderTarget2D.DrawLine(new SharpDX.Mathematics.Interop.RawVector2(x0, y0), new SharpDX.Mathematics.Interop.RawVector2(x1, y1), _SceneColorBrush);
+            _RenderTarget2D.EndDraw();
+        }
         public void Dispose()
         {
             Utilities.Dispose(ref _Factory2D);
             Utilities.Dispose(ref _FactoryDWrite);
-            Utilities.Dispose(ref _RenderTarget2D);
             Utilities.Dispose(ref _SceneColorBrush);
             Utilities.Dispose(ref _TextLayout);
+            Utilities.Dispose(ref _TextFormat);
+            Utilities.Dispose(ref _RenderTarget2D);
         }
     }
 }

@@ -107,12 +107,15 @@ namespace SharpDX11GameByWinbringer.Models
         private ShaderResourceView _textureResourse1;
         private HullShader _hShader;
         private DomainShader _dShader;
-        #endregion
 
+        #endregion
+        public bool Moving { get; set; }
+        public bool isFaced { get; set; }
         public EarthFromOBJ(DeviceContext dx11Context)
         {
+
             _dx11Context = dx11Context;
-            World = Matrix.Translation(200, 200, -200) * Matrix.Identity;
+            World = Matrix.Translation(0, 100, -5000);
             _light.Color = Color4.White;
 
             const string obj = "3DModelsFiles\\Earth\\earth.obj";
@@ -193,13 +196,19 @@ namespace SharpDX11GameByWinbringer.Models
 
 
         #region Методы
-
-        public void Update(float time)
+        bool reseting;
+        public void Update(float time, Matrix w)
         {
-            World = Matrix.RotationX(0.0005f * time) * World * Matrix.RotationY(0.0005f * time);
+            if (isFaced)
+            {
+                if (reseting) World = Matrix.Translation(0, 100, -5000);
+                Moving = false;
+            }
+            if (Moving) reseting = true; else reseting = false;
+            World = Moving ? Matrix.RotationY(-0.0005f * time) * World * w : Matrix.RotationY(-0.0005f * time) * World;
         }
 
-        public void Draw(Matrix world, Matrix view, Matrix proj, float dispScale,int tFactor)
+        public void Draw(Matrix world, Matrix view, Matrix proj, float dispScale, int tFactor)
         {
             Matrix oWorld = World * world;
             Center = Vector3.TransformCoordinate(Vector3.Zero, oWorld);
@@ -207,7 +216,7 @@ namespace SharpDX11GameByWinbringer.Models
             var camPosition = Matrix.Transpose(Matrix.Invert(view)).Column4;
             _light.CameraPosition = new Vector3(camPosition.X, camPosition.Y, camPosition.Z);
 
-            _matrices= new Matrices(oWorld, view, proj);
+            _matrices = new Matrices(oWorld, view, proj);
             _matrices.DisplaceScale = dispScale;
             _matrices.TessellationFactor = tFactor;
             _matrices.Transpose();
@@ -230,8 +239,8 @@ namespace SharpDX11GameByWinbringer.Models
 
             _dx11Context.PixelShader.SetConstantBuffer(0, _constantBuffer);
             _dx11Context.PixelShader.SetConstantBuffer(1, _materialsBuffer);
-            _dx11Context.PixelShader.SetConstantBuffer(2, _lightBuffer);            
-            _dx11Context.PixelShader.SetSampler(0, _samplerState);          
+            _dx11Context.PixelShader.SetConstantBuffer(2, _lightBuffer);
+            _dx11Context.PixelShader.SetSampler(0, _samplerState);
             _dx11Context.PixelShader.SetShaderResource(0, _textureResourse);
             _dx11Context.PixelShader.SetShaderResource(1, _textureResourse1);
             _dx11Context.PixelShader.SetShaderResource(2, _textureResourse2);
